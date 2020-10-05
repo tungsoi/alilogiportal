@@ -11,7 +11,7 @@ return [
     | login page.
     |
     */
-    'name' => 'Ceramics',
+    'name' => 'Alo Order',
 
     /*
     |--------------------------------------------------------------------------
@@ -22,7 +22,7 @@ return [
     | `img` tag, eg '<img src="http://logo-url" alt="Admin logo">'.
     |
     */
-    'logo' => '<b>Ceramics</b>',
+    'logo' => '<b>Alo Order</b>',
 
     /*
     |--------------------------------------------------------------------------
@@ -34,7 +34,7 @@ return [
     | '<img src="http://logo-url" alt="Admin logo">'.
     |
     */
-    'logo-mini' => '<b>CR</b>',
+    'logo-mini' => '<b>AO</b>',
 
     /*
     |--------------------------------------------------------------------------
@@ -288,7 +288,7 @@ return [
     |    "skin-red", "skin-red-light", "skin-black", "skin-black-light".
     |
     */
-    'skin' => 'skin-purple-light',
+    'skin' => 'skin-yellow-light',
 
     /*
     |--------------------------------------------------------------------------
