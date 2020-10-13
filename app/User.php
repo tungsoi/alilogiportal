@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\Models\RongDoUser;
+use App\Models\TransportOrderItem;
 use Encore\Admin\Traits\AdminBuilder;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
@@ -13,6 +15,11 @@ use Encore\Admin\Auth\Database\HasPermissions;
 class User extends Model implements AuthenticatableContract
 {
     use Authenticatable, AdminBuilder, HasPermissions;
+
+    const STATUS = [
+        0   =>  'Khoá',
+        1   =>  'Hoạt động'
+    ];
 
     /**
      * Table name
@@ -27,22 +34,19 @@ class User extends Model implements AuthenticatableContract
      * @var array
      */
     protected $fillable = [
-        'email',
-        'password',
+        'username',
         'name',
         'avatar',
-        'provider_id',
-        'provider',
-        'is_social',
-        'token',
-        'created_date',
-        'mobile',
-        'birthday',
-        'gender',
-        'is_member',
+        'email',
+        'phone_number',
+        'wallet',
         'address',
-        'province',
-        'district'
+        'is_customer',
+        'symbol_name',
+        'ware_house_id',
+        'is_active',
+        'password',
+        'note'
     ];
 
     /**
@@ -125,5 +129,43 @@ class User extends Model implements AuthenticatableContract
             return $token['access_token'];
         }
         return '';
+    }
+
+    public function warehouse() {
+        return $this->hasOne('App\Models\Warehouse', 'id', 'ware_house_id');
+    }
+
+    public function getSumWeightByCustomerSymbolName($symbolName) {
+        $transportCustomer = RongDoUser::where('name', $symbolName)->first();
+        if ($transportCustomer != "") {
+            return TransportOrderItem::where('transport_customer_id', $transportCustomer->id)->sum('kg');
+        }
+
+        return 0;
+    }
+    
+    public function getSumCublicMeterByCustomerSymbolName($symbolName) {
+        $items = RongDoUser::where('name', $symbolName)->get();
+        if ($items != "") {
+            $sum = 0;
+            foreach ($items as $item) {
+                $sum += !is_null($item->cublic_meter) ? $item->cublic_meter : round( ( $item->product_width * $item->product_height * $item->product_length)/1000000, 4 );
+            }
+            return $sum;
+        }
+        return 0;
+    }
+
+    public function getSumMoneyPayment($symbolName) {
+        $transportCustomer = RongDoUser::where('name', $symbolName)->first();
+        if ($transportCustomer != "") {
+            return TransportOrderItem::where('transport_customer_id', $transportCustomer->id)->where('is_payment', 1)->sum('total_price');
+        }
+
+        return 0;
+    }
+
+    public static function customers() {
+        return self::where('is_customer', 1)->get();
     }
 }

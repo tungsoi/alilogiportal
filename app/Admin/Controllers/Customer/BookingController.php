@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Admin\Controllers\FE;
+namespace App\Admin\Controllers\Customer;
 
 use Encore\Admin\Controllers\AdminController;
 use Encore\Admin\Form;
 use Encore\Admin\Grid;
 use Encore\Admin\Show;
-use App\Models\HomeMenu;
+use App\Models\Example;
+use App\Models\OrderItem;
 
-class HomeMenuController extends AdminController
+class BookingController extends AdminController
 {
     /**
      * Title for current resource.
@@ -19,7 +20,7 @@ class HomeMenuController extends AdminController
 
     public function __construct()
     {
-        $this->title = trans('admin.menu_titles.home_menu');
+        $this->title = 'Đặt mua sản phẩm';
     }
 
     /**
@@ -29,25 +30,19 @@ class HomeMenuController extends AdminController
      */
     protected function grid()
     {
-        $grid = new Grid(new HomeMenu);
+        $form = new Form(new OrderItem());
 
-        $grid->filter(function($filter) {
-            $filter->expand();
-            $filter->disableIdFilter();
-            $filter->like('title', trans('admin.title'));
-        });
+        $form->display('id', __('ID'));
+        $form->text('title', trans('admin.title'))->rules('required');
+        $form->number('order', trans('admin.order'))->default(0)->rules('required');
+        $form->display('created_at', trans('admin.created_at'));
+        $form->display('updated_at', trans('admin.updated_at'));
 
-        $grid->id(trans('admin.id'));
-        $grid->title(trans('admin.title'))->editable();
-        $grid->order(trans('admin.order'))->editable();
-        $grid->created_at(trans('admin.created_at'))->display(function () {
-            return date('H:i | d-m-Y', strtotime($this->created_at));
-        });
-        $grid->updated_at(trans('admin.updated_at'))->display(function () {
-            return date('H:i | d-m-Y', strtotime($this->updated_at));
-        });
+        $form->disableEditingCheck();
+        $form->disableCreatingCheck();
+        $form->disableViewCheck();
 
-        return $grid;
+        return $form;
     }
 
     /**
@@ -58,7 +53,7 @@ class HomeMenuController extends AdminController
      */
     protected function detail($id)
     {
-        $show = new Show(HomeMenu::findOrFail($id));
+        $show = new Show(Example::findOrFail($id));
 
         $show->field('id', trans('admin.id'));
         $show->title(trans('admin.title'));
@@ -76,7 +71,7 @@ class HomeMenuController extends AdminController
      */
     protected function form()
     {
-        $form = new Form(new HomeMenu);
+        $form = new Form(new Example);
 
         $form->display('id', __('ID'));
         $form->text('title', trans('admin.title'))->rules('required');

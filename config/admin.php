@@ -13,6 +13,8 @@ return [
     */
     'name' => 'Alo Order',
 
+    'title' =>  env('APP_TITLE'),
+
     /*
     |--------------------------------------------------------------------------
     | Laravel-admin logo
@@ -285,10 +287,10 @@ return [
     | Supported:
     |    "skin-blue", "skin-blue-light", "skin-yellow", "skin-yellow-light",
     |    "skin-green", "skin-green-light", "skin-purple", "skin-purple-light",
-    |    "skin-red", "skin-red-light", "skin-black", "skin-black-light".
+    |    "skin-red", "skin-purple-light", "skin-black", "skin-black-light".
     |
     */
-    'skin' => 'skin-yellow-light',
+    'skin' => 'skin-purple',
 
     /*
     |--------------------------------------------------------------------------
@@ -425,5 +427,10 @@ return [
             // the cookie name for the multi-language var, optional, default is 'locale'
             'cookie-name' => 'locale'
         ],
+        'grid-lightbox' => [
+        
+            // Set to `false` if you want to disable this extension
+            'enable' => true,
+        ]
     ],
 ];

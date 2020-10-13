@@ -9,9 +9,7 @@
     <!-- Tell the browser to be responsive to screen width -->
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
 
-    @if(!is_null($favicon = Admin::favicon()))
-    <link rel="shortcut icon" href="{{$favicon}}">
-    @endif
+    <link rel="shortcut icon" href="{{ asset('images/favicon.jpeg') }}">
 
     {!! Admin::css() !!}
 
@@ -21,6 +19,19 @@
     <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
+    <style>
+        body {
+            font-family: "Tahoma" !important;
+            font-size: 12px !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+            font-family: "Tahoma" !important;
+        }
+        tfoot {
+            display: table-row-group;
+        }
+    </style>
 
 </head>
 

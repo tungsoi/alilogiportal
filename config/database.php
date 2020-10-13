@@ -78,6 +78,36 @@ return [
             'prefix' => '',
         ],
 
+        'aloorder' => [
+            'driver' => 'mysql',
+            'host' => '150.95.115.152',
+            'port' => env('DB_PORT', '3306'),
+            'database' => 'aloorder',
+            'username' => 'tungxxx',
+            'password' => 'bavAdm1n123',
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ],
+
+        'alilogi' => [
+            'driver' => 'mysql',
+            'host' => '150.95.115.152',
+            'port' => env('DB_PORT', '3306'),
+            'database' => 'alilogi',
+            'username' => 'tungxxx',
+            'password' => 'bavAdm1n123',
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ]
+
     ],
 
     /*
