@@ -19,6 +19,7 @@ class Ordered extends BatchAction
     public function handle(Collection $collection, Request $request)
     {
         $order_id = 0;
+        $orders = [];
         foreach ($collection as $model) {
             $item_code = "SPMH-".str_pad($model->id, 5, 0, STR_PAD_LEFT);
             if ($model->status == OrderItem::STATUS_PURCHASE_ITEM_ORDERED) {
@@ -31,6 +32,15 @@ class Ordered extends BatchAction
                 // nếu trạng thái của sản phẩm là đã về kho Việt Nam
                 return $this->response()->error("Sản phẩm ".$item_code." đã hết hàng. Không thể xác nhận Đã đặt hàng. Vui lòng kiểm tra lại !")->refresh();
             } 
+
+            $orders[] = $model->order_id;
+        }
+
+        foreach ($orders as $order_id) {
+            $order = PurchaseOrder::find($order_id);
+            if ($order->status != PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
+                return $this->response()->error("Đơn hàng " .$order->order_number. " chưa được vào tiền cọc. Vui lòng đặt cọc cho đơn hàng này trước khi đặt hàng các sản phẩm." )->refresh();
+            }
         }
 
         // chỉ còn các sản phẩm ở trạng thái chưa đặt hàng
