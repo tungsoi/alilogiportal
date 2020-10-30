@@ -37,7 +37,8 @@ class Deposite extends RowAction
             'user_id_created'   => $request->get('user_id_deposited'),
             'money' =>  $deposite,
             'type_recharge' =>  TransportRecharge::DEPOSITE_ORDER,
-            'content'   =>  'Đặt cọc đơn hàng mua hộ. Mã đơn hàng '.$model->order_number
+            'content'   =>  'Đặt cọc đơn hàng mua hộ. Mã đơn hàng '.$model->order_number,
+            'order_type'    =>  TransportRecharge::TYPE_ORDER
         ]);
 
         return $this->response()->success('Vào cọc cho đơn hàng mua hộ mã '. $model->order_number. " thành công. Đã trừ tiền trong tài khoản của khách hàng ".$alilogi_user->symbol_name." !")->refresh();
