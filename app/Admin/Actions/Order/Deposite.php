@@ -20,6 +20,10 @@ class Deposite extends RowAction
         $deposite = $request->get('deposite');
         $deposite = (int) str_replace(",", "", str_replace(".", "", $deposite));
 
+        if ($deposite > (int) $model->final_total_price) {
+            return $this->response()->error("Số tiền vào cọc lớn hơn tổng giá trị đơn hàng !")->refresh();
+        }
+
         PurchaseOrder::find($model->id)->update([
             'deposited' =>  $deposite,
             'user_id_deposited' =>  $request->get('user_id_deposited'),
