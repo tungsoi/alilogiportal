@@ -16,18 +16,30 @@ Route::group([
 
     $router->get('/', 'HomeController@index')->name('admin.home');
 
+    $router->get('/customers/{id}/recharge', 'CustomerController@recharge')->name('customers.recharge');
+    $router->post('/customers/recharge', 'CustomerController@rechargeStore')->name('customers.rechargeStore');
+    $router->get('/customers/{id}/recharge-history', 'CustomerController@rechargeHistory')->name('customers.rechargeHistory');
+
     $router->resources([
         'order_items'       =>  OrderItemController::class,
         'puchase_orders'    =>  PurchaseOrderController::class,
-        'warehouses'    => WareHouseController::class
+        'warehouses'        =>  WareHouseController::class,
+        'exchange_rates'    =>  ExchangeRateController::class,
+        'customers'         =>  CustomerController::class ,
+        'carts'             =>  CartController::class,
+        'customer_items'    =>  CustomerItemController::class,
+        'customer_recharges'    =>  CustomerRechargeController::class,
+        'customer_orders'   =>  CustomerOrderController::class
     ]);
 });
 
-// FRONTEND GROUP
+
+// HOME GROUP
 Route::group([
-    'prefix'        => config('admin.fe.route.prefix'),
-    'namespace'     => config('admin.fe.route.namespace'),
-    'middleware'    => config('admin.fe.route.middleware'),
+    'prefix'        =>  'customer',
+    'namespace'     => 'App\\Admin\\Controllers\\Customer',
+    'as'    =>  'customer.',
+    'middleware' => ['web']
 ], function (Router $router) {
-    //
+    $router->post('register', 'RegisterController@postRegister')->name('postRegister');
 });

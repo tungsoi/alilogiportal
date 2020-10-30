@@ -31,6 +31,11 @@
         tfoot {
             display: table-row-group;
         }
+        th {
+            padding: 10px 4px !important;
+            font-weight: 600;
+            font-size: 10px !important;
+        }
     </style>
 
 </head>

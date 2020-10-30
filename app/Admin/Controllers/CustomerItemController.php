@@ -4,7 +4,6 @@ namespace App\Admin\Controllers;
 
 use App\Admin\Actions\OrderItem\Ordered;
 use App\Admin\Actions\OrderItem\WarehouseVietnam;
-use App\Models\Alilogi\Order;
 use App\Models\Alilogi\TransportOrderItem;
 use Encore\Admin\Controllers\AdminController;
 use Encore\Admin\Form;
@@ -15,7 +14,7 @@ use App\Models\PurchaseOrder;
 use App\User;
 use Encore\Admin\Facades\Admin;
 
-class OrderItemController extends AdminController
+class CustomerItemController extends AdminController
 {
     /**
      * Title for current resource.
@@ -37,7 +36,10 @@ class OrderItemController extends AdminController
     protected function grid()
     {
         $grid = new Grid(new OrderItem);
-        $grid->model()->where('status', '!=', OrderItem::PRODUCT_NOT_IN_CART)->orderBy('created_at', 'desc');
+        $grid->model()
+        ->where('customer_id', Admin::user()->id)
+        ->where('status', '!=', OrderItem::PRODUCT_NOT_IN_CART)
+        ->orderBy('created_at', 'desc');
 
         $grid->filter(function($filter) {
             $filter->expand();
@@ -96,26 +98,19 @@ class OrderItemController extends AdminController
         $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
             return date('H:i d-m-Y', strtotime($this->weight_date));
         });
-        $grid->cn_code('Mã vận đơn Alilogi')->editable();
-        $grid->cn_order_number('Mã giao dịch')->editable();
-        $grid->customer_note('Khách hàng ghi chú')->style('width: 100px')->editable();
-        $grid->admin_note('Admin ghi chú')->editable();
+        $grid->cn_code('Mã vận đơn Alilogi');
+        $grid->cn_order_number('Mã giao dịch');
+        $grid->customer_note('Khách hàng ghi chú')->style('width: 100px');
+        $grid->admin_note('Admin ghi chú');
 
         $grid->disableCreateButton();
         
         $grid->tools(function (Grid\Tools $tools) {
-            $tools->append(new Ordered());
-            $tools->append(new WarehouseVietnam());
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
         });
-        $grid->actions(function ($actions) {
-            $actions->disableView();
-            // $actions->disableEdit();
-            $actions->disableDelete();
-        });
-
+        $grid->disableActions();
         return $grid;
     }
 

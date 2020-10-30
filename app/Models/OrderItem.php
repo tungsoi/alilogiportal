@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Alilogi\Order;
+use App\User;
 use Encore\Admin\Traits\AdminBuilder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,18 +11,47 @@ class OrderItem extends Model
 {
     use AdminBuilder;
 
+    const PRODUCT_NOT_IN_CART   = 10;
     const STATUS_PURCHASE_ITEM_NOT_ORDER = 0;
     const STATUS_PURCHASE_ITEM_ORDERED = 1;
     const STATUS_PURCHASE_WAREHOUSE_TQ = 2;
     const STATUS_PURCHASE_WAREHOUSE_VN = 3;
     const STATUS_PURCHASE_OUT_OF_STOCK = 4;
 
+    const PRODUCT_NOT_IN_CART_TEXT = 'Chưa lên đơn';
+    const STATUS_PURCHASE_ITEM_NOT_ORDER_TEXT = 'Chưa đặt hàng';
+    const STATUS_PURCHASE_ITEM_ORDERED_TEXT = 'Đã đặt hàng';
+    const STATUS_PURCHASE_WAREHOUSE_TQ_TEXT = 'Đã về Trung Quốc';
+    const STATUS_PURCHASE_WAREHOUSE_VN_TEXT = 'Đã về kho Việt Nam';
+    const STATUS_PURCHASE_OUT_OF_STOCK_TEXT = 'Hết hàng';
+
+    const STATUS = [
+        self::PRODUCT_NOT_IN_CART => self::PRODUCT_NOT_IN_CART_TEXT,
+        self::STATUS_PURCHASE_ITEM_NOT_ORDER    =>  self::STATUS_PURCHASE_ITEM_NOT_ORDER_TEXT,
+        self::STATUS_PURCHASE_ITEM_ORDERED      =>  self::STATUS_PURCHASE_ITEM_ORDERED_TEXT,
+        self::STATUS_PURCHASE_WAREHOUSE_VN      =>  self::STATUS_PURCHASE_WAREHOUSE_VN_TEXT,
+        self::STATUS_PURCHASE_OUT_OF_STOCK      =>  self::STATUS_PURCHASE_OUT_OF_STOCK_TEXT
+    ];
+
+    const LABEL = [
+        'default',
+        'primary',
+        'success',
+        'success',
+        'default',
+        'default',
+        'default',
+        'default',
+        'default',
+        'default',
+        'warning',
+    ];
     /**
      * Table name
      *
      * @var string
      */
-    protected $table = 'purchase_order_items';
+    protected $table = 'items';
 
     /**
      * Fields
@@ -39,7 +69,7 @@ class OrderItem extends Model
         'customer_note',
         'admin_note',
         'price_range',
-        'cn_transport_code',
+        'cn_code',
         'cn_order_number',
         'status',
         'order_group_id',
@@ -53,6 +83,7 @@ class OrderItem extends Model
         'type',
         'internal_note',
         'weight_date',
+        'order_id'
     ];
 
     protected $casts = [
@@ -102,5 +133,11 @@ class OrderItem extends Model
     public function getPriceVnAttribute()
     {
         return (float)($this->current_rate * $this->price);
+    }
+
+    public function customer()
+    {
+        # code...
+        return $this->hasOne(User::class, 'id', 'customer_id');
     }
 }

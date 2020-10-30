@@ -11,39 +11,53 @@ class PurchaseOrder extends Model
 {   
     use AdminBuilder;
 
-    const STATUS_UNSENT = 1;
+    // const STATUS_UNSENT = 1;
     const STATUS_NEW_ORDER = 2;
-    const STATUS_CONFIRMED = 3;
+    // const STATUS_CONFIRMED = 3;
     const STATUS_DEPOSITED_ORDERING = 4;
     const STATUS_ORDERED = 5;
-    const STATUS_IN_WAREHOUSE_TQ = 6;
+    // const STATUS_IN_WAREHOUSE_TQ = 6;
     const STATUS_IN_WAREHOUSE_VN = 7;
-    const STATUS_TRANSPORTING = 8;
+    // const STATUS_TRANSPORTING = 8;
     const STATUS_SUCCESS = 9;
     const STATUS_CANCEL = 10;
 
-    const STATUS_UNSENT_TEXT = 'Chưa gửi';
+    // const STATUS_UNSENT_TEXT = 'Chưa gửi';
     const STATUS_NEW_ORDER_TEXT = 'Đơn hàng mới';
-    const STATUS_CONFIRMED_TEXT = 'Đã xác nhận';
+    // const STATUS_CONFIRMED_TEXT = 'Đã xác nhận';
     const STATUS_DEPOSITED_ORDERING_TEXT = 'Đã cọc - đang đặt';
     const STATUS_ORDERED_TEXT = 'Đã đặt hàng';
-    const STATUS_IN_WAREHOUSE_TQ_TEXT = 'Về kho TQ';
+    // const STATUS_IN_WAREHOUSE_TQ_TEXT = 'Về kho TQ';
     const STATUS_IN_WAREHOUSE_VN_TEXT = 'Về kho VN';
-    const STATUS_TRANSPORTING_TEXT = 'Đã ship VN';
+    // const STATUS_TRANSPORTING_TEXT = 'Đã ship VN';
     const STATUS_SUCCESS_TEXT = 'Thành công';
     const STATUS_CANCEL_TEXT = 'Đã hủy';
 
     const STATUS = [
-        self::STATUS_UNSENT => self::STATUS_UNSENT_TEXT,
+        // self::STATUS_UNSENT => self::STATUS_UNSENT_TEXT,
         self::STATUS_NEW_ORDER => self::STATUS_NEW_ORDER_TEXT,
-        self::STATUS_CONFIRMED => self::STATUS_CONFIRMED_TEXT,
+        // self::STATUS_CONFIRMED => self::STATUS_CONFIRMED_TEXT,
         self::STATUS_DEPOSITED_ORDERING => self::STATUS_DEPOSITED_ORDERING_TEXT,
         self::STATUS_ORDERED => self::STATUS_ORDERED_TEXT,
-        self::STATUS_IN_WAREHOUSE_TQ => self::STATUS_IN_WAREHOUSE_TQ_TEXT,
+        // self::STATUS_IN_WAREHOUSE_TQ => self::STATUS_IN_WAREHOUSE_TQ_TEXT,
         self::STATUS_IN_WAREHOUSE_VN => self::STATUS_IN_WAREHOUSE_VN_TEXT,
-        self::STATUS_TRANSPORTING => self::STATUS_TRANSPORTING_TEXT,
+        // self::STATUS_TRANSPORTING => self::STATUS_TRANSPORTING_TEXT,
         self::STATUS_SUCCESS => self::STATUS_SUCCESS_TEXT,
         self::STATUS_CANCEL => self::STATUS_CANCEL_TEXT,
+    ];
+
+    const LABEL = [
+        "", 
+        "",
+        'default',
+        "",
+        'primary',
+        'info',
+        "",
+        'warning',
+        "",
+        'success',
+        'danger'
     ];
     
     /**
@@ -111,7 +125,9 @@ class PurchaseOrder extends Model
         'discount_type',
         'success_at',
         'is_discounted',
-        'transport_customer_id'
+        'transport_customer_id',
+        'purchase_order_transport_fee',
+        'purchase_order_service_fee'
     ];
 
     public function customer() {
@@ -120,5 +136,65 @@ class PurchaseOrder extends Model
 
     public function warehouse() {
         return $this->hasOne(Warehouse::class, 'id', 'warehouse_id');
+    }
+
+    public function supporterOrder() {
+        return $this->hasOne(User::class, 'id', 'supporter_order_id');
+    }
+
+    public function supporter() {
+        return $this->hasOne(User::class, 'id', 'supporter_id');
+    }
+
+    public function supporterWarehouse() {
+        return $this->hasOne(User::class, 'id', 'support_warehouse_id');
+    }
+
+    public function items()
+    {
+        # code...
+        return $this->hasMany(OrderItem::class, 'order_id', 'id');
+    }
+
+    /**
+     * So luong san pham da duoc dat hang
+     *
+     * @return void
+     */
+    public function orderedItems()
+    {
+        # code...
+        return $this->items()->whereStatus(OrderItem::STATUS_PURCHASE_ITEM_ORDERED)->count();
+    }
+
+    /**
+     * Tong so luong san pham
+     *
+     * @return void
+     */
+    public function totalItems()
+    {
+        # code...
+        return $this->items()->count();
+    }
+
+    public function warehouseVietnamItems()
+    {
+        # code...
+        return $this->items()->whereStatus(OrderItem::STATUS_PURCHASE_WAREHOUSE_VN)->count();
+    }
+
+    public function totalWeight() {
+        $items = $this->items;
+
+        $kg = 0;
+        if ($items) {
+
+            foreach ($items as $item) {
+                $kg += $item->weight;
+            }
+        }
+
+        return $kg;
     }
 }

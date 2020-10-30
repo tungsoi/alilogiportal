@@ -46,7 +46,10 @@ class User extends Model implements AuthenticatableContract
         'ware_house_id',
         'is_active',
         'password',
-        'note'
+        'note',
+        'wallet_order',
+        'province_id',
+        'district_id'
     ];
 
     /**
@@ -132,40 +135,42 @@ class User extends Model implements AuthenticatableContract
     }
 
     public function warehouse() {
-        return $this->hasOne('App\Models\Warehouse', 'id', 'ware_house_id');
+        return $this->hasOne('App\Models\Alilogi\Warehouse', 'id', 'ware_house_id');
     }
 
-    public function getSumWeightByCustomerSymbolName($symbolName) {
-        $transportCustomer = RongDoUser::where('name', $symbolName)->first();
-        if ($transportCustomer != "") {
-            return TransportOrderItem::where('transport_customer_id', $transportCustomer->id)->sum('kg');
-        }
+    // public function getSumWeightByCustomerSymbolName($symbolName) {
+    //     $transportCustomer = RongDoUser::where('name', $symbolName)->first();
+    //     if ($transportCustomer != "") {
+    //         return TransportOrderItem::where('transport_customer_id', $transportCustomer->id)->sum('kg');
+    //     }
 
-        return 0;
-    }
+    //     return 0;
+    // }
     
-    public function getSumCublicMeterByCustomerSymbolName($symbolName) {
-        $items = RongDoUser::where('name', $symbolName)->get();
-        if ($items != "") {
-            $sum = 0;
-            foreach ($items as $item) {
-                $sum += !is_null($item->cublic_meter) ? $item->cublic_meter : round( ( $item->product_width * $item->product_height * $item->product_length)/1000000, 4 );
-            }
-            return $sum;
-        }
-        return 0;
-    }
+    // public function getSumCublicMeterByCustomerSymbolName($symbolName) {
+    //     $items = RongDoUser::where('name', $symbolName)->get();
+    //     if ($items != "") {
+    //         $sum = 0;
+    //         foreach ($items as $item) {
+    //             $sum += !is_null($item->cublic_meter) ? $item->cublic_meter : round( ( $item->product_width * $item->product_height * $item->product_length)/1000000, 4 );
+    //         }
+    //         return $sum;
+    //     }
+    //     return 0;
+    // }
 
-    public function getSumMoneyPayment($symbolName) {
-        $transportCustomer = RongDoUser::where('name', $symbolName)->first();
-        if ($transportCustomer != "") {
-            return TransportOrderItem::where('transport_customer_id', $transportCustomer->id)->where('is_payment', 1)->sum('total_price');
-        }
+    // public function getSumMoneyPayment($symbolName) {
+    //     $transportCustomer = RongDoUser::where('name', $symbolName)->first();
+    //     if ($transportCustomer != "") {
+    //         return TransportOrderItem::where('transport_customer_id', $transportCustomer->id)->where('is_payment', 1)->sum('total_price');
+    //     }
 
-        return 0;
-    }
+    //     return 0;
+    // }
 
     public static function customers() {
         return self::where('is_customer', 1)->get();
     }
+
+
 }

@@ -4,6 +4,7 @@ namespace App\Admin\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\PurchaseOrder;
 use App\Models\TransportOrderItem;
 use App\User;
 use Encore\Admin\Facades\Admin;
@@ -30,14 +31,14 @@ class HomeController extends Controller
         })
         ->row(function (Row $row) {
             if (Admin::user()->isRole('administrator')) {
-                $row->column(3, new InfoBox('Quản trị viên', 'users', 'aqua', 'admin/auth/users', User::where('is_customer', 0)->count()));
-                $row->column(3, new InfoBox('Khách hàng', 'book', 'green', '/admin/customers', User::where('is_customer', 1)->count()));
-                $row->column(3, new InfoBox('Mã vận đơn', 'tag', 'yellow', '/admin/transport_order_items', 2));
-                $row->column(3, new InfoBox('Đơn hàng', 'file', 'red', '/admin/transport_orders', 3));
+                $row->column(4, new InfoBox('Quản trị viên', 'users', 'aqua', 'admin/auth/users', User::where('is_customer', 0)->count()));
+                $row->column(4, new InfoBox('Khách hàng', 'book', 'green', '/admin/customers', User::where('is_customer', 1)->count()));
+                $row->column(4, new InfoBox('Đơn hàng mua hộ', 'tag', 'yellow', '/admin/purchase_orders', PurchaseOrder::count()));
             } else {
-                $row->column(12, function (Column $column) {
-                    $column->append($this->grid()->render());
-                });
+                $row->column(3, new InfoBox('Số dư ví', 'users', 'aqua', 'admin/auth/users', number_format(Admin::user()->wallet)));
+                // $row->column(12, function (Column $column) {
+                //     $column->append($this->grid()->render());
+                // });
             }
         });
     }

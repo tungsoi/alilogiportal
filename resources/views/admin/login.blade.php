@@ -76,6 +76,17 @@
           <button type="submit" class="btn btn-primary btn-block btn-flat">{{ trans('admin.login') }}</button>
         </div>
         <!-- /.col -->
+
+        <div class="row">
+          <div class="col-xs-12">
+            <hr>
+            <div class="checkbox icheck" style="float: right; padding: 0px 15px;">
+              <a href="/#register"> 
+                Đăng ký tài khoản khách hàng ?
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </form>
 

@@ -43,12 +43,15 @@ class SyncDataAdminUserFromAlilogi extends Command
         $aloUsers = AloorderUser::all();
 
         foreach ($aliUsers as $aliUser) {
+            echo "$aliUser->username \t";
             $flag = AloorderUser::whereUsername($aliUser->username)->first();
 
             if ($flag) {
                 AloorderUser::find($aliUser->id)->update($aliUser->toArray());
+                echo " update \n";
             } else {
-                AloorderUser::create($aliUser->toArray());
+                AloorderUser::insertGetId($aliUser->toArray());
+                echo " create \n";
             }
         }
     }

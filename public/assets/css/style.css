@@ -1605,3 +1605,7 @@ section {
 .uppercase {
   text-transform: uppercase;
 }
+.help-block {
+  color: red;
+  font-size: 12px;
+}

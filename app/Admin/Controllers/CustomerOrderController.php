@@ -18,7 +18,7 @@ use Encore\Admin\Layout\Row;
 use Encore\Admin\Widgets\Box;
 use Encore\Admin\Widgets\Table;
 
-class PurchaseOrderController extends AdminController
+class CustomerOrderController extends AdminController
 {
     /**
      * Title for current resource.
@@ -29,7 +29,7 @@ class PurchaseOrderController extends AdminController
 
     public function __construct()
     {
-        $this->title = 'Đơn hàng mua hộ';
+        $this->title = 'Danh sách đơn hàng';
     }
 
     /**
@@ -40,7 +40,9 @@ class PurchaseOrderController extends AdminController
     protected function grid()
     {
         $grid = new Grid(new PurchaseOrder());
-        $grid->model()->whereOrderType(1)->orderBy('created_at', 'desc');
+        $grid->model()
+        ->where('customer_id', Admin::user()->id)
+        ->whereOrderType(1)->orderBy('created_at', 'desc');
 
         $grid->filter(function($filter) {
             $filter->expand();
@@ -84,7 +86,9 @@ class PurchaseOrderController extends AdminController
         $grid->column('total_kg', 'Tổng KG')->display(function () {
             return $this->totalWeight();
         });
-        $grid->column('price_weight', 'Giá KG (VND)')->editable();
+        $grid->column('price_weight', 'Giá KG (VND)')->display(function () {
+            return number_format($this->price_weight);
+        });
         $grid->warehouse()->name('Kho');
         $grid->deposited('Đã cọc (VND)')->display(function () {
             return number_format($this->deposited);
@@ -115,8 +119,7 @@ class PurchaseOrderController extends AdminController
 
             return $html;
         });
-        $grid->admin_note('Admin ghi chú')->editable();
-        $grid->internal_note('Nội bộ ghi chú')->editable();
+        $grid->admin_note('Admin ghi chú');
         $grid->current_rate('Tỷ giá (VND)')->display(function () {
             return number_format($this->current_rate);
         });
@@ -133,14 +136,8 @@ class PurchaseOrderController extends AdminController
             return $html;
         });
         $grid->disableCreateButton();
-        $grid->actions(function ($actions) {
-            $actions->disableDelete();
-            $actions->add(new Deposite);
-        });
-
-        $grid->tools(function (Grid\Tools $tools) {
-            // $tools->append(new SuccessOrder());
-        });
+        $grid->disableActions();
+        $grid->disableBatchActions();
         Admin::script(
             <<<EOT
 
