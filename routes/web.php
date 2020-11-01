@@ -11,6 +11,5 @@
 |
 */
 
-Route::get('/', function () {
-    return view('frontend.index');
-});
+Route::get('/', 'HomeController@index')->name('customer.index');
+Route::get('/register', 'HomeController@register')->name('customer.register');

@@ -92,9 +92,9 @@ class OrderItemController extends AdminController
             $totalPrice = $this->qty_reality * $this->price + $this->purchase_cn_transport_fee ;
             return number_format($totalPrice, 1) ?? 0; 
         });
-        $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi');
+        $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi')->editable();
         $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
-            return date('H:i d-m-Y', strtotime($this->weight_date));
+            return $this->weight_date != null ? date('H:i d-m-Y', strtotime($this->weight_date)) : null;
         });
         $grid->cn_code('Mã vận đơn Alilogi')->editable();
         $grid->cn_order_number('Mã giao dịch')->editable();
@@ -160,6 +160,7 @@ class OrderItemController extends AdminController
         $form->text('cn_code', 'Mã vận đơn');
         $form->text('cn_order_number', 'Mã giao dịch');
         $form->text('admin_note', 'Admin ghi chú');
+        $form->text('weight', 'Ngày vào cân');
 
         $form->disableEditingCheck();
         $form->disableCreatingCheck();

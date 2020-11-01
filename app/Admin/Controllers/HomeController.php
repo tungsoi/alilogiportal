@@ -33,7 +33,7 @@ class HomeController extends Controller
             if (Admin::user()->isRole('administrator')) {
                 $row->column(4, new InfoBox('Quản trị viên', 'users', 'aqua', 'admin/auth/users', User::where('is_customer', 0)->count()));
                 $row->column(4, new InfoBox('Khách hàng', 'book', 'green', '/admin/customers', User::where('is_customer', 1)->count()));
-                $row->column(4, new InfoBox('Đơn hàng mua hộ', 'tag', 'yellow', '/admin/purchase_orders', PurchaseOrder::count()));
+                $row->column(4, new InfoBox('Đơn hàng mua hộ', 'tag', 'yellow', '/admin/puchase_orders', PurchaseOrder::count()));
             } else {
                 $row->column(3, new InfoBox('Số dư ví', 'users', 'aqua', 'admin/auth/users', number_format(Admin::user()->wallet)));
                 // $row->column(12, function (Column $column) {
