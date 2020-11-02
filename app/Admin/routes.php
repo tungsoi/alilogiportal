@@ -29,7 +29,8 @@ Route::group([
         'carts'             =>  CartController::class,
         'customer_items'    =>  CustomerItemController::class,
         'customer_recharges'    =>  CustomerRechargeController::class,
-        'customer_orders'   =>  CustomerOrderController::class
+        'customer_orders'   =>  CustomerOrderController::class,
+        'schedule_logs' =>  ScheduleLogController::class
     ]);
 });
 

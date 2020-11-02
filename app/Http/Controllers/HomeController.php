@@ -12,16 +12,13 @@ class HomeController extends Controller
     public function index()
     {
         # code...
-        if (Admin::user()) {
-            return redirect()->route('admin.home');
-        }
-
         return view('frontend.index');
     }
 
     public function register()
     {
         # code...  
+
         $provinces = Province::all();
         $districts = District::all();
 

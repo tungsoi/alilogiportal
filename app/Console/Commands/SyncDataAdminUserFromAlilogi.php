@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Alilogi\User as AlilogiUser;
+use App\Models\ScheduleLog;
 use App\User as AloorderUser;
 
 class SyncDataAdminUserFromAlilogi extends Command
@@ -54,5 +55,9 @@ class SyncDataAdminUserFromAlilogi extends Command
                 echo " create \n";
             }
         }
+
+        ScheduleLog::create([
+            'code'  =>  'sync-user-from-logi-to-order'
+        ]);
     }
 }
