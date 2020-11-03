@@ -32,9 +32,17 @@
             display: table-row-group;
         }
         th {
-            padding: 10px 4px !important;
+            padding: 10px 10px !important;
             font-weight: 600;
-            font-size: 10px !important;
+            font-size: 12px !important;
+        }
+
+        .grid-row-view, .grid-row-edit, .grid-row-deposite {
+            margin-top: 5px;
+        }
+
+        .editable-click, a.editable-click, a.editable-click:hover {
+            border-bottom: none;
         }
     </style>
 

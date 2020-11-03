@@ -34,7 +34,7 @@ class OrderItemController extends AdminController
      *
      * @return Grid
      */
-    protected function grid()
+    public function grid()
     {
         $grid = new Grid(new OrderItem);
         $grid->model()->where('status', '!=', OrderItem::PRODUCT_NOT_IN_CART)->orderBy('created_at', 'desc');
@@ -57,15 +57,16 @@ class OrderItemController extends AdminController
             });
             
         });
+        $grid->fixColumns(6);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
-        $grid->order()->order_number('MĐH')->help('Mã đơn hàng mua hộ')->label('success');
+        $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary');
         $grid->id('Mã SP')->display(function () {
             return "SPMH-".str_pad($this->id, 5, 0, STR_PAD_LEFT);
         });
-        $grid->column('customer_name', 'Mã KH')->display(function () {
+        $grid->column('customer_name', 'Mã khách hàng')->display(function () {
             return $this->customer->symbol_name ?? "";
         })->help('Mã khách hàng');
         $grid->status('Trạng thái')->display(function () {
@@ -80,22 +81,22 @@ class OrderItemController extends AdminController
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 50, 'height' => 50]);
         $grid->product_size('Kích thước')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
-        });
-        $grid->product_color('Màu');
-        $grid->qty('Số lượng');
-        $grid->qty_reality('Số lượng thực đặt');
-        $grid->price('Giá (Tệ)');
+        })->editable();
+        $grid->product_color('Màu')->editable();
+        $grid->qty('Số lượng')->editable();
+        $grid->qty_reality('Số lượng thực đặt')->editable();
+        $grid->price('Giá (Tệ)')->editable();
         $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
             return $this->purchase_cn_transport_fee ?? 0;
-        })->help('Phí vận chuyển nội địa Trung quốc');
+        })->help('Phí vận chuyển nội địa Trung quốc')->editable();
         $grid->column('total_price', 'Tổng tiền (Tệ)')->display(function () {
-            $totalPrice = $this->qty_reality * $this->price + $this->purchase_cn_transport_fee ;
-            return number_format($totalPrice, 1) ?? 0; 
-        });
+            $totalPrice = ($this->qty_reality * $this->price) + $this->purchase_cn_transport_fee ;
+            return number_format($totalPrice) ?? 0; 
+        })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
         $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi')->editable();
         $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
-            return $this->weight_date != null ? date('H:i d-m-Y', strtotime($this->weight_date)) : null;
-        });
+            return $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null;
+        })->editable('date');
         $grid->cn_code('Mã vận đơn Alilogi')->editable();
         $grid->cn_order_number('Mã giao dịch')->editable();
         $grid->customer_note('Khách hàng ghi chú')->style('width: 100px')->editable();
@@ -115,6 +116,7 @@ class OrderItemController extends AdminController
             // $actions->disableEdit();
             $actions->disableDelete();
         });
+        $grid->paginate(100);
 
         return $grid;
     }
@@ -157,14 +159,28 @@ class OrderItemController extends AdminController
     {
         $form = new Form(new OrderItem);
 
+        $form->text('product_size', 'Kích thước');
+        $form->text('product_color', 'Màu sắc');
+        $form->text('qty', 'Số lượng');
+        $form->text('qty_reality', 'Số lượng thực đặt');
+        $form->currency('price', 'Giá (Tệ)')->symbol('￥');
+        $form->currency('purchase_cn_transport_fee', 'VCND TQ (Tệ)')->symbol('￥');
+        $form->text('weight', 'Cân nặng (KG)');
+        $form->date('weight_date', 'Ngày vào KG');
+
         $form->text('cn_code', 'Mã vận đơn');
         $form->text('cn_order_number', 'Mã giao dịch');
-        $form->text('admin_note', 'Admin ghi chú');
-        $form->text('weight', 'Ngày vào cân');
+        $form->textarea('customer_note', 'Khách hàng ghi chú');
+        $form->textarea('admin_note', 'Admin ghi chú');
 
         $form->disableEditingCheck();
         $form->disableCreatingCheck();
         $form->disableViewCheck();
+        $form->tools(function (Form\Tools $tools) {
+            // $tools->disableDelete();
+            $tools->disableView();
+            // $tools->disableList();
+        });
 
         $form->saving(function (Form $form) {
             $cn_code = $form->cn_code;
@@ -175,6 +191,22 @@ class OrderItemController extends AdminController
                     'weight_date'   =>  $transport_item->warehouse_cn_date
                 ]);
             } 
+
+            if ($form->qty_reality == 0) {
+                $status = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
+                OrderItem::find($form->model()->id)->update([
+                    'status'    =>  $status
+                ]);
+            } else if ($form->qty_reality > 0) {
+                $item =  OrderItem::find($form->model()->id);
+
+                if ($item->qty_reality == 0) {
+                    $status = OrderItem::STATUS_PURCHASE_ITEM_ORDERED;
+                    OrderItem::find($form->model()->id)->update([
+                        'status'    =>  $status
+                    ]);
+                }
+            }
             
         });
 

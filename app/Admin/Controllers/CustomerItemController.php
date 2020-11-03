@@ -59,15 +59,16 @@ class CustomerItemController extends AdminController
             });
             
         });
+        $grid->fixColumns(6);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
-        $grid->order()->order_number('MĐH')->help('Mã đơn hàng mua hộ')->label('success');
+        $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary');
         $grid->id('Mã SP')->display(function () {
             return "SPMH-".str_pad($this->id, 5, 0, STR_PAD_LEFT);
         });
-        $grid->column('customer_name', 'Mã KH')->display(function () {
+        $grid->column('customer_name', 'Mã khách hàng')->display(function () {
             return $this->customer->symbol_name ?? "";
         })->help('Mã khách hàng');
         $grid->status('Trạng thái')->display(function () {
@@ -91,12 +92,12 @@ class CustomerItemController extends AdminController
             return $this->purchase_cn_transport_fee ?? 0;
         })->help('Phí vận chuyển nội địa Trung quốc');
         $grid->column('total_price', 'Tổng tiền (Tệ)')->display(function () {
-            $totalPrice = $this->qty_reality * $this->price + $this->purchase_cn_transport_fee ;
-            return number_format($totalPrice, 1) ?? 0; 
-        });
+            $totalPrice = ($this->qty_reality * $this->price) + $this->purchase_cn_transport_fee ;
+            return number_format($totalPrice) ?? 0; 
+        })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
         $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi');
         $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
-            return date('H:i d-m-Y', strtotime($this->weight_date));
+            return $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null;
         });
         $grid->cn_code('Mã vận đơn Alilogi');
         $grid->cn_order_number('Mã giao dịch');
@@ -106,11 +107,20 @@ class CustomerItemController extends AdminController
         $grid->disableCreateButton();
         
         $grid->tools(function (Grid\Tools $tools) {
+            // $tools->append(new Ordered());
+            // $tools->append(new WarehouseVietnam());
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
         });
         $grid->disableActions();
+        $grid->actions(function ($actions) {
+            $actions->disableView();
+            // $actions->disableEdit();
+            $actions->disableDelete();
+        });
+        $grid->paginate(100);
+
         return $grid;
     }
 

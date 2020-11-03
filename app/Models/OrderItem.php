@@ -38,7 +38,7 @@ class OrderItem extends Model
         'primary',
         'success',
         'success',
-        'default',
+        'danger',
         'default',
         'default',
         'default',

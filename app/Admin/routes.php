@@ -19,6 +19,9 @@ Route::group([
     $router->get('/customers/{id}/recharge', 'CustomerController@recharge')->name('customers.recharge');
     $router->post('/customers/recharge', 'CustomerController@rechargeStore')->name('customers.rechargeStore');
     $router->get('/customers/{id}/recharge-history', 'CustomerController@rechargeHistory')->name('customers.rechargeHistory');
+    $router->get('/puchase_orders/{id}/deposite', 'PurchaseOrderController@deposite')->name('puchase_orders.deposite');
+    $router->put('/puchase_orders/postDeposite', 'PurchaseOrderController@postDeposite')->name('puchase_orders.postDeposite');
+    $router->put('/detail_orders/{order_id}/{item_id}', 'DetailOrderController@editable')->name('detail_orders.editable');
 
     $router->resources([
         'order_items'       =>  OrderItemController::class,
@@ -30,7 +33,8 @@ Route::group([
         'customer_items'    =>  CustomerItemController::class,
         'customer_recharges'    =>  CustomerRechargeController::class,
         'customer_orders'   =>  CustomerOrderController::class,
-        'schedule_logs' =>  ScheduleLogController::class
+        'schedule_logs' =>  ScheduleLogController::class,
+        'detail_orders' =>  DetailOrderController::class
     ]);
 });
 

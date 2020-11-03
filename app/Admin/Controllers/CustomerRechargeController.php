@@ -35,7 +35,8 @@ class CustomerRechargeController extends AdminController
         $grid = new Grid(new TransportRecharge);
         $grid->model()
         ->where('money', ">", 0)
-        ->where('customer_id', $id)->orderBy('id', 'desc');
+        ->where('customer_id', $id)
+        ->orderBy('id', 'desc');
 
         $grid->filter(function($filter) {
             $filter->expand();
@@ -48,46 +49,62 @@ class CustomerRechargeController extends AdminController
             $color = $wallet > 0 ? 'green' : 'red';
             return '<h4 style="font-weight: bold;">Số dư hiện tại: <span  style="color: '.$color.'">'. number_format($wallet) ."</span> (VND)</h4>";
         });        
-        $grid->id('ID');
-        $grid->order_type('Website')->display(function () {
-            return $this->order_type == TransportRecharge::TYPE_ORDER ? "<span class='label label-primary'>Alooder</span>" : "<span class='label label-danger'>Alilogi</span>";
+        $grid->rows(function (Grid\Row $row) {
+            $row->column('number', ($row->number+1));
         });
-        $grid->customer_id('Tên khách hàng')->display(function () {
-            return $this->customer->name ?? "";
-        });
-        $grid->user_id_created('Nhân viên thực hiện')->display(function () {
-            return $this->userCreated->name ?? "";
-        });
-        $grid->money('Số tiền')->display(function () {
-            if ($this->money > 0) {
-                return '<span class="label label-success">'.number_format($this->money) ?? "0".'</span>';
-            }
-
-            return '<span class="label label-danger">'.number_format($this->money).'</span>';
-        });
-        $grid->type_recharge('Loại giao dịch')->display(function () {
-            if ($this->order_type == TransportRecharge::TYPE_TRANSPORT) {
-                if ($this->type_recharge == TransportRecharge::PAYMENT) {
-                    return '<span class="label label-'.TransportRecharge::COLOR[TransportRecharge::PAYMENT].' ">'.TransportRecharge::RECHARGE_PAYMENT.'</span>';
-                }
-                return '<span class="label label-'.TransportRecharge::COLOR[$this->type_recharge].' ">'.TransportRecharge::RECHARGE[$this->type_recharge].'</span>';
-            } else {
-                $label = "default";
-                if ($this->type_recharge == TransportRecharge::DEPOSITE_ORDER ) {
-                    $label = "warning";
-                    $text = TransportRecharge::DEPOSITE_ORDER_TEXT;
-                } else {
-                    $label = "danger";
-                    $text = TransportRecharge::PAYMENT_ORDER_TEXT;
-                }
-
-                return '<span class="label label-'.$label.'">'.$text.'</span>';
-            }
-        });
+        $grid->column('number', 'STT');
         $grid->content('Nội dung');
-        $grid->created_at(trans('admin.created_at'))->display(function () {
-            return date('H:i | d-m-Y', strtotime($this->created_at));
+        $grid->column('wallet_before', 'Số dư đầu kỳ');
+        $grid->column('pad_money', 'Trừ tiền')->display(function () {
+            if (! in_array($this->type_recharge, TransportRecharge::UP)) {
+                return number_format($this->money);
+            }
         });
+        $grid->column('plus_money', 'Nạp tiền')->display(function () {
+            if (in_array($this->type_recharge, TransportRecharge::UP)) {
+                return number_format($this->money);
+            }
+        });
+        $grid->column('wallet_after', 'Số dư cuối kỳ');
+        // $grid->order_type('Website')->display(function () {
+        //     return $this->order_type == TransportRecharge::TYPE_ORDER ? "<span class='label label-primary'>Alooder</span>" : "<span class='label label-danger'>Alilogi</span>";
+        // });
+        // $grid->customer_id('Tên khách hàng')->display(function () {
+        //     return $this->customer->name ?? "";
+        // });
+        // $grid->user_id_created('Nhân viên thực hiện')->display(function () {
+        //     return $this->userCreated->name ?? "";
+        // });
+        // $grid->money('Số tiền')->display(function () {
+        //     if ($this->money > 0) {
+        //         return '<span class="label label-success">'.number_format($this->money) ?? "0".'</span>';
+        //     }
+
+        //     return '<span class="label label-danger">'.number_format($this->money).'</span>';
+        // });
+        // $grid->type_recharge('Loại giao dịch')->display(function () {
+        //     if ($this->order_type == TransportRecharge::TYPE_TRANSPORT) {
+        //         if ($this->type_recharge == TransportRecharge::PAYMENT) {
+        //             return '<span class="label label-'.TransportRecharge::COLOR[TransportRecharge::PAYMENT].' ">'.TransportRecharge::RECHARGE_PAYMENT.'</span>';
+        //         }
+        //         return '<span class="label label-'.TransportRecharge::COLOR[$this->type_recharge].' ">'.TransportRecharge::RECHARGE[$this->type_recharge].'</span>';
+        //     } else {
+        //         $label = "default";
+        //         if ($this->type_recharge == TransportRecharge::DEPOSITE_ORDER ) {
+        //             $label = "warning";
+        //             $text = TransportRecharge::DEPOSITE_ORDER_TEXT;
+        //         } else {
+        //             $label = "danger";
+        //             $text = TransportRecharge::PAYMENT_ORDER_TEXT;
+        //         }
+
+        //         return '<span class="label label-'.$label.'">'.$text.'</span>';
+        //     }
+        // });
+        // $grid->content('Nội dung');
+        // $grid->created_at(trans('admin.created_at'))->display(function () {
+        //     return date('H:i | d-m-Y', strtotime($this->created_at));
+        // });
         $grid->disableActions();
 
         $grid->disableCreateButton();

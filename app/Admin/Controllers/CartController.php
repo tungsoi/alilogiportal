@@ -108,10 +108,15 @@ class CartController extends AdminController
         $form->textarea('customer_note', 'Ghi chú');
         $form->hidden('customer_id')->default(Admin::user()->id);
         $form->hidden('status')->default(OrderItem::PRODUCT_NOT_IN_CART);
+        $form->hidden('qty_reality');
 
         $form->disableEditingCheck();
         $form->disableCreatingCheck();
         $form->disableViewCheck();
+
+        $form->saving(function (Form $form) {
+            $form->qty_reality = $form->qty;
+        });
 
         return $form;
     }
