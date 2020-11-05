@@ -30,7 +30,7 @@ class ScheduleLogController extends AdminController
     protected function grid()
     {
         $grid = new Grid(new ScheduleLog);
-
+        $grid->model()->orderBy('id', 'desc');
         $grid->filter(function($filter) {
             $filter->expand();
             $filter->disableIdFilter();

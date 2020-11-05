@@ -55,10 +55,12 @@ class SyncDataAdminUserFromAlilogi extends Command
                 AloorderUser::insertGetId($aliUser->toArray());
                 echo " create \n";
 
-                DB::table('admin_role_users')->insert([
-                    'user_id'   =>  $aliUser->id,
-                    'role_id'   =>  2
-                ]);
+                if ($aliUser->is_customer == 1) {
+                    DB::table('admin_role_users')->insert([
+                        'user_id'   =>  $aliUser->id,
+                        'role_id'   =>  2
+                    ]);
+                }
             }
         }
 
