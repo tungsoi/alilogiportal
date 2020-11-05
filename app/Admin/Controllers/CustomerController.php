@@ -160,8 +160,8 @@ class CustomerController extends AdminController
         $show->ware_house_id('Kho')->as(function () {
             return $this->warehouse->name ?? "";
         });
-        $show->wallet_order('Số dư ví (VND)')->as(function () {
-            return number_format($this->wallet_order);
+        $show->wallet('Số dư ví (VND)')->as(function () {
+            return number_format($this->wallet);
         });
         $show->address('Địa chỉ')->editable();
         $show->is_active('Trạng thái')->as(function () {
@@ -246,7 +246,7 @@ class CustomerController extends AdminController
         $form->display('symbol_name', 'Mã khách hàng')->default($user->symbol_name);
         $form->display('email', 'Email')->default($user->email);
         $form->display('phone_number', 'Số điện thoại')->default($user->phone_number);
-        $form->display('wallet_order', 'Số dư hiện tại')->default(number_format($user->wallet_order));
+        $form->display('wallet', 'Số dư hiện tại')->default(number_format($user->wallet));
         $form->divider('Nạp tiền');
         $form->currency('money', 'Số tiền cần nạp')->rules('required|min:4')->symbol('VND')->digits(0);
         $form->select('type_recharge', 'Loại hành động')->options(OrderRecharge::RECHARGE)->default(1)->rules('required')
@@ -294,21 +294,21 @@ EOT
             OrderRecharge::create($data);
 
             $customer = User::find($data['customer_id']);
-            $wallet_order = $customer->wallet_order;
+            $wallet = $customer->wallet;
             
             switch ($data['type_recharge']) {
                 case OrderRecharge::DEDUCTION:
-                    $customer->wallet_order = (int) $wallet_order - (int) $data['money'];
+                    $customer->wallet = (int) $wallet - (int) $data['money'];
                     $customer->save();
                     break;
                 default:
-                    $customer->wallet_order = (int) $wallet_order + (int) $data['money'];
+                    $customer->wallet = (int) $wallet + (int) $data['money'];
                     $customer->save();
                     break;
             }
 
             DB::commit();
-            admin_success(OrderRecharge::RECHARGE[$data['type_recharge']], 'Số tiền: '.number_format($data['money'])." - Khách hàng: ".$customer->name." - Số dư ví sau giao dịch: ".number_format($customer->wallet_order)) ." (VND)";
+            admin_success(OrderRecharge::RECHARGE[$data['type_recharge']], 'Số tiền: '.number_format($data['money'])." - Khách hàng: ".$customer->name." - Số dư ví sau giao dịch: ".number_format($customer->wallet)) ." (VND)";
         } catch (\Exception $e) {
             DB::rollBack();
             admin_error('Nạp tiền không thành công', $e->getMessage());
