@@ -377,7 +377,7 @@ EOT
         });
 
         $grid->tools(function (Grid\Tools $tools) {
-            $tools->append('<a href="'.route('customers.index').'" class="btn btn-sm btn-primary" title="Danh sách">
+            $tools->append('<a href="'.route('admin.customers.index').'" class="btn btn-sm btn-primary" title="Danh sách">
                 <i class="fa fa-list"></i>
                 <span class="hidden-xs">&nbsp;Danh sách</span>
             </a>');
