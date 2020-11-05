@@ -12,6 +12,8 @@ use App\Admin\Actions\Customer\Recharge;
 use App\Admin\Actions\Customer\RechargeHistory;
 use App\Admin\Actions\Customer\OrderHistory;
 use App\Admin\Actions\Customer\OrderPayment;
+use App\Models\Alilogi\District;
+use App\Models\Alilogi\Province;
 use App\Models\Order;
 use App\Models\TransportOrderItem;
 use App\Models\OrderRecharge;
@@ -69,6 +71,8 @@ class CustomerController extends AdminController
                 $filter->like('email');
                 $filter->like('phone_number', 'SDT');
                 $filter->equal('ware_house_id', 'Kho')->select(Warehouse::where('is_active', 1)->get()->pluck('name', 'id'));
+                $filter->equal('province', 'Tỉnh/thành phố')->select(Province::all()->pluck('name', 'province_id'));
+                $filter->equal('district', 'Quận/huyện')->select(District::all()->pluck('name', 'district_id'));
             });
         });
 
