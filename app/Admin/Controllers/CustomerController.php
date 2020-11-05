@@ -364,7 +364,7 @@ EOT
             if ($this->type_recharge == TransportRecharge::PAYMENT) {
                 return '<span class="label label-'.TransportRecharge::COLOR[TransportRecharge::PAYMENT].' ">'.TransportRecharge::RECHARGE_PAYMENT.'</span>';
             }
-            return '<span class="label label-'.TransportRecharge::COLOR[$this->type_recharge].' ">'.TransportRecharge::RECHARGE[$this->type_recharge].'</span>';
+            return '<span class="label label-'.TransportRecharge::COLOR[$this->type_recharge].' ">'.TransportRecharge::ALL_RECHARGE[$this->type_recharge].'</span>';
         });
         $grid->content('Nội dung');
         $grid->created_at(trans('admin.created_at'))->display(function () {
