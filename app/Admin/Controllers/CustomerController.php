@@ -14,6 +14,7 @@ use App\Admin\Actions\Customer\OrderHistory;
 use App\Admin\Actions\Customer\OrderPayment;
 use App\Models\Alilogi\District;
 use App\Models\Alilogi\Province;
+use App\Models\Alilogi\TransportRecharge;
 use App\Models\Order;
 use App\Models\TransportOrderItem;
 use App\Models\OrderRecharge;
@@ -331,19 +332,19 @@ EOT
      */
     protected function rechargeHistoryGrid($id)
     {
-        $grid = new Grid(new OrderRecharge);
-        $grid->model()->where('customer_id', $id)->where('money', '>', 0)->orderBy('id', 'desc');
+        $grid = new Grid(new TransportRecharge);
+        $grid->model()->where('customer_id', $id)->orderBy('id', 'desc');
 
         $grid->filter(function($filter) {
             $filter->expand();
             $filter->disableIdFilter();
-            $filter->equal('type_recharge', 'Loại giao dịch')->select(OrderRecharge::RECHARGE);
+            $filter->equal('type_recharge', 'Loại giao dịch')->select(TransportRecharge::RECHARGE);
         });
 
         $grid->header(function ($query) use ($id) {
-            $wallet_order = User::find($id)->wallet_order;
-            $color = $wallet_order > 0 ? 'green' : 'red';
-            return '<h4 style="font-weight: bold;">Số dư hiện tại: <span  style="color: '.$color.'">'. number_format($wallet_order) ."</span> (VND)</h4>";
+            $wallet = User::find($id)->wallet;
+            $color = $wallet > 0 ? 'green' : 'red';
+            return '<h4 style="font-weight: bold;">Số dư hiện tại: <span  style="color: '.$color.'">'. number_format($wallet) ."</span> (VND)</h4>";
         });        
         $grid->id('ID');
         $grid->customer_id('Tên khách hàng')->display(function () {
@@ -353,15 +354,17 @@ EOT
             return $this->userCreated->name ?? "";
         });
         $grid->money('Số tiền')->display(function () {
-            return number_format($this->money);
-        })->totalRow(function ($amount) {
-            return "<span class='label label-success'>".number_format($amount)."</span>";
+            if ($this->money > 0) {
+                return '<span class="label label-success">'.number_format($this->money) ?? "0".'</span>';
+            }
+
+            return '<span class="label label-danger">'.number_format($this->money).'</span>';
         });
         $grid->type_recharge('Loại giao dịch')->display(function () {
-            // if ($this->type_recharge == OrderRecharge::PAYMENT) {
-            //     return '<span class="label label-'.OrderRecharge::COLOR[OrderRecharge::PAYMENT].' ">'.OrderRecharge::RECHARGE_PAYMENT.'</span>';
-            // }
-            return '<span class="label label-'.OrderRecharge::COLOR[$this->type_recharge].' ">'.OrderRecharge::RECHARGE[$this->type_recharge].'</span>';
+            if ($this->type_recharge == TransportRecharge::PAYMENT) {
+                return '<span class="label label-'.TransportRecharge::COLOR[TransportRecharge::PAYMENT].' ">'.TransportRecharge::RECHARGE_PAYMENT.'</span>';
+            }
+            return '<span class="label label-'.TransportRecharge::COLOR[$this->type_recharge].' ">'.TransportRecharge::RECHARGE[$this->type_recharge].'</span>';
         });
         $grid->content('Nội dung');
         $grid->created_at(trans('admin.created_at'))->display(function () {
@@ -374,22 +377,13 @@ EOT
         });
 
         $grid->tools(function (Grid\Tools $tools) {
-            $tools->append('<a href="'.route('admin.customers.index').'" class="btn btn-sm btn-primary" title="Danh sách">
+            $tools->append('<a href="'.route('customers.index').'" class="btn btn-sm btn-primary" title="Danh sách">
                 <i class="fa fa-list"></i>
                 <span class="hidden-xs">&nbsp;Danh sách</span>
             </a>');
         });
 
         $grid->disableCreateButton();
-
-        Admin::script(
-            <<<EOT
-
-            $('tfoot').each(function () {
-                $(this).insertAfter($(this).siblings('thead'));
-        });
-EOT);
-
         return $grid;
     }
 

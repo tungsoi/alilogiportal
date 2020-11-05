@@ -72,6 +72,8 @@ class TransportRecharge extends Model
         'success',
         'primary',
         'default',
+        'danger',
+        'danger',
         'danger'
     ];
 
