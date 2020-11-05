@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\Models\Alilogi\User as AlilogiUser;
 use App\Models\ScheduleLog;
 use App\User as AloorderUser;
+use Illuminate\Support\Facades\DB;
 
 class SyncDataAdminUserFromAlilogi extends Command
 {
@@ -53,6 +54,11 @@ class SyncDataAdminUserFromAlilogi extends Command
             } else {
                 AloorderUser::insertGetId($aliUser->toArray());
                 echo " create \n";
+
+                DB::table('admin_role_users')->insert([
+                    'user_id'   =>  $aliUser->id,
+                    'role_id'   =>  2
+                ]);
             }
         }
 

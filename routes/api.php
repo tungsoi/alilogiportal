@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\PurchaseOrder;
 use Illuminate\Http\Request;
 
 /*
@@ -13,6 +14,17 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+Route::get('/service_percent', function (Request $request) {
+    $option = $request->q;
+    $data = [
+        1, 1.5, 2, 2.5, 3
+    ];
+
+    $percent = $data[$option];
+    $order = PurchaseOrder::find($request->id);
+
+    $total_price_items = $order->getPurchaseTotalItemPrice();
+
+    $final = ($total_price_items * $percent) / 100;
+    return $final;
 });

@@ -197,4 +197,20 @@ class PurchaseOrder extends Model
 
         return $kg;
     }
+
+    public function getPurchaseTotalItemPrice()
+    {
+        # code...
+        $items = $this->items;
+        if ($items) {
+            $total = 0;
+            foreach ($this->items as $item) {
+                $total += $item->qty_reality * $item->price;
+            }
+
+            return $total;
+        }
+
+        return 0;
+    }
 }

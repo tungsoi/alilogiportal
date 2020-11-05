@@ -100,7 +100,7 @@ class CartController extends AdminController
         $form->text('shop_name', 'Tên shop');
         $form->text('product_name', 'Tên sản phẩm');
         $form->text('product_link', 'Link sản phẩm')->rules('required');
-        $form->image('product_image','Ảnh sản phẩm')->thumbnail('small', $width = 150, $height = 150)->rules('required');
+        $form->image('product_image','Ảnh sản phẩm')->thumbnail('small', $width = 150, $height = 150);
         $form->text('product_size', 'Size sản phẩm')->rules('required');
         $form->text('product_color', 'Màu sắc sản phẩm')->rules('required');
         $form->number('qty', 'Số lượng')->rules('required');

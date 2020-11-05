@@ -44,6 +44,15 @@
         .editable-click, a.editable-click, a.editable-click:hover {
             border-bottom: none;
         }
+
+        form .box-footer .pull-right {
+            float: left !important;
+            margin-left: 20px;
+        }
+
+        #purchase_total_items_price_new {
+            text-align: right !important;
+        }
     </style>
 
 </head>
@@ -85,6 +94,29 @@
 
 <!-- REQUIRED JS SCRIPTS -->
 {!! Admin::js() !!}
+
+
+<script>
+    $(document).ready(function () {
+        $(document).on('change','select[name="purchase_service_fee_percent"]', function () {
+            let value = $(this).val();
+
+            $.ajax({
+                type: 'GET',
+                url: '/api/service_percent',
+                dataType: 'json',
+                data: {
+                    'q' : value,
+                    'id': $('.id').val()
+                },
+                success: function(data) {
+                    $('input[name="purchase_order_service_fee"]').val(data);
+                }
+            });
+        });
+    });
+</script>
+
 
 </body>
 </html>

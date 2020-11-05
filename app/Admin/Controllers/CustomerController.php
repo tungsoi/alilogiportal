@@ -232,6 +232,7 @@ class CustomerController extends AdminController
         $form->setAction(route('admin.customers.rechargeStore'));
         $form->divider('Thông tin khách hàng');
         $form->display('name', 'Họ và tên')->default($user->name);
+        $form->display('symbol_name', 'Mã khách hàng')->default($user->symbol_name);
         $form->display('email', 'Email')->default($user->email);
         $form->display('phone_number', 'Số điện thoại')->default($user->phone_number);
         $form->display('wallet_order', 'Số dư hiện tại')->default(number_format($user->wallet_order));

@@ -133,18 +133,17 @@ class DetailOrderController extends AdminController
             });
             
         });
-        $grid->fixColumns(6);
+        $grid->fixColumns(5);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
-        $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary');
-        $grid->id('Mã SP')->display(function () {
-            return "SPMH-".str_pad($this->id, 5, 0, STR_PAD_LEFT);
+        $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary')->display(function () {
+            $html = "<span class='label label-primary'>".$this->order->order_number."</span>";
+            $html .= "<br> <br> <span class='label label-info'>".$this->customer->symbol_name."</span>" ?? "";
+
+            return $html;
         });
-        $grid->column('customer_name', 'Mã khách hàng')->display(function () {
-            return $this->customer->symbol_name ?? "";
-        })->help('Mã khách hàng');
         $grid->status('Trạng thái')->display(function () {
             $html = "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
             $html .= "<br> <br>";
@@ -217,18 +216,29 @@ class DetailOrderController extends AdminController
     {
         $order = PurchaseOrder::find($id);
 
+        if (! isset($order->items)) {
+            admin_error('Đơn hàng bạn vừa chọn xem chi tiết không tồn tại. Vui lòng kiểm tra lại.');
+            return redirect()->route('admin.puchase_orders.index');
+        }
         $items = $order->items;
         $qty = $qty_reality = 0;
+        $purchase_cn_transport_fee = 0; // Tổng phí ship nội địa TQ
+        $total_price_reality = 0; // Tổng tiền thực đặt = Tổng thực đặt * giá 
         foreach ($items as $item) {
             $qty_reality += $item->qty_reality;
             $qty += $item->qty;
+            $purchase_cn_transport_fee += $item->purchase_cn_transport_fee;
+            $total_price_reality += $item->qty_reality * $item->price;
         }
+
+        $total_bill = ($total_price_reality + $purchase_cn_transport_fee + $order->purchase_order_service_fee);
         $headers = ['Thông tin', 'Giá trị', ''];
         $rows = [
-            ['Tổng giá trị đơn hàng', number_format($order->purchase_total_items_price), 'Kho', $order->warehouse->name ?? "Đang cập nhật"],
-            ['Tổng tiền thực đặt', number_format($order->purchase_total_items_price), 'Nhân viên đặt hàng', $order->supporterOrder->name ?? "Đang cập nhật"],
-            ['Tổng phí ship nội địa TQ', number_format($order->transport_fee), 'Nhân viên CSKH', $order->supporter->name ?? "Đang cập nhật"],
-            ['Tổng số lượng', $qty, 'Nhân viên Kho', $order->supporterWarehouse->name ?? "Đang cập nhật"],
+            ['Tổng giá trị đơn hàng = Tổng tiền thực đặt + ship nội địa + dịch vụ', number_format($total_bill) . " (Tệ)", 'Kho', $order->warehouse->name ?? "Đang cập nhật"],
+            ['Tổng tiền thực đặt', number_format($total_price_reality) . " (Tệ)", 'Nhân viên đặt hàng', $order->supporterOrder->name ?? "Đang cập nhật"],
+            ['Tổng phí ship nội địa Trung Quốc', number_format($purchase_cn_transport_fee) . " (Tệ)", 'Nhân viên CSKH', $order->supporter->name ?? "Đang cập nhật"],
+            ['Tổng phí dịch vụ', number_format($order->purchase_order_service_fee) . " (Tệ)", 'Nhân viên Kho', $order->supporterWarehouse->name ?? "Đang cập nhật"],
+            ['Tổng số lượng', $qty],
             ['Tổng thực đặt', $qty_reality],  
             ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at))],
         ];

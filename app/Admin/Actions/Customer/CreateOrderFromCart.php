@@ -55,6 +55,7 @@ class CreateOrderFromCart extends BatchAction
             'deposit_default'   =>  $deposit_default
         ]);
 
+        admin_success('Tạo đơn hàng thành công. Vui lòng liên hệ với bộ phận Sale để tiến hành đặt cọc cho đơn hàng này.');
         return $this->response()->success('Tạo đơn hàng thành công')->refresh();
     }
 
