@@ -103,6 +103,12 @@ class CustomerController extends AdminController
 
             return '<span class="label label-danger">'.number_format($this->wallet).'</span>';
         })->sortable();
+        $grid->province('Tỉnh/thành phố')->display(function () {
+            return Province::whereProvinceId($this->province)->first()->name ?? "";
+        });
+        $grid->district('Quận/huyện')->display(function () {
+            return District::whereDistrictId($this->district)->first()->name ?? "";
+        });
         $grid->address('Địa chỉ')->editable();
         $grid->is_active('Trạng thái')->display(function () {
             switch($this->is_active) {
