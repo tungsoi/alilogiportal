@@ -117,7 +117,7 @@ class PurchaseOrderController extends AdminController
             return '<span class="">'.$amount.'</span>';
         })->editable();
 
-        $grid->purchase_order_transport_fee('Tổng phí VCNĐ (VND)')->display(function () {
+        $grid->purchase_order_transport_fee('Tổng phí VCNĐ (Tệ)')->display(function () {
             if ($this->items) {
                 $total = 0;
                 foreach ($this->items as $item) {
@@ -156,7 +156,7 @@ class PurchaseOrderController extends AdminController
                 ? date('d-m-Y', strtotime($this->deposited_at))
                 : "";
         });
-        $grid->final_total_price('Tổng giá cuối (VND)')->display(function () {
+        $grid->final_total_price('Tổng giá cuối (Tệ)')->display(function () {
             if ($this->items) {
                 $total = $total_transport = 0;
                 foreach ($this->items as $item) {
@@ -166,9 +166,7 @@ class PurchaseOrderController extends AdminController
 
                 $total_bill = ($total + $total_transport + $this->purchase_order_service_fee);
                 
-                return number_format(
-                    $total_bill * $this->current_rate
-                ) . "<br> <i>" . number_format($total_bill) . " (Tệ)</i>";
+                return number_format($total_bill) . "<br> <i>" . number_format($total_bill * $this->current_rate) . " (VND)</i>";
             }
             return 0;
         })->totalRow(function ($amount) {

@@ -10,14 +10,11 @@ use Encore\Admin\Show;
 use App\User;
 use App\Admin\Actions\Customer\Recharge;
 use App\Admin\Actions\Customer\RechargeHistory;
-use App\Admin\Actions\Customer\OrderHistory;
-use App\Admin\Actions\Customer\OrderPayment;
 use App\Models\Alilogi\District;
 use App\Models\Alilogi\Province;
 use App\Models\Alilogi\TransportRecharge;
 use App\Models\Order;
 use App\Models\TransportOrderItem;
-use App\Models\OrderRecharge;
 use Encore\Admin\Facades\Admin;
 use Encore\Admin\Layout\Content;
 use Illuminate\Http\Request;
@@ -237,7 +234,7 @@ class CustomerController extends AdminController
     }
 
     public function rechargeForm($id) {
-        $form = new Form(new OrderRecharge());
+        $form = new Form(new TransportRecharge());
         $user = User::find($id);
 
         $form->setAction(route('admin.customers.rechargeStore'));
@@ -249,7 +246,7 @@ class CustomerController extends AdminController
         $form->display('wallet', 'Số dư hiện tại')->default(number_format($user->wallet));
         $form->divider('Nạp tiền');
         $form->currency('money', 'Số tiền cần nạp')->rules('required|min:4')->symbol('VND')->digits(0);
-        $form->select('type_recharge', 'Loại hành động')->options(OrderRecharge::RECHARGE)->default(1)->rules('required')
+        $form->select('type_recharge', 'Loại hành động')->options(TransportRecharge::RECHARGE)->default(1)->rules('required')
         ->help('Trường hợp Hoàn tiền hoặc trừ tiền, yêu cầu ghi rõ nội dung: Lý do, Đơn hàng, ...');
         $form->textarea('content', 'Nội dung')->default('...');
         $form->hidden('user_id_created')->default(Admin::user()->id);
@@ -283,7 +280,7 @@ EOT
     {
         return $content
             ->header($this->title)
-            ->description('Nạp tiền')
+            ->description('Nạp tiền vào tài khoản')
             ->body($this->rechargeForm($id));
     }
 
@@ -291,13 +288,13 @@ EOT
         DB::beginTransaction();
         try {
             $data = $request->all();
-            OrderRecharge::create($data);
+            TransportRecharge::create($data);
 
             $customer = User::find($data['customer_id']);
             $wallet = $customer->wallet;
             
             switch ($data['type_recharge']) {
-                case OrderRecharge::DEDUCTION:
+                case TransportRecharge::DEDUCTION:
                     $customer->wallet = (int) $wallet - (int) $data['money'];
                     $customer->save();
                     break;
@@ -308,7 +305,7 @@ EOT
             }
 
             DB::commit();
-            admin_success(OrderRecharge::RECHARGE[$data['type_recharge']], 'Số tiền: '.number_format($data['money'])." - Khách hàng: ".$customer->name." - Số dư ví sau giao dịch: ".number_format($customer->wallet)) ." (VND)";
+            admin_success(TransportRecharge::RECHARGE[$data['type_recharge']], 'Số tiền: '.number_format($data['money'])." - Khách hàng: ".$customer->name." - Số dư ví sau giao dịch: ".number_format($customer->wallet)) ." (VND)";
         } catch (\Exception $e) {
             DB::rollBack();
             admin_error('Nạp tiền không thành công', $e->getMessage());
@@ -333,7 +330,9 @@ EOT
     protected function rechargeHistoryGrid($id)
     {
         $grid = new Grid(new TransportRecharge);
-        $grid->model()->where('customer_id', $id)->orderBy('id', 'desc');
+        $grid->model()
+        ->where('money', '>', 0)
+        ->where('customer_id', $id)->orderBy('id', 'desc');
 
         $grid->filter(function($filter) {
             $filter->expand();

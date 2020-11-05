@@ -2,8 +2,6 @@
 
 namespace App;
 
-use App\Models\RongDoUser;
-use App\Models\TransportOrderItem;
 use Encore\Admin\Traits\AdminBuilder;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
@@ -20,6 +18,8 @@ class User extends Model implements AuthenticatableContract
         0   =>  'Khoá',
         1   =>  'Hoạt động'
     ];
+
+    protected $connection = "alilogi";
 
     /**
      * Table name
@@ -68,7 +68,7 @@ class User extends Model implements AuthenticatableContract
      * @param array $attributes
      */
     public function __construct(array $attributes = []){
-        $connection = config('admin.database.connection') ?: config('database.default');
+        $connection = $this->connection ?: config('database.default');
 
         $this->setConnection($connection);
 

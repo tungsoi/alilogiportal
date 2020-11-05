@@ -3,7 +3,7 @@
 namespace App\Admin\Actions\Order;
 
 use App\Models\Alilogi\TransportRecharge;
-use App\Models\Alilogi\User;
+use App\User;
 use App\Models\PurchaseOrder;
 use Encore\Admin\Actions\RowAction;
 use Encore\Admin\Facades\Admin;
