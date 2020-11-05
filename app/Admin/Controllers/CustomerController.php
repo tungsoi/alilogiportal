@@ -54,16 +54,16 @@ class CustomerController extends AdminController
                 $filter->where(function ($query) {
                     switch ($this->input) {
                         case 0:
-                            $query->where('wallet_order', '<', 0);
+                            $query->where('wallet', '<', 0);
                             break;
                         case 1:
-                            $query->where('wallet_order', '>', 0);
+                            $query->where('wallet', '>', 0);
                             break;
                         case 2:
-                            $query->where('wallet_order', '<', 0)->orWhere('wallet_order', '>=', 0);
+                            $query->where('wallet', '<', 0)->orWhere('wallet', '>=', 0);
                             break;
                     }
-                }, 'Số dư tài khoản', 'wallet_order')->select(['Công nợ', 'Số dư', 'Tất cả'])->default(2);
+                }, 'Số dư tài khoản', 'wallet')->select(['Công nợ', 'Số dư', 'Tất cả'])->default(2);
             });
             $filter->column(1/2, function ($filter) {
                 $filter->like('email');
@@ -74,7 +74,7 @@ class CustomerController extends AdminController
 
         $grid->header(function ($query) {
 
-            $owed = $query->sum('wallet_order');
+            $owed = $query->sum('wallet');
             $color = $owed > 0 ? 'green' : 'red';
 
             return '<h4>Công nợ khách hàng hiện tại: <span style="color:'.$color.'">'. number_format($owed) ."</span> (VND)</h4>";
@@ -92,12 +92,12 @@ class CustomerController extends AdminController
         $grid->ware_house_id('Kho')->display(function () {
             return $this->warehouse->name ?? "";
         });
-        $grid->wallet_order('Số dư ví (VND)')->display(function () {
-            if ($this->wallet_order > 0) {
-                return '<span class="label label-success">'.number_format($this->wallet_order) ?? "0".'</span>';
+        $grid->wallet('Số dư ví (VND)')->display(function () {
+            if ($this->wallet > 0) {
+                return '<span class="label label-success">'.number_format($this->wallet) ?? "0".'</span>';
             }
 
-            return '<span class="label label-danger">'.number_format($this->wallet_order).'</span>';
+            return '<span class="label label-danger">'.number_format($this->wallet).'</span>';
         })->sortable();
         $grid->address('Địa chỉ')->editable();
         $grid->is_active('Trạng thái')->display(function () {
