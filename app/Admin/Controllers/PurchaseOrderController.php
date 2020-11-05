@@ -351,8 +351,8 @@ EOT
     protected function form()
     {
         $form = new Form(new PurchaseOrder);
-
-        $id = explode('/', request()->server()['PATH_INFO'])[3];
+        
+        $id = explode('/', request()->server()['REQUEST_URI'])[3];
         $order = PurchaseOrder::find($id);
         $purchase_total_items_price = $order->getPurchaseTotalItemPrice();
 
