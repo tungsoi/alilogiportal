@@ -57,7 +57,7 @@
         #customer-info li.header {
             color: white !important;
             font-size: 18px !important;
-            background-color: gray !important;
+            background-color: #615ca8 !important;
             margin-bottom: 5px;
         }
     </style>
