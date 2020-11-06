@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
 Route::get('/service_percent', function (Request $request) {
     $option = $request->q;
     $data = [
-        1, 1.5, 2, 2.5, 3
+        0, 1, 1.5, 2, 2.5, 3
     ];
 
     $percent = $data[$option];

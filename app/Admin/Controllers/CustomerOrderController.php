@@ -89,7 +89,7 @@ class CustomerOrderController extends AdminController
             return $html;
         });
         $grid->column('total_items', 'Số sản phẩm')->display(function () {
-            return $this->totalItems();
+            return $this->totalItemReality();
         });
         $grid->purchase_total_items_price('Tổng giá sản phẩm (Tệ)')->display(function () {
             return number_format($this->purchase_total_items_price);

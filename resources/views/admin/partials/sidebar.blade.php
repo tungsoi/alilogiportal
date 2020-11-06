@@ -15,6 +15,13 @@
             </div>
         </div>
 
+        <ul class="sidebar-menu" id="customer-info">
+            <li class="header">MKH: {{ Admin::user()->symbol_name }}</li>
+            <li class="header">Số dư: {{ number_format(Admin::user()->wallet) }} VND</li>
+        </ul>
+
+        <br>
+
         @if(config('admin.enable_menu_search'))
         <!-- search form (Optional) -->
         <form class="sidebar-form" style="overflow: initial;" onsubmit="return false;">

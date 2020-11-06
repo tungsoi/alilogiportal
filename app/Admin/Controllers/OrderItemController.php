@@ -85,7 +85,7 @@ class OrderItemController extends AdminController
         $grid->product_color('Màu')->editable();
         $grid->qty('Số lượng')->editable();
         $grid->qty_reality('Số lượng thực đặt')->editable();
-        $grid->price('Giá (Tệ)')->editable();
+        $grid->price('Giá (Tệ)');
         $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
             return $this->purchase_cn_transport_fee ?? 0;
         })->help('Phí vận chuyển nội địa Trung quốc')->editable();
@@ -163,7 +163,7 @@ class OrderItemController extends AdminController
         $form->text('product_color', 'Màu sắc');
         $form->text('qty', 'Số lượng');
         $form->text('qty_reality', 'Số lượng thực đặt');
-        $form->currency('price', 'Giá (Tệ)')->symbol('￥');
+        $form->currency('price', 'Giá (Tệ)')->symbol('￥')->readonly();
         $form->currency('purchase_cn_transport_fee', 'VCND TQ (Tệ)')->symbol('￥');
         $form->text('weight', 'Cân nặng (KG)');
         $form->date('weight_date', 'Ngày vào KG');

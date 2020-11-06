@@ -53,6 +53,13 @@
         #purchase_total_items_price_new {
             text-align: right !important;
         }
+
+        #customer-info li.header {
+            color: white !important;
+            font-size: 18px !important;
+            background-color: gray !important;
+            margin-bottom: 5px;
+        }
     </style>
 
 </head>

@@ -92,7 +92,7 @@ class PurchaseOrderController extends AdminController
             return $html;
         });
         $grid->column('total_items', 'Số sản phẩm')->display(function () {
-            return $this->totalItems();
+            return $this->totalItemReality();
         });
         $grid->purchase_total_items_price('Tổng giá trị SP (Tệ)')->display(function () {
             if ($this->items) {
@@ -269,7 +269,7 @@ EOT
                 ['Tổng phí ship nội địa TQ', number_format($order->transport_fee), 'Nhân viên CSKH', $order->supporter->name ?? "Đang cập nhật"],
                 ['Tổng số lượng', $qty, 'Nhân viên Kho', $order->supporterWarehouse->name ?? "Đang cập nhật"],
                 ['Tổng thực đặt', $qty_reality],  
-                ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at))],
+                ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at)), 'Mã khách hàng', $order->customer->symbol_name],
             ];
 
             $table = new Table($headers, $rows);
@@ -385,13 +385,14 @@ EOT
 
             $form->divider();
             $form->select('purchase_service_fee_percent', '% phí dịch vụ')->options([
+                '0% tổng tiền sản phẩm',
                 '1% tổng tiền sản phẩm',
                 '1.5% tổng tiền sản phẩm',
                 '2% tổng tiền sản phẩm',
                 '2.5% tổng tiền sản phẩm',
                 '3% tổng tiền sản phẩm',
             ]); // tinh % khi chon gia tri
-            $form->currency('purchase_order_service_fee', 'Phí dịch vụ (VND)')->symbol('VND')->width(200)->digits(0);
+            $form->currency('purchase_order_service_fee', 'Phí dịch vụ (VND)')->symbol('VND')->width(200)->digits(0)->readonly();
             
             $form->divider();
             // $form->currency('purchase_order_transport_fee', 'Phí ship nội địa (VND)')->symbol('VND')->width(200)->digits(0);

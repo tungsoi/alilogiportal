@@ -160,7 +160,7 @@ class DetailOrderController extends AdminController
         $grid->product_color('Màu')->editable();
         $grid->qty('Số lượng')->editable();
         $grid->qty_reality('Số lượng thực đặt')->editable();
-        $grid->price('Giá (Tệ)')->editable();
+        $grid->price('Giá (Tệ)');
         $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
             return $this->purchase_cn_transport_fee ?? 0;
         })->help('Phí vận chuyển nội địa Trung quốc')->editable();
@@ -232,15 +232,16 @@ class DetailOrderController extends AdminController
         }
 
         $total_bill = ($total_price_reality + $purchase_cn_transport_fee + $order->purchase_order_service_fee);
+        $current_rate = $order->current_rate;
         $headers = ['Thông tin', 'Giá trị', ''];
         $rows = [
-            ['Tổng giá trị đơn hàng = Tổng tiền thực đặt + ship nội địa + dịch vụ', number_format($total_bill) . " (Tệ)", 'Kho', $order->warehouse->name ?? "Đang cập nhật"],
-            ['Tổng tiền thực đặt', number_format($total_price_reality) . " (Tệ)", 'Nhân viên đặt hàng', $order->supporterOrder->name ?? "Đang cập nhật"],
-            ['Tổng phí ship nội địa Trung Quốc', number_format($purchase_cn_transport_fee) . " (Tệ)", 'Nhân viên CSKH', $order->supporter->name ?? "Đang cập nhật"],
-            ['Tổng phí dịch vụ', number_format($order->purchase_order_service_fee) . " (Tệ)", 'Nhân viên Kho', $order->supporterWarehouse->name ?? "Đang cập nhật"],
-            ['Tổng số lượng', $qty],
-            ['Tổng thực đặt', $qty_reality],  
-            ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at))],
+            ['Tổng giá trị đơn hàng = Tổng tiền thực đặt + ship nội địa + dịch vụ', number_format($total_bill) . " (Tệ)" . " = " . number_format($total_bill * $current_rate) . " (VND)", 'Kho', $order->warehouse->name ?? "Đang cập nhật"],
+            ['Tổng tiền thực đặt', number_format($total_price_reality) . " (Tệ)" . " = " . number_format($total_price_reality * $current_rate) . " (VND)", 'Nhân viên đặt hàng', $order->supporterOrder->name ?? "Đang cập nhật"],
+            ['Tổng phí ship nội địa Trung Quốc', number_format($purchase_cn_transport_fee) . " (Tệ)"  . " = " . number_format($purchase_cn_transport_fee * $current_rate) . " (VND)", 'Nhân viên CSKH', $order->supporter->name ?? "Đang cập nhật"],
+            ['Tổng phí dịch vụ', number_format($order->purchase_order_service_fee) . " (Tệ)" . " = " . number_format($order->purchase_order_service_fee * $current_rate) . " (VND)", 'Nhân viên Kho', $order->supporterWarehouse->name ?? "Đang cập nhật"],
+            ['Tổng số lượng', $qty, '<h6><b>Mã đơn hàng</b></h6>', '<h6><b>'.$order->order_number.'</b></h6>'],
+            ['Tổng thực đặt', $qty_reality, '<h6><b>Mã khách hàng</b></h6>', '<h6><b>'.$order->customer->symbol_name.'</b></h6>'],  
+            ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at)), 'Tỷ giá', number_format($current_rate) . " (VND)"],
         ];
 
         $table = new Table($headers, $rows);

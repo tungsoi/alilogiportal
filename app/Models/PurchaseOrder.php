@@ -213,4 +213,20 @@ class PurchaseOrder extends Model
 
         return 0;
     }
+
+    public function totalItemReality()
+    {
+        # code...
+        $items = $this->items;
+        if ($items) {
+            $total = 0;
+            foreach ($this->items as $item) {
+                $total += $item->qty_reality;
+            }
+
+            return $total;
+        }
+
+        return 0;
+    }
 }
