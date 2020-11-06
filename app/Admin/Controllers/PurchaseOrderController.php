@@ -443,6 +443,8 @@ EOT
     protected function formDeposite()
     {
         $form = new Form(new PurchaseOrder);
+        $id = explode('/', request()->server()['REQUEST_URI'])[3];
+        $order = PurchaseOrder::find($id);
 
         $form->setAction(route('admin.puchase_orders.postDeposite'));
 
@@ -454,8 +456,14 @@ EOT
             $form->display('created_at', trans('admin.created_at'));
         });
 
-        $form->column(1/2, function ($form) {
+        $form->column(1/2, function ($form) use ($order) {
             $form->divider("Vào tiền cọc");
+            $form->currency('wallet', 'Số dư ví khách hàng')
+            ->default($order->customer->wallet)
+            ->symbol('VND')
+            ->width(200)
+            ->readonly()
+            ->digits(0);
             $form->currency('final_total_price', 'Tổng giá cuối')
                 ->symbol('VND')
                 ->width(200)

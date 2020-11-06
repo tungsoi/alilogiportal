@@ -28,6 +28,7 @@ class HomeController extends Controller
             $row->column(12, function (Column $column) use ($words) {
                 $column->append((new Callout($words))->style('success'));
             });
+            
         })
         ->row(function (Row $row) {
             if (Admin::user()->isRole('administrator')) {
