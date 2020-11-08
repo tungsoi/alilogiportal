@@ -13,6 +13,7 @@ class ToolController extends Controller
     {
         $data = $request->all();
         $order = $data['data']['selected'];
+        dd($order);
         $request->session()->push('booking_product', $order);
 
         return redirect()->route('admin.carts.create');
