@@ -50,6 +50,23 @@ class OrderItemController extends AdminController
                 
                 }, 'Mã đơn hàng');
                 $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
+
+                $filter->where(function ($query) {
+                    switch ($this->input) {
+                        case 'yes':
+                            // custom complex query if the 'yes' option is selected
+                            $query->whereNotNull('cn_code');
+                            break;
+                        case 'no':
+                            $query->whereNull('cn_code');
+                            break;
+                    }
+                }, 'Tình trạng sản phẩm')->radio([
+                    '' => 'Tất cả',
+                    'yes' => 'Đã có mã vận đơn',
+                    'no' => 'Chưa có mã vận đơn',
+                ]);
+                
             });
             $filter->column(1/2, function ($filter) {
                 $filter->like('cn_code', 'Mã vận đơn');

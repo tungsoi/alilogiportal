@@ -61,12 +61,12 @@ class Ordered extends BatchAction
             }
         }
 
-        if ($flag_all_item_ordered) {
-            // update trạng thái của đơn hàng -> đã đặt hàng
-            PurchaseOrder::find($order_id)->update([
-                'status'    =>  PurchaseOrder::STATUS_ORDERED
-            ]);
-        }
+        // if ($flag_all_item_ordered) {
+        //     // update trạng thái của đơn hàng -> đã đặt hàng
+        //     PurchaseOrder::find($order_id)->update([
+        //         'status'    =>  PurchaseOrder::STATUS_ORDERED
+        //     ]);
+        // }
        
         return $this->response()->success('Xác nhận đặt hàng thành công')->refresh();
     }

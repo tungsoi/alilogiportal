@@ -52,6 +52,7 @@ class PurchaseOrderController extends AdminController
             });
             $filter->column(1/2, function ($filter) {
                 $filter->equal('status', 'Trạng thái')->select(PurchaseOrder::STATUS);
+                $filter->between('created_at', 'Ngày đặt hàng')->date();
             });
         });
 
@@ -60,18 +61,24 @@ class PurchaseOrderController extends AdminController
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
-        $grid->order_number('Mã đơn hàng')->label('primary');
+        $grid->order_number('Mã đơn hàng')->display(function () {
+            $html = "<span class='label label-primary'>".$this->order_number."</span>";
+            $html .= "<br> <i>Tỷ giá: ".number_format($this->current_rate)." (VND) </i>";
+            $html .= "<br> <i>".date('H:i | d-m-Y', strtotime($this->created_at))."</i>";
+
+            return $html;
+        });
         $grid->customer_id('Mã khách hàng')->display(function () {
             $user = User::find($this->customer_id);
-            $html = $user->symbol_name ?? null;
-            $html .= "<br> <br> <h6>(" . number_format($user->wallet) . ")</h6>";
+            $html = "<span class='label label-primary'>".$user->symbol_name."</span>" ?? null;
+            $html .= "<br> <i>" . number_format($user->wallet) . " (VND)</i>";
 
             return $html;
         });
 
         $grid->status('Trạng thái')->display(function () {
             $count = "";
-            if ($this->status == PurchaseOrder::STATUS_ORDERED) {
+            if ($this->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
                 $count = "( ".$this->orderedItems() . " / " . $this->totalItems()." )";
             } else if ($this->status == PurchaseOrder::STATUS_IN_WAREHOUSE_VN) {
                 $count = "( ".$this->warehouseVietnamItems() . " / " . $this->totalItems()." )";
@@ -146,15 +153,14 @@ class PurchaseOrderController extends AdminController
         })->editable();
         $grid->warehouse()->name('Kho');
         $grid->deposited('Đã cọc (VND)')->display(function () {
-            return number_format($this->deposited);
+            $html = number_format($this->deposited);
+            $deposited_at = $this->deposited_at != null ? date('d-m-Y', strtotime($this->deposited_at)) : "";
+            $html .= "<br> <i>".$deposited_at."</i>";
+
+            return $html;
         })->totalRow(function ($amount) {
             $amount = number_format($amount);
             return '<span class="">'.$amount.'</span>';
-        });
-        $grid->deposited_at('Ngày cọc')->display(function () {
-            return $this->deposited_at != null 
-                ? date('d-m-Y', strtotime($this->deposited_at))
-                : "";
         });
         $grid->final_total_price('Tổng giá cuối (Tệ)')->display(function () {
             if ($this->items) {
@@ -174,14 +180,13 @@ class PurchaseOrderController extends AdminController
             return '<span class="">'.$amount.'</span>';
         })
         ->help('Tổng giá cuối = Tổng giá trị SP + Phí dịch vụ + Tổng phí VCNĐ');
+
+        $grid->final_payment('Tổng thanh toán (VND)')->display(function () {
+            return number_format($this->final_payment);
+        })->editable();
+
         $grid->admin_note('Admin ghi chú')->editable();
         $grid->internal_note('Nội bộ ghi chú')->editable();
-        $grid->current_rate('Tỷ giá (VND)')->display(function () {
-            return number_format($this->current_rate);
-        });
-        $grid->created_at(trans('admin.created_at'))->display(function () {
-            return date('H:i | d-m-Y', strtotime($this->created_at));
-        });
         $grid->disableCreateButton();
         $grid->setActionClass(\Encore\Admin\Grid\Displayers\Actions::class);
 
@@ -191,34 +196,52 @@ class PurchaseOrderController extends AdminController
             $actions->disableEdit();
 
             $actions->append('
-                <a href="'.route('admin.detail_orders.show', $this->getKey()).'" class="grid-row-view btn btn-success btn-xs">
-                    <i class="fa fa-eye"></i> &nbsp;Chi tiết đơn
+                <a href="'.route('admin.detail_orders.show', $this->getKey()).'" class="grid-row-view btn btn-success btn-xs" data-toggle="tooltip" title="Xem chi tiết đơn hàng">
+                    <i class="fa fa-eye"></i>
                 </a>'
             );
 
             $actions->append('
-                <a href="'.route('admin.puchase_orders.edit', $this->getKey()).'" class="grid-row-edit btn btn-primary btn-xs">
-                    <i class="fa fa-edit"></i> &nbsp;Chỉnh sửa
+                <a href="'.route('admin.puchase_orders.edit', $this->getKey()).'" class="grid-row-edit btn btn-primary btn-xs" data-toggle="tooltip" title="Chỉnh sửa đơn hàng">
+                    <i class="fa fa-edit"></i>
                 </a>'
             );
 
             if ($this->row->status == PurchaseOrder::STATUS_NEW_ORDER) {
                 $actions->append('
-                    <a href="'.route('admin.puchase_orders.deposite', $this->getKey()).'" class="grid-row-deposite btn btn-info btn-xs">
-                        <i class="fa fa-money"></i> &nbsp;Vào tiền cọc
+                    <a href="'.route('admin.puchase_orders.deposite', $this->getKey()).'" class="grid-row-deposite btn btn-info btn-xs" data-toggle="tooltip" title="Đặt cọc tiền">
+                        <i class="fa fa-money"></i>
                     </a>'
                 );
             }
 
             $actions->append('
-                <a href="'.route('admin.customers.recharge', $this->row->customer_id).'" class="grid-row-edit btn btn-warning btn-xs" target="_blank">
-                    <i class="fa fa-plus"></i> &nbsp;Nạp tiền
+                <a href="'.route('admin.customers.recharge', $this->row->customer_id).'" class="grid-row-edit btn btn-warning btn-xs" target="_blank" data-toggle="tooltip" title="Nạp tài khoản khách hàng">
+                    <i class="fa fa-plus"></i>
                 </a>'
             );
+
+            $order = PurchaseOrder::find($this->getKey());
+            if ($this->row->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING && $order->orderedItems() == $order->totalItems()) {
+                $actions->append('
+                    <a data-id="'.$this->getKey().'" data-user="'.Admin::user()->id.'"  class="grid-row-confirm-ordered btn btn-info btn-xs" data-toggle="tooltip" title="Xác nhận đã đặt hàng">
+                        <i class="fa fa-check"></i>
+                    </a>'
+                );
+            }
             
+
+            if ($this->row->status != PurchaseOrder::STATUS_CANCEL && $this->row->status != PurchaseOrder::STATUS_SUCCESS) {
+                $actions->append('
+                    <a data-id="'.$this->getKey().'" data-user="'.Admin::user()->id.'" class="grid-row-cancle btn btn-danger btn-xs" data-toggle="tooltip" title="Huỷ đơn hàng">
+                        <i class="fa fa-times"></i>
+                    </a>'
+                );
+            }
+  
         });
 
-        Admin::style('.btn {display: block;}');
+        // Admin::style('.btn {display: block;}');
 
         $grid->batchActions(function ($batch) {
             $batch->disableDelete();
@@ -231,6 +254,68 @@ class PurchaseOrderController extends AdminController
             $('tfoot').each(function () {
                 $(this).insertAfter($(this).siblings('thead'));
             });
+
+            var bar = "bar";
+            $(document).on('click', '.grid-row-cancle', function () {
+                var foo = bar;
+                if ( foo == "bar" ) {
+                    var isGood=confirm('Xác nhận Huỷ đơn hàng ?');
+                    if (isGood) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/api/cancle-purchase-order',
+                            data: {
+                                order_id: $(this).data('id'),
+                                user_id_created: $(this).data('user')
+                            },
+                            success: function(response) {
+                                if (response.error == false) {
+                                    alert('Đã huỷ đơn hàng thành công.');
+
+                                    setTimeout(function () {
+                                        window.location.reload();
+                                    }, 1000);
+                                    
+                                } else {
+                                    alert('Xảy ra lỗi: ' + response.msg);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            var bar = "bar";
+            $(document).on('click', '.grid-row-confirm-ordered', function () {
+                var foo = bar;
+                if ( foo == "bar" ) {
+                    var isGood=confirm('Xác nhận Đã đặt hàng đơn hàng này ?');
+                    if (isGood) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/api/confirm-ordered',
+                            data: {
+                                order_id: $(this).data('id'),
+                                user_id_created: $(this).data('user')
+                            },
+                            success: function(response) {
+                                if (response.error == false) {
+                                    alert('Đã xác nhận đặt hàng thành công.');
+
+                                    setTimeout(function () {
+                                        window.location.reload();
+                                    }, 1000);
+                                    
+                                } else {
+                                    alert('Xảy ra lỗi: ' + response.msg);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+
 EOT
     );
 
@@ -376,6 +461,12 @@ EOT
         });
        
         $form->column(1/2, function ($form) use ($purchase_total_items_price, $order) {
+            $form->divider("Tổng tiền");
+            $form->currency('final_total_price', 'Tổng giá cuối (VND)')->symbol('VND')->width(200)->disable()->digits(0);
+            $form->currency('final_payment', 'Tiền thanh toán (VND)')->symbol('VND')->width(200)->digits(0);
+            $form->currency('deposit_default', 'Số tiền phải cọc (70%) (VND)')->readonly()->symbol('VND')->width(200)->digits(0);
+            $form->currency('deposited', 'Số tiền đã cọc (VND)')->symbol('VND')->width(200)->readonly()->digits(0);
+            $form->text('deposited_at', 'Ngày vào cọc')->readonly();
 
             $form->divider("Các khoản chi phí");
             $form->html("<h4 style='text-align: right'>".number_format($purchase_total_items_price)."</h4>", 'Tổng giá sản phẩm (Tệ)');
@@ -392,15 +483,12 @@ EOT
                 '2.5% tổng tiền sản phẩm',
                 '3% tổng tiền sản phẩm',
             ]); // tinh % khi chon gia tri
-            $form->currency('purchase_order_service_fee', 'Phí dịch vụ (VND)')->symbol('VND')->width(200)->digits(0)->readonly();
+            $form->currency('purchase_order_service_fee', 'Phí dịch vụ (Tệ)')->symbol('￥')->width(200)->digits(0)->readonly();
             
             $form->divider();
             // $form->currency('purchase_order_transport_fee', 'Phí ship nội địa (VND)')->symbol('VND')->width(200)->digits(0);
             $form->currency('price_weight', 'Giá cân nặng (VND)')->symbol('VND')->width(200)->digits(0);
-            $form->currency('final_total_price', 'Tổng giá cuối (VND)')->symbol('VND')->width(200)->disable()->digits(0);
-            $form->currency('deposit_default', 'Số tiền phải cọc (70%) (VND)')->readonly()->symbol('VND')->width(200)->digits(0);
-            $form->currency('deposited', 'Số tiền đã cọc (VND)')->symbol('VND')->width(200)->readonly()->digits(0);
-            $form->text('deposited_at', 'Ngày vào cọc')->readonly();
+            
             $form->hidden('deposited_at');
         });
 

@@ -34,7 +34,8 @@ Route::group([
         'customer_recharges'    =>  CustomerRechargeController::class,
         'customer_orders'   =>  CustomerOrderController::class,
         'schedule_logs' =>  ScheduleLogController::class,
-        'detail_orders' =>  DetailOrderController::class
+        'detail_orders' =>  DetailOrderController::class,
+        'complaints'    =>  ComplaintController::class
     ]);
 });
 

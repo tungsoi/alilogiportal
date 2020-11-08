@@ -59,6 +59,10 @@ class PurchaseOrder extends Model
         'success',
         'danger'
     ];
+
+    const PERCENT = [
+        '0%', '1%', '1.5%', '2%', '2.5%', '3%'
+    ];
     
     /**
      * Table name
@@ -127,7 +131,9 @@ class PurchaseOrder extends Model
         'is_discounted',
         'transport_customer_id',
         'purchase_order_transport_fee',
-        'purchase_order_service_fee'
+        'purchase_order_service_fee',
+        'final_payment',
+        'user_id_confirm_ordered'
     ];
 
     public function customer() {
