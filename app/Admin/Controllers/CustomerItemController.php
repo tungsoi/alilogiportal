@@ -51,7 +51,24 @@ class CustomerItemController extends AdminController
                     $query->whereIn('order_id', $orders);
                 
                 }, 'Mã đơn hàng');
-                $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
+                // $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
+
+                $filter->where(function ($query) {
+                    switch ($this->input) {
+                        case 'yes':
+                            // custom complex query if the 'yes' option is selected
+                            $query->whereNotNull('cn_code');
+                            break;
+                        case 'no':
+                            $query->whereNull('cn_code');
+                            break;
+                    }
+                }, 'Tình trạng sản phẩm')->radio([
+                    '' => 'Tất cả',
+                    'yes' => 'Đã có mã vận đơn',
+                    'no' => 'Chưa có mã vận đơn',
+                ]);
+                
             });
             $filter->column(1/2, function ($filter) {
                 $filter->like('cn_code', 'Mã vận đơn');
@@ -65,11 +82,11 @@ class CustomerItemController extends AdminController
         });
         $grid->column('number', 'STT');
         $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary');
-        $grid->id('Mã SP')->display(function () {
-            return "SPMH-".str_pad($this->id, 5, 0, STR_PAD_LEFT);
-        });
+        // $grid->id('Mã SP')->display(function () {
+        //     return "SPMH-".str_pad($this->id, 5, 0, STR_PAD_LEFT);
+        // });
         $grid->column('customer_name', 'Mã khách hàng')->display(function () {
-            return $this->customer->symbol_name ?? "";
+            return $this->order->customer->symbol_name ?? "";
         })->help('Mã khách hàng');
         $grid->status('Trạng thái')->display(function () {
             $html = "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
@@ -105,15 +122,15 @@ class CustomerItemController extends AdminController
         $grid->admin_note('Admin ghi chú');
 
         $grid->disableCreateButton();
+        $grid->disableActions();
         
         $grid->tools(function (Grid\Tools $tools) {
-            // $tools->append(new Ordered());
-            // $tools->append(new WarehouseVietnam());
+            $tools->append(new Ordered());
+            $tools->append(new WarehouseVietnam());
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
         });
-        $grid->disableActions();
         $grid->actions(function ($actions) {
             $actions->disableView();
             // $actions->disableEdit();

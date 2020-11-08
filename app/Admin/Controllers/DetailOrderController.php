@@ -2,6 +2,7 @@
 
 namespace App\Admin\Controllers;
 
+use App\Admin\Actions\Order\ConfirmOrdered;
 use App\Admin\Actions\OrderItem\Ordered;
 use App\Admin\Actions\OrderItem\WarehouseVietnam;
 use App\Models\Alilogi\TransportOrderItem;
@@ -186,6 +187,10 @@ class DetailOrderController extends AdminController
         $grid->tools(function (Grid\Tools $tools) {
             $tools->append(new Ordered());
             $tools->append(new WarehouseVietnam());
+
+            $id = explode('/', request()->server()['REQUEST_URI'])[3];
+
+            $tools->append('<a class="btn-confirm-ordered btn btn-sm btn-warning" data-user="'.Admin::user()->id.'" data-id="'.$id.'"><i class="fa fa-check"></i> &nbsp; Xác nhận đã dặt hàng</a>');
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
@@ -204,6 +209,40 @@ class DetailOrderController extends AdminController
         });
         $grid->paginate(200);
         Admin::style('.box {border-top:none;}');
+
+        Admin::script(
+            <<<EOT
+            var bar = "bar";
+            $(document).on('click', '.btn-confirm-ordered', function () {
+                var foo = bar;
+                if ( foo == "bar" ) {
+                    var isGood=confirm('Xác nhận Đã đặt hàng đơn hàng này ?');
+                    if (isGood) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/api/confirm-ordered',
+                            data: {
+                                order_id: $(this).data('id'),
+                                user_id_created: $(this).data('user')
+                            },
+                            success: function(response) {
+                                if (response.error == false) {
+                                    alert('Đã xác nhận đặt hàng thành công.');
+
+                                    setTimeout(function () {
+                                        window.location.reload();
+                                    }, 1000);
+                                    
+                                } else {
+                                    alert('Xảy ra lỗi: ' + response.msg);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+EOT
+        );
 
         return $grid;
     }
@@ -244,6 +283,7 @@ class DetailOrderController extends AdminController
             ['Tổng số lượng', $qty, '<h6><b>Mã đơn hàng</b></h6>', '<h6><b>'.$order->order_number.'</b></h6>'],
             ['Tổng thực đặt', $qty_reality, '<h6><b>Mã khách hàng</b></h6>', '<h6><b>'.$order->customer->symbol_name.'</b></h6>'],  
             ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at)), 'Tỷ giá', number_format($current_rate) . " (VND)"],
+            ['Trạng thái đơn hàng', PurchaseOrder::STATUS[$order->status]]
         ];
 
         $table = new Table($headers, $rows);

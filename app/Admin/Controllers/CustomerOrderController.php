@@ -17,6 +17,7 @@ use Encore\Admin\Layout\Content;
 use Encore\Admin\Layout\Row;
 use Encore\Admin\Widgets\Box;
 use Encore\Admin\Widgets\Table;
+use Encore\Admin\Layout\Column;
 
 class CustomerOrderController extends AdminController
 {
@@ -32,6 +33,35 @@ class CustomerOrderController extends AdminController
         $this->title = 'Danh sách đơn hàng';
     }
 
+
+     /**
+     * Show interface.
+     *
+     * @param mixed   $id
+     * @param Content $content
+     *
+     * @return Content
+     */
+    public function show($id, Content $content)
+    {
+        return $content->header('Đơn hàng mua hộ')
+        ->description('Chi tiết đơn hàng')
+        ->row(function (Row $row) use ($id)
+        {
+            // Tab thong tin chi tiet bao cao
+            $row->column(12, function (Column $column) use ($id) 
+            {
+                $column->append((new Box('Thông tin đơn hàng', $this->detail($id))));
+            });
+
+            // Tab thong tin xu ly
+            $row->column(12, function (Column $column) use ($id)
+            {
+                $column->append((new Box('Danh sách sản phẩm', $this->gridItem($id)->render())));
+            });
+        });
+    }
+
     /**
      * Make a grid builder.
      *
@@ -41,34 +71,44 @@ class CustomerOrderController extends AdminController
     {
         $grid = new Grid(new PurchaseOrder());
         $grid->model()
+        ->whereOrderType(1)
+        ->where('status', '!=', PurchaseOrder::STATUS_UNSENT)
         ->where('customer_id', Admin::user()->id)
-        ->whereOrderType(1)->orderBy('created_at', 'desc');
+        ->orderBy('created_at', 'desc');
 
         $grid->filter(function($filter) {
             $filter->expand();
             $filter->disableIdFilter();
-            $filter->column(1/2, function ($filter) {
-                $filter->like('order_number', 'Mã đơn hàng');
-                $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
-            });
-            $filter->column(1/2, function ($filter) {
-                $filter->equal('status', 'Trạng thái')->select(PurchaseOrder::STATUS);
-            });
+            $filter->like('order_number', 'Mã đơn hàng');
+            $filter->equal('status', 'Trạng thái')->select(PurchaseOrder::STATUS);
+            $filter->between('created_at', 'Ngày đặt hàng')->date();
         });
 
-        $grid->fixColumns(6, -1);
+        $grid->fixColumns(6);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
-        $grid->order_number('Mã đơn hàng')->label('primary');
+        $grid->order_number('Mã đơn hàng')->display(function () {
+            $html = "<span class='label label-primary'>".$this->order_number."</span>";
+            $html .= "<br> <i>Tỷ giá: ".number_format($this->current_rate)." (VND) </i>";
+            $html .= "<br> <i>".date('H:i | d-m-Y', strtotime($this->created_at))."</i>";
+
+            return $html;
+        });
         $grid->customer_id('Mã khách hàng')->display(function () {
-            return User::find($this->customer_id)->symbol_name ?? null;
+            $user = User::find($this->customer_id);
+            $symbol_name = $user->symbol_name != null ? $user->symbol_name : $user->email;
+            
+            $html = "<span class='label label-primary'>".$symbol_name."</span>";
+            $html .= "<br> <i>" . number_format($user->wallet) . " (VND)</i>";
+
+            return $html;
         });
 
         $grid->status('Trạng thái')->display(function () {
             $count = "";
-            if ($this->status == PurchaseOrder::STATUS_ORDERED) {
+            if ($this->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
                 $count = "( ".$this->orderedItems() . " / " . $this->totalItems()." )";
             } else if ($this->status == PurchaseOrder::STATUS_IN_WAREHOUSE_VN) {
                 $count = "( ".$this->warehouseVietnamItems() . " / " . $this->totalItems()." )";
@@ -91,100 +131,108 @@ class CustomerOrderController extends AdminController
         $grid->column('total_items', 'Số sản phẩm')->display(function () {
             return $this->totalItemReality();
         });
-        $grid->purchase_total_items_price('Tổng giá sản phẩm (Tệ)')->display(function () {
-            return number_format($this->purchase_total_items_price);
+        $grid->purchase_total_items_price('Tổng giá trị SP (Tệ)')->display(function () {
+            if ($this->items) {
+                $total = 0;
+                foreach ($this->items as $item) {
+                    $total += $item->qty_reality * $item->price;
+                }
+
+                return number_format($total);
+            }
+
+            return 0;
         })->totalRow(function ($amount) {
             $amount = number_format($amount);
             return '<span class="">'.$amount.'</span>';
         });
-        $grid->purchase_order_service_fee('Phí dịch vụ (VND)')->display(function () {
-            return number_format($this->purchase_order_service_fee);
+        $grid->purchase_order_service_fee('Phí dịch vụ (Tệ)')->display(function () {
+            $html = number_format($this->purchase_order_service_fee);
+            return $html;
         })->totalRow(function ($amount) {
             $amount = number_format($amount);
             return '<span class="">'.$amount.'</span>';
         });
 
-        $grid->purchase_order_transport_fee('Phí VCNĐ (VND)')->display(function () {
-            return number_format($this->purchase_order_transport_fee);
+        $grid->purchase_order_transport_fee('Tổng phí VCNĐ (Tệ)')->display(function () {
+            if ($this->items) {
+                $total = 0;
+                foreach ($this->items as $item) {
+                    $total += $item->purchase_cn_transport_fee;
+                }
+
+                return number_format($total);
+            }
+
+            return 0;
         });
         $grid->column('total_kg', 'Tổng KG')->display(function () {
-            return $this->totalWeight();
+            if ($this->items) {
+                $total = 0;
+                foreach ($this->items as $item) {
+                    $total += $item->weight;
+                }
+
+                return $total;
+            }
+
+            return 0;
         });
         $grid->column('price_weight', 'Giá KG (VND)')->display(function () {
             return number_format($this->price_weight);
         });
         $grid->warehouse()->name('Kho');
         $grid->deposited('Đã cọc (VND)')->display(function () {
-            return number_format($this->deposited);
+            $html = number_format($this->deposited);
+            $deposited_at = $this->deposited_at != null ? date('d-m-Y', strtotime($this->deposited_at)) : "";
+            $html .= "<br> <i>".$deposited_at."</i>";
+
+            return $html;
         })->totalRow(function ($amount) {
             $amount = number_format($amount);
             return '<span class="">'.$amount.'</span>';
         });
-        $grid->deposited_at('Ngày cọc')->display(function () {
-            return $this->deposited_at != null 
-                ? date('d-m-Y', strtotime($this->deposited_at))
-                : "";
-        });
-        $grid->final_total_price('Tổng giá cuối (VND)')->display(function () {
-            return number_format($this->final_total_price);
+        $grid->final_total_price('Tổng giá cuối (Tệ)')->display(function () {
+            if ($this->items) {
+                $total = $total_transport = 0;
+                foreach ($this->items as $item) {
+                    $total += $item->qty_reality * $item->price; // tong gia san pham
+                    $total_transport += $item->purchase_cn_transport_fee; // tong phi ship
+                }
+
+                $total_bill = ($total + $total_transport + $this->purchase_order_service_fee);
+                
+                return number_format($total_bill) . "<br> <i>" . number_format($total_bill * $this->current_rate) . " (VND)</i>";
+            }
+            return 0;
         })->totalRow(function ($amount) {
             $amount = number_format($amount);
             return '<span class="">'.$amount.'</span>';
-        });
+        })
+        ->help('Tổng giá cuối = Tổng giá trị SP + Phí dịch vụ + Tổng phí VCNĐ');
+
         $grid->admin_note('Admin ghi chú');
-        $grid->internal_note('Nội bộ ghi chú');
-        $grid->current_rate('Tỷ giá (VND)')->display(function () {
-            return number_format($this->current_rate);
-        });
-        $grid->created_at(trans('admin.created_at'))->display(function () {
-            return date('H:i | d-m-Y', strtotime($this->created_at));
-        });
         $grid->disableCreateButton();
         $grid->setActionClass(\Encore\Admin\Grid\Displayers\Actions::class);
 
-        $grid->disableActions();
         $grid->actions(function ($actions) {
             $actions->disableDelete();
             $actions->disableView();
             $actions->disableEdit();
 
             $actions->append('
-                <a href="'.route('admin.detail_orders.show', $this->getKey()).'" class="grid-row-view btn btn-success btn-xs">
-                    <i class="fa fa-eye"></i> &nbsp;Chi tiết đơn
+                <a href="'.route('admin.customer_orders.show', $this->getKey()).'" class="grid-row-view btn btn-success btn-xs" data-toggle="tooltip" title="Xem chi tiết đơn hàng">
+                    <i class="fa fa-eye"></i>
                 </a>'
             );
-
-            $actions->append('
-                <a href="'.route('admin.puchase_orders.edit', $this->getKey()).'" class="grid-row-edit btn btn-primary btn-xs">
-                    <i class="fa fa-edit"></i> &nbsp;Chỉnh sửa
-                </a>'
-            );
-
-            if ($this->row->status == PurchaseOrder::STATUS_NEW_ORDER) {
-                $actions->append('
-                    <a href="'.route('admin.puchase_orders.deposite', $this->getKey()).'" class="grid-row-deposite btn btn-info btn-xs">
-                        <i class="fa fa-money"></i> &nbsp;Vào tiền cọc
-                    </a>'
-                );
-            }
-            
         });
 
-        Admin::style('.btn {display: block;}');
+        // Admin::style('.btn {display: block;}');
 
         $grid->batchActions(function ($batch) {
             $batch->disableDelete();
         });
-        $grid->paginate(50);
-
-        Admin::script(
-            <<<EOT
-
-            $('tfoot').each(function () {
-                $(this).insertAfter($(this).siblings('thead'));
-            });
-EOT
-    );
+        $grid->paginate(20);
 
         return $grid;
     }
@@ -197,46 +245,93 @@ EOT
      */
     protected function detail($id)
     {
+        $order = PurchaseOrder::find($id);
+
+        if (! isset($order->items)) {
+            admin_error('Đơn hàng bạn vừa chọn xem chi tiết không tồn tại. Vui lòng kiểm tra lại.');
+            return redirect()->route('admin.puchase_orders.index');
+        }
+        $items = $order->items;
+        $qty = $qty_reality = 0;
+        $purchase_cn_transport_fee = 0; // Tổng phí ship nội địa TQ
+        $total_price_reality = 0; // Tổng tiền thực đặt = Tổng thực đặt * giá 
+        foreach ($items as $item) {
+            $qty_reality += $item->qty_reality;
+            $qty += $item->qty;
+            $purchase_cn_transport_fee += $item->purchase_cn_transport_fee;
+            $total_price_reality += $item->qty_reality * $item->price;
+        }
+
+        $total_bill = ($total_price_reality + $purchase_cn_transport_fee + $order->purchase_order_service_fee);
+        $current_rate = $order->current_rate;
+        $headers = ['Thông tin', 'Giá trị', ''];
+        $rows = [
+            ['Tổng giá trị đơn hàng = Tổng tiền thực đặt + ship nội địa + dịch vụ', number_format($total_bill) . " (Tệ)" . " = " . number_format($total_bill * $current_rate) . " (VND)", 'Kho', $order->warehouse->name ?? "Đang cập nhật"],
+            ['Tổng tiền thực đặt', number_format($total_price_reality) . " (Tệ)" . " = " . number_format($total_price_reality * $current_rate) . " (VND)", 'Nhân viên đặt hàng', $order->supporterOrder->name ?? "Đang cập nhật"],
+            ['Tổng phí ship nội địa Trung Quốc', number_format($purchase_cn_transport_fee) . " (Tệ)"  . " = " . number_format($purchase_cn_transport_fee * $current_rate) . " (VND)", 'Nhân viên CSKH', $order->supporter->name ?? "Đang cập nhật"],
+            ['Tổng phí dịch vụ', number_format($order->purchase_order_service_fee) . " (Tệ)" . " = " . number_format($order->purchase_order_service_fee * $current_rate) . " (VND)", 'Nhân viên Kho', $order->supporterWarehouse->name ?? "Đang cập nhật"],
+            ['Tổng số lượng', $qty, '<h6><b>Mã đơn hàng</b></h6>', '<h6><b>'.$order->order_number.'</b></h6>'],
+            ['Tổng thực đặt', $qty_reality, '<h6><b>Mã khách hàng</b></h6>', '<h6><b>'.$order->customer->symbol_name.'</b></h6>'],  
+            ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at)), 'Tỷ giá', number_format($current_rate) . " (VND)"],
+            ['Trạng thái đơn hàng', PurchaseOrder::STATUS[$order->status]]
+        ];
+
+        $table = new Table($headers, $rows);
+
+        return $table->render();
+    }
+
+    /**
+     * Make a form builder.
+     *
+     * @return Form
+     */
+    protected function form()
+    {
+        //
+    }
+
+    /**
+     * Make a grid builder.
+     *
+     * @return Grid
+     */
+    protected function gridItem($id)
+    {
         $grid = new Grid(new OrderItem());
-        $grid->model()->whereOrderId($id)->orderBy('created_at', 'desc');
+        $grid->model()->where('order_id',$id);
 
         $grid->filter(function($filter) {
             $filter->expand();
             $filter->disableIdFilter();
+            // $filter->column(1/2, function ($filter) {
+                $filter->where(function ($query) {
+                    $orders = PurchaseOrder::where('order_number', 'like', "%{$this->input}%")->get()->pluck('id');
+    
+                    $query->whereIn('order_id', $orders);
+                
+                }, 'Mã đơn hàng');
+                // $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
+            // });
+            // $filter->column(1/2, function ($filter) {
+                $filter->like('cn_code', 'Mã vận đơn');
+                $filter->like('cn_order_number', 'Mã giao dịch');
+            // });
+            
         });
-
-        $grid->header(function ($query) use ($id) {
-            $order = PurchaseOrder::find($id);
-
-            $items = $order->items;
-            $qty = $qty_reality = 0;
-            foreach ($items as $item) {
-                $qty_reality += $item->qty_reality;
-                $qty += $item->qty;
-            }
-            $headers = ['Thông tin', 'Giá trị', ''];
-            $rows = [
-                ['Tổng giá trị đơn hàng', number_format($order->purchase_total_items_price), 'Kho', $order->warehouse->name ?? "Đang cập nhật"],
-                ['Tổng tiền thực đặt', number_format($order->purchase_total_items_price), 'Nhân viên đặt hàng', $order->supporterOrder->name ?? "Đang cập nhật"],
-                ['Tổng phí ship nội địa TQ', number_format($order->transport_fee), 'Nhân viên CSKH', $order->supporter->name ?? "Đang cập nhật"],
-                ['Tổng số lượng', $qty, 'Nhân viên Kho', $order->supporterWarehouse->name ?? "Đang cập nhật"],
-                ['Tổng thực đặt', $qty_reality],  
-                ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at))],
-            ];
-
-            $table = new Table($headers, $rows);
-
-            return $table->render();
-        });
-
+        $grid->fixColumns(5);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
-        $grid->order()->order_number('MĐH')->help('Mã đơn hàng mua hộ')->label('success');
-        $grid->column('customer_name', 'Mã KH')->display(function () {
-            return $this->customer->symbol_name ?? "";
-        })->help('Mã khách hàng');
+        $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary')->display(function () {
+            $html = "<span class='label label-primary'>".$this->order->order_number."</span>";
+            $customer = $this->order->customer->symbol_name ?? $this->order->customer->email;
+
+            $html .= "<br> <br> <span class='label label-info'>".$customer."</span>" ?? "";
+
+            return $html;
+        });
         $grid->status('Trạng thái')->display(function () {
             $html = "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
             $html .= "<br> <br>";
@@ -255,94 +350,86 @@ EOT
         $grid->qty_reality('Số lượng thực đặt');
         $grid->price('Giá (Tệ)');
         $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
-            return $this->purchase_cn_transport_fee ?? 0;
-        })->editable()->help('Phí vận chuyển nội địa Trung quốc');
+            return (int) $this->purchase_cn_transport_fee ?? 0;
+        })->help('Phí vận chuyển nội địa Trung quốc');
         $grid->column('total_price', 'Tổng tiền (Tệ)')->display(function () {
             $totalPrice = $this->qty_reality * $this->price + $this->purchase_cn_transport_fee ;
-            return number_format($totalPrice, 1) ?? 0; 
+            return number_format($totalPrice) ?? 0; 
+        })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
+        $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi');
+        $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
+            return $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null;
         });
-        $grid->weight('Cân nặng (KG)');
-        $grid->weight_date('Ngày vào KG');
-        $grid->cn_transport_code('Mã vận đơn Alilogi');
+        $grid->cn_code('Mã vận đơn Alilogi');
         $grid->cn_order_number('Mã giao dịch');
         $grid->customer_note('Khách hàng ghi chú')->style('width: 100px');
         $grid->admin_note('Admin ghi chú');
 
-        $grid->disableActions();
-        $grid->disableBatchActions();
         $grid->disableCreateButton();
-        $grid->disableRowSelector();
-        $grid->disableFilter();
-        $grid->disableColumnSelector();
+        $grid->disableActions();
 
-        $grid->tools(function ($tools) {
-            $tools->append('<a href="'.route('admin.puchase_orders.index').'" class="btn btn-sm btn-default" title="Danh sách"><i class="fa fa-list"></i><span class="hidden-xs">&nbsp;Danh sách</span></a>');
+        $grid->setActionClass(\Encore\Admin\Grid\Displayers\Actions::class);
+        
+        $grid->tools(function (Grid\Tools $tools) {
+            // $tools->append(new Ordered());
+            // $tools->append(new WarehouseVietnam());
+
+            // $id = explode('/', request()->server()['REQUEST_URI'])[3];
+
+            // $tools->append('<a class="btn-confirm-ordered btn btn-sm btn-warning" data-user="'.Admin::user()->id.'" data-id="'.$id.'"><i class="fa fa-check"></i> &nbsp; Xác nhận đã dặt hàng</a>');
+            $tools->batch(function ($batch) {
+                $batch->disableDelete();
+            });
         });
+        $grid->actions(function ($actions) {
+            $actions->disableDelete();
+            $actions->disableView();
+            $actions->disableEdit();
+
+            $actions->append('
+                <a href="'.route('admin.order_items.edit', $this->getKey()).'" class="grid-row-edit btn btn-primary btn-xs" target="_blank">
+                    <i class="fa fa-edit"></i> &nbsp;Chỉnh sửa
+                </a>'
+            );
+            
+        });
+        $grid->paginate(200);
+        Admin::style('.box {border-top:none;}');
+
+        Admin::script(
+            <<<EOT
+            var bar = "bar";
+            $(document).on('click', '.btn-confirm-ordered', function () {
+                var foo = bar;
+                if ( foo == "bar" ) {
+                    var isGood=confirm('Xác nhận Đã đặt hàng đơn hàng này ?');
+                    if (isGood) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/api/confirm-ordered',
+                            data: {
+                                order_id: $(this).data('id'),
+                                user_id_created: $(this).data('user')
+                            },
+                            success: function(response) {
+                                if (response.error == false) {
+                                    alert('Đã xác nhận đặt hàng thành công.');
+
+                                    setTimeout(function () {
+                                        window.location.reload();
+                                    }, 1000);
+                                    
+                                } else {
+                                    alert('Xảy ra lỗi: ' + response.msg);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+EOT
+        );
 
         return $grid;
-    }
-
-    /**
-     * Make a form builder.
-     *
-     * @return Form
-     */
-    protected function form()
-    {
-        $form = new Form(new PurchaseOrder);
-
-        $form->divider("Thông tin");
-        $form->display('order_number', 'Mã đơn hàng');
-        $form->display('customer_name', 'Mã khách hàng');
-        $form->select('warehouse_id', 'Kho')->options(Warehouse::all()->pluck('name', 'id'));
-        $form->display('created_at', trans('admin.created_at'));
-        $form->select('status', 'Trạng thái')->options(PurchaseOrder::STATUS);
-
-        $form->divider("Các khoản chi phí");
-        $form->currency('purchase_total_items_price', 'Tổng giá sản phẩm (Tệ)')->symbol('￥')->readonly()->width(200);
-        $form->currency('current_rate', 'Tỷ giá chuyển đổi (VND)')->symbol('VND')->readonly()->width(200);
-
-        $form->currency('purchase_order_service_fee', 'Phí dịch vụ (VND)')->symbol('VND')->width(200);
-        
-        $form->currency('purchase_order_transport_fee', 'Phí VCNĐ (VND)')->symbol('VND')->width(200);
-        $form->currency('price_weight', 'Giá cân nặng (VND)')->symbol('VND')->width(200);
-        $form->currency('final_total_price', 'Tổng giá cuối (VND)')->symbol('VND')->width(200)->disable();
-        $form->currency('deposit_default', 'Số tiền phải cọc (70%) (VND)')->readonly()->symbol('VND')->width(200);
-        $form->currency('deposited', 'Số tiền đã cọc (VND)')->symbol('VND')->width(200)->readonly();
-        $form->text('deposited_at', 'Ngày vào cọc')->readonly();
-
-        $form->divider("Nhân viên phụ trách");
-        $form->select('supporter_order_id', 'Nhân viên đặt hàng')->options(User::whereIsCustomer(0)->get()->pluck('name', 'id'));
-        $form->select('supporter_id', 'Nhân viên CSKH')->options(User::whereIsCustomer(0)->get()->pluck('name', 'id'));
-        $form->select('support_warehouse_id', 'Nhân viên kho')->options(User::whereIsCustomer(0)->get()->pluck('name', 'id'));
-        $form->hidden('deposited_at');
-
-        $form->divider("Ghi chú");
-        $form->textarea('admin_note', 'Admin ghi chú');
-        $form->textarea('internal_note', 'Ghi chú nội bộ');
-        $form->divider();
-        $form->disableEditingCheck();
-        $form->disableCreatingCheck();
-        $form->disableViewCheck();
-
-        $form->saving(function (Form $form) {
-            $deposited = $form->deposited;
-            if ($deposited != null) {
-                $form->status = PurchaseOrder::STATUS_DEPOSITED_ORDERING;
-                $form->deposited_at = date('Y-m-d H:i:s', strtotime(now()));
-            }
-
-            $order = PurchaseOrder::find($form->model()->id);
-            $purchase_total_items_price = $order->purchase_total_items_price;
-            $current_rate = $order->current_rate;
-            $purchase_order_service_fee = $form->purchase_order_service_fee;
-            $purchase_order_transport_fee = $form->purchase_order_transport_fee;
-
-            $final_total_price = ($purchase_total_items_price *  $current_rate) + $purchase_order_service_fee + $purchase_order_transport_fee;
-            $order->final_total_price = $final_total_price;
-            $order->save();
-        });
-
-        return $form;
     }
 }
