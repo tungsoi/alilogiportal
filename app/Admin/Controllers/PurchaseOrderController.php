@@ -70,7 +70,9 @@ class PurchaseOrderController extends AdminController
         });
         $grid->customer_id('Mã khách hàng')->display(function () {
             $user = User::find($this->customer_id);
-            $html = "<span class='label label-primary'>".$user->symbol_name."</span>" ?? null;
+            $symbol_name = $user->symbol_name != null ? $user->symbol_name : $user->email;
+            
+            $html = "<span class='label label-primary'>".$symbol_name."</span>";
             $html .= "<br> <a href=".route('admin.customers.rechargeHistory', $this->customer_id)." target='_blank'><i>" . number_format($user->wallet) . " (VND)</i> </a>";
 
             return $html;
@@ -246,7 +248,7 @@ class PurchaseOrderController extends AdminController
         $grid->batchActions(function ($batch) {
             $batch->disableDelete();
         });
-        $grid->paginate(50);
+        $grid->paginate(20);
 
         Admin::script(
             <<<EOT
@@ -557,7 +559,8 @@ EOT
                 ->symbol('VND')
                 ->width(200)
                 ->readonly()
-                ->digits(0);
+                ->digits(0)
+                ->default($order->final_total_price);
             $form->currency('deposit_default', 'Số tiền phải cọc (70%)')
                 ->symbol('VND')
                 ->width(200)

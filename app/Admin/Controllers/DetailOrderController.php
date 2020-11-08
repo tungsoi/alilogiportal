@@ -140,7 +140,9 @@ class DetailOrderController extends AdminController
         $grid->column('number', 'STT');
         $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary')->display(function () {
             $html = "<span class='label label-primary'>".$this->order->order_number."</span>";
-            $html .= "<br> <br> <span class='label label-info'>".$this->customer->symbol_name."</span>" ?? "";
+            $customer = $this->order->customer->symbol_name ?? $this->order->customer->email;
+
+            $html .= "<br> <br> <span class='label label-info'>".$customer."</span>" ?? "";
 
             return $html;
         });

@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 class PurchaseOrder extends Model
 {   
     use AdminBuilder;
-
-    protected $connection = "aloorder";
     
     const STATUS_UNSENT = 1;
     const STATUS_NEW_ORDER = 2;
@@ -49,15 +47,15 @@ class PurchaseOrder extends Model
     ];
 
     const LABEL = [
-        "", 
-        "",
+        "default", 
+        "default",
         'default',
-        "",
+        "default",
         'primary',
         'info',
-        "",
+        "default",
         'warning',
-        "",
+        "default",
         'success',
         'danger'
     ];
