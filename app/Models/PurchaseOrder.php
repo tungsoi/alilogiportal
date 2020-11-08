@@ -11,7 +11,9 @@ class PurchaseOrder extends Model
 {   
     use AdminBuilder;
 
-    // const STATUS_UNSENT = 1;
+    protected $connection = "aloorder";
+    
+    const STATUS_UNSENT = 1;
     const STATUS_NEW_ORDER = 2;
     // const STATUS_CONFIRMED = 3;
     const STATUS_DEPOSITED_ORDERING = 4;
@@ -22,7 +24,7 @@ class PurchaseOrder extends Model
     const STATUS_SUCCESS = 9;
     const STATUS_CANCEL = 10;
 
-    // const STATUS_UNSENT_TEXT = 'Chưa gửi';
+    const STATUS_UNSENT_TEXT = 'Chưa gửi';
     const STATUS_NEW_ORDER_TEXT = 'Đơn hàng mới';
     // const STATUS_CONFIRMED_TEXT = 'Đã xác nhận';
     const STATUS_DEPOSITED_ORDERING_TEXT = 'Đã cọc - đang đặt';
@@ -34,7 +36,7 @@ class PurchaseOrder extends Model
     const STATUS_CANCEL_TEXT = 'Đã hủy';
 
     const STATUS = [
-        // self::STATUS_UNSENT => self::STATUS_UNSENT_TEXT,
+        self::STATUS_UNSENT => self::STATUS_UNSENT_TEXT,
         self::STATUS_NEW_ORDER => self::STATUS_NEW_ORDER_TEXT,
         // self::STATUS_CONFIRMED => self::STATUS_CONFIRMED_TEXT,
         self::STATUS_DEPOSITED_ORDERING => self::STATUS_DEPOSITED_ORDERING_TEXT,

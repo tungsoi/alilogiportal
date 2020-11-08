@@ -11,6 +11,8 @@ class OrderItem extends Model
 {
     use AdminBuilder;
 
+    protected $connection = "aloorder";
+    
     const PRODUCT_NOT_IN_CART   = 10;
     const STATUS_PURCHASE_ITEM_NOT_ORDER = 0;
     const STATUS_PURCHASE_ITEM_ORDERED = 1;
