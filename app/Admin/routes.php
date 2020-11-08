@@ -2,6 +2,7 @@
 
 use Illuminate\Routing\Router;
 use Encore\Admin\Facades\Admin;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // ADMIN GROUP
@@ -49,3 +50,5 @@ Route::group([
 ], function (Router $router) {
     $router->post('register', 'RegisterController@postRegister')->name('postRegister');
 });
+
+Route::get('/my-account/orders/temps', 'App\\Admin\\Controllers\\ToolController@booking')->middleware(['web']);

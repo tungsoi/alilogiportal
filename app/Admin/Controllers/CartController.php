@@ -10,6 +10,9 @@ use Encore\Admin\Show;
 use App\Models\OrderItem;
 use Encore\Admin\Facades\Admin;
 use App\User;
+use Encore\Admin\Layout\Content;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class CartController extends AdminController
 {
@@ -97,6 +100,35 @@ class CartController extends AdminController
     {
         $form = new Form(new OrderItem);
         
+        if (session()->has('booking_product')) {
+            $booking = session()->get('booking_product');
+
+            $form->text('shop_name', 'Tên shop')->default($booking[0]['shop_name']);
+            $form->text('product_name', 'Tên sản phẩm')->default($booking[0]['product_name']);
+            $form->text('product_link', 'Link sản phẩm')->rules('required')->default($booking[0]['product_link']);
+            $form->html('<img src="'.$booking[0]['product_image'].'" style="width: 150px;"/>');
+
+            $form->text('product_size', 'Size sản phẩm')->rules('required')->default($booking[0]['product_size']);
+            $form->text('product_color', 'Màu sắc sản phẩm')->rules('required')->default($booking[0]['product_color']);
+            $form->number('qty', 'Số lượng')->rules('required')->default($booking[0]['qty']);
+            $form->currency('price', 'Giá sản phẩm (Tệ)')->rules('required')->symbol('￥')->digits(0)->default($booking[0]['price']);
+            $form->textarea('customer_note', 'Ghi chú');
+            $form->hidden('customer_id')->default(Admin::user()->id);
+            $form->hidden('status')->default(OrderItem::PRODUCT_NOT_IN_CART);
+            $form->hidden('qty_reality');
+            $form->hidden('product_image')->default($booking[0]['product_image']);
+    
+            $form->disableEditingCheck();
+            $form->disableCreatingCheck();
+            $form->disableViewCheck();
+    
+            $form->saving(function (Form $form) {
+                $form->qty_reality = $form->qty;
+            });
+    
+            return $form;
+        }
+        
         $form->text('shop_name', 'Tên shop');
         $form->text('product_name', 'Tên sản phẩm');
         $form->text('product_link', 'Link sản phẩm')->rules('required');
@@ -120,4 +152,5 @@ class CartController extends AdminController
 
         return $form;
     }
+
 }

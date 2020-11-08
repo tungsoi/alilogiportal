@@ -9,6 +9,12 @@ use Encore\Admin\Show;
 use App\Models\Alilogi\TransportRecharge;
 use App\User;
 use Encore\Admin\Facades\Admin;
+use Encore\Admin\Layout\Content;
+use Encore\Admin\Layout\Row;
+use Encore\Admin\Layout\Column;
+use Encore\Admin\Widgets\Box;
+use Encore\Admin\Widgets\InfoBox;
+use Encore\Admin\Widgets\Table;
 
 class CustomerRechargeController extends AdminController
 {
@@ -24,6 +30,31 @@ class CustomerRechargeController extends AdminController
         $this->title = "Lịch sử giao dịch ví tiền";
     }
 
+     /**
+     * Show interface.
+     *
+     * @param mixed   $id
+     * @param Content $content
+     *
+     * @return Content
+     */
+    public function index(Content $content)
+    {
+        return $content->header('Lịch sử giao dịch ví')
+        ->description('Chi tiết đơn hàng')
+
+        ->row(function (Row $row) {
+            $row->column(4, new InfoBox('Số dư ví', 'users', 'danger', '#', number_format(Admin::user()->wallet)));
+        })
+        ->row(function (Row $row)
+        {
+            // Tab thong tin chi tiet bao cao
+            $row->column(12, function (Column $column) 
+            {
+                $column->append((new Box('Chi tiết các giao dịch', $this->grid())));
+            });
+        });
+    }
     /**
      * Make a grid builder.
      *
@@ -32,103 +63,97 @@ class CustomerRechargeController extends AdminController
     protected function grid()
     {
         $id = Admin::user()->id;
-        $grid = new Grid(new TransportRecharge);
-        $grid->model()
-        ->where('money', ">", 0)
+        $res = TransportRecharge::where('money', ">", 0)
         ->where('customer_id', $id)
-        ->orderBy('id', 'desc');
+        ->orderBy('id', 'desc')
+        ->get();
 
-        $grid->filter(function($filter) {
-            $filter->expand();
-            $filter->disableIdFilter();
-            $filter->equal('type_recharge', 'Loại giao dịch')->select(TransportRecharge::RECHARGE);
-        });
+        $headers = ['STT', 'Ngày giao dịch', 'Nội dung giao dịch', 'Loại giao dịch', 'Số dư đầu kỳ (VND)', 'Trừ tiền (VND)', 'Nạp tiền (VND)', 'Số dư cuối kỳ (VND)'];
 
-        $grid->header(function ($query) use ($id) {
-            $wallet = User::find($id)->wallet;
-            $color = $wallet > 0 ? 'green' : 'red';
-            return '<h4 style="font-weight: bold;">Số dư hiện tại: <span  style="color: '.$color.'">'. number_format($wallet) ."</span> (VND)</h4>";
-        });        
-        $grid->rows(function (Grid\Row $row) {
-            $row->column('number', ($row->number+1));
-        });
-        $grid->column('number', 'STT');
-        $grid->content('Nội dung');
-        $grid->column('wallet_before', 'Số dư đầu kỳ');
-        $grid->column('pad_money', 'Trừ tiền')->display(function () {
-            if (! in_array($this->type_recharge, TransportRecharge::UP)) {
-                return number_format($this->money);
+        $raw = [
+            'order' =>  '',
+            'payment_date'  =>  '',
+            'type_recharge' =>  '',
+            'content'   =>  '',
+            'before_payment'    =>  '',
+            'down'   =>  '',
+            'up'    =>  '',
+            'after_payment'
+        ];
+        $data = [];
+
+        foreach ($res as $key => $record) {
+            $type = $record->type_recharge;
+            if (in_array($type, TransportRecharge::UP)) {
+                $up = $record->money;
+                $down = null;
+                $flag = 'up';
+            } else {
+                $down = $record->money;
+                $up = null;
+                $flag = 'down';
             }
-        });
-        $grid->column('plus_money', 'Nạp tiền')->display(function () {
-            if (in_array($this->type_recharge, TransportRecharge::UP)) {
-                return number_format($this->money);
+
+            $data[] = [
+                'order' =>  $key + 1,
+                'payment_date'  =>  date('H:i | d-m-Y', strtotime($record->created_at)),
+                'type_recharge' =>  TransportRecharge::ALL_RECHARGE[$record->type_recharge],
+                'content'   =>  $record->content,
+                'before_payment'    =>  '',
+                'down'   =>  $down,
+                'up'    => $up,
+                'after_payment' =>  '',
+                'flag'  =>  $flag
+            ];
+        }
+
+        $data = array_reverse($data);
+        foreach ($data as $key => $raw) {
+            if ($key == 0) {
+                $data[0]['before_payment']  = 0;
+                if ($data[0]['flag'] == 'up') {
+                    $data[0]['after_payment'] = $data[0]['before_payment'] + $data[0]['up'];
+                }
+                else {
+                    $data[0]['after_payment'] = $data[0]['before_payment'] - $data[0]['down'];
+                }
             }
-        });
-        $grid->column('wallet_after', 'Số dư cuối kỳ');
-        // $grid->order_type('Website')->display(function () {
-        //     return $this->order_type == TransportRecharge::TYPE_ORDER ? "<span class='label label-primary'>Alooder</span>" : "<span class='label label-danger'>Alilogi</span>";
-        // });
-        // $grid->customer_id('Tên khách hàng')->display(function () {
-        //     return $this->customer->name ?? "";
-        // });
-        // $grid->user_id_created('Nhân viên thực hiện')->display(function () {
-        //     return $this->userCreated->name ?? "";
-        // });
-        // $grid->money('Số tiền')->display(function () {
-        //     if ($this->money > 0) {
-        //         return '<span class="label label-success">'.number_format($this->money) ?? "0".'</span>';
-        //     }
+            else {
+                $data[$key]['before_payment']  = $data[$key-1]['after_payment'];
+                if ($data[$key]['flag'] == 'up') {
+                    $data[$key]['after_payment'] = $data[$key]['before_payment'] + $data[$key]['up'];
+                }
+                else {
+                    $data[$key]['after_payment'] = $data[$key]['before_payment'] - $data[$key]['down'];
+                }
+            }
+        }
 
-        //     return '<span class="label label-danger">'.number_format($this->money).'</span>';
-        // });
-        // $grid->type_recharge('Loại giao dịch')->display(function () {
-        //     if ($this->order_type == TransportRecharge::TYPE_TRANSPORT) {
-        //         if ($this->type_recharge == TransportRecharge::PAYMENT) {
-        //             return '<span class="label label-'.TransportRecharge::COLOR[TransportRecharge::PAYMENT].' ">'.TransportRecharge::RECHARGE_PAYMENT.'</span>';
-        //         }
-        //         return '<span class="label label-'.TransportRecharge::COLOR[$this->type_recharge].' ">'.TransportRecharge::RECHARGE[$this->type_recharge].'</span>';
-        //     } else {
-        //         $label = "default";
-        //         if ($this->type_recharge == TransportRecharge::DEPOSITE_ORDER ) {
-        //             $label = "warning";
-        //             $text = TransportRecharge::DEPOSITE_ORDER_TEXT;
-        //         } else {
-        //             $label = "danger";
-        //             $text = TransportRecharge::PAYMENT_ORDER_TEXT;
-        //         }
+        $data = array_reverse($data);
 
-        //         return '<span class="label label-'.$label.'">'.$text.'</span>';
-        //     }
-        // });
-        // $grid->content('Nội dung');
-        // $grid->created_at(trans('admin.created_at'))->display(function () {
-        //     return date('H:i | d-m-Y', strtotime($this->created_at));
-        // });
-        $grid->disableActions();
+        foreach ($data as $key => $last_raw) {
 
-        $grid->disableCreateButton();
-        return $grid;
-    }
+            $data[$key]['before_payment'] = $data[$key]['before_payment'] >= 0 
+            ? "<span class='label label-success'>".number_format($data[$key]['before_payment'])."</span>"
+            : "<span class='label label-danger'>".number_format($data[$key]['before_payment'])."</span>";
 
-    /**
-     * Make a show builder.
-     *
-     * @param mixed   $id
-     * @return Show
-     */
-    protected function detail($id)
-    {
-        //
-    }
+            $data[$key]['down'] = $data[$key]['down'] != null
+            ? "<span class='label label-danger'>".number_format($data[$key]['down'])."</span>"
+            : null;
+            
+            $data[$key]['up'] = $data[$key]['up'] != null
+            ? "<span class='label label-success'>".number_format($data[$key]['up'])."</span>"
+            : null;
+        
+            $data[$key]['after_payment'] = $data[$key]['after_payment'] >= 0 
+            ? "<span class='label label-success'>".number_format($data[$key]['after_payment'])."</span>"
+            : "<span class='label label-danger'>".number_format($data[$key]['after_payment'])."</span>";
 
-    /**
-     * Make a form builder.
-     *
-     * @return Form
-     */
-    protected function form()
-    {
-        // 
+            unset($data[$key]['flag']);
+        }
+
+        $table = new Table($headers, $data);
+
+        return $table->render();
     }
 }

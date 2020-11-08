@@ -212,33 +212,29 @@ class DetailOrderController extends AdminController
 
         Admin::script(
             <<<EOT
-            var bar = "bar";
             $(document).on('click', '.btn-confirm-ordered', function () {
-                var foo = bar;
-                if ( foo == "bar" ) {
-                    var isGood=confirm('Xác nhận Đã đặt hàng đơn hàng này ?');
-                    if (isGood) {
-                        $.ajax({
-                            type: 'POST',
-                            url: '/api/confirm-ordered',
-                            data: {
-                                order_id: $(this).data('id'),
-                                user_id_created: $(this).data('user')
-                            },
-                            success: function(response) {
-                                if (response.error == false) {
-                                    alert('Đã xác nhận đặt hàng thành công.');
+                var isGood=confirm('Xác nhận Đã đặt hàng đơn hàng này ?');
+                if (isGood) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/api/confirm-ordered',
+                        data: {
+                            order_id: $(this).data('id'),
+                            user_id_created: $(this).data('user')
+                        },
+                        success: function(response) {
+                            if (response.error == false) {
+                                alert('Đã xác nhận đặt hàng thành công.');
 
-                                    setTimeout(function () {
-                                        window.location.reload();
-                                    }, 1000);
-                                    
-                                } else {
-                                    alert('Xảy ra lỗi: ' + response.msg);
-                                }
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000);
+                                
+                            } else {
+                                alert('Xảy ra lỗi: ' + response.msg);
                             }
-                        });
-                    }
+                        }
+                    });
                 }
             });
 EOT
