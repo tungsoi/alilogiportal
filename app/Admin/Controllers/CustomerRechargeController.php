@@ -41,7 +41,7 @@ class CustomerRechargeController extends AdminController
     public function index(Content $content)
     {
         return $content->header('Lịch sử giao dịch ví')
-        ->description('Chi tiết đơn hàng')
+        ->description('Chi tiết')
 
         ->row(function (Row $row) {
             $row->column(4, new InfoBox('Số dư ví', 'users', 'danger', '#', number_format(Admin::user()->wallet)));
