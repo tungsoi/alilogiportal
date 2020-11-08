@@ -71,7 +71,7 @@ class PurchaseOrderController extends AdminController
         $grid->customer_id('Mã khách hàng')->display(function () {
             $user = User::find($this->customer_id);
             $html = "<span class='label label-primary'>".$user->symbol_name."</span>" ?? null;
-            $html .= "<br> <i>" . number_format($user->wallet) . " (VND)</i>";
+            $html .= "<br> <a href=".route('admin.customers.rechargeHistory', $this->customer_id)." target='_blank'><i>" . number_format($user->wallet) . " (VND)</i> </a>";
 
             return $html;
         });
