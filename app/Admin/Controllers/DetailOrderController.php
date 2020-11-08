@@ -222,7 +222,7 @@ class DetailOrderController extends AdminController
                     },
                     success: function(response) {
                         if (response.error == false) {
-                            alert('Đã xác nhận đặt hàng thành công.');
+                            toastr.success('Đã xác nhận đặt hàng thành công.');
 
                             setTimeout(function () {
                                 window.location.reload();
@@ -331,8 +331,12 @@ EOT
         // cn_code alilogi
         if ($column == 'cn_code' && $value == 0) {
             $transport_item = TransportOrderItem::select('cn_code', 'kg', 'warehouse_cn_date')->where('cn_code', $value)->first();
-            $res['weight'] = $transport_item->kg;
-            $res['weight_date'] =  $transport_item->warehouse_cn_date;
+
+            if ($transport_item) {
+                $res['weight'] = $transport_item->kg;
+                $res['weight_date'] =  $transport_item->warehouse_cn_date;
+            }
+            
         }
 
         OrderItem::find($data['pk'])->update($res);
