@@ -59,7 +59,7 @@ class CartController extends AdminController
         $grid->product_color('Màu');
         $grid->qty('Số lượng đặt');
         $grid->price('Giá (Tệ)');
-        $grid->customer_note('Ghi chú');
+        $grid->customer_note('Ghi chú')->editable();
         $grid->status('Trạng thái')->display(function () {
             return OrderItem::STATUS[$this->status];
         })->label('primary');

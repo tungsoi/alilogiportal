@@ -235,4 +235,42 @@ class PurchaseOrder extends Model
 
         return 0;
     }
+
+    public function finalPriceRMB()
+    {
+        # code...
+
+        if ($this->items) {
+            $total = $total_transport = 0;
+            foreach ($this->items as $item) {
+                $total += $item->qty_reality * $item->price; // tong gia san pham
+                $total_transport += $item->purchase_cn_transport_fee; // tong phi ship
+            }
+
+            $total_bill = ($total + $total_transport + $this->purchase_order_service_fee);
+
+            return $total_bill;
+        }
+
+        return 0;
+    }
+
+    public function finalPriceVND()
+    {
+        # code...
+
+        if ($this->items) {
+            $total = $total_transport = 0;
+            foreach ($this->items as $item) {
+                $total += $item->qty_reality * $item->price; // tong gia san pham
+                $total_transport += $item->purchase_cn_transport_fee; // tong phi ship
+            }
+
+            $total_bill = ($total + $total_transport + (int) str_replace(',', '', $this->purchase_order_service_fee));
+
+            return $total_bill * $this->current_rate;
+        }
+
+        return 0;
+    }
 }

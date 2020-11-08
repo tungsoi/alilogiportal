@@ -119,8 +119,7 @@ class PurchaseOrderController extends AdminController
             return '<span class="">'.$amount.'</span>';
         });
         $grid->purchase_order_service_fee('Phí dịch vụ (Tệ)')->display(function () {
-            $html = number_format($this->purchase_order_service_fee);
-            return $html;
+            return $this->purchase_order_service_fee;
         })->totalRow(function ($amount) {
             $amount = number_format($amount);
             return '<span class="">'.$amount.'</span>';
@@ -166,15 +165,7 @@ class PurchaseOrderController extends AdminController
         });
         $grid->final_total_price('Tổng giá cuối (Tệ)')->display(function () {
             if ($this->items) {
-                $total = $total_transport = 0;
-                foreach ($this->items as $item) {
-                    $total += $item->qty_reality * $item->price; // tong gia san pham
-                    $total_transport += $item->purchase_cn_transport_fee; // tong phi ship
-                }
-
-                $total_bill = ($total + $total_transport + $this->purchase_order_service_fee);
-                
-                return number_format($total_bill) . "<br> <i>" . number_format($total_bill * $this->current_rate) . " (VND)</i>";
+                return number_format($this->finalPriceRMB()) . "<br> <i>" . number_format($this->finalPriceVND()) . " (VND)</i>";
             }
             return 0;
         })->totalRow(function ($amount) {
@@ -499,20 +490,10 @@ EOT
         $form->disableViewCheck();
 
         $form->saving(function (Form $form) {
-            $deposited = $form->deposited;
-            if ($deposited != null) {
-                $form->status = PurchaseOrder::STATUS_DEPOSITED_ORDERING;
-                $form->deposited_at = date('Y-m-d H:i:s', strtotime(now()));
-            }
-
             $order = PurchaseOrder::find($form->model()->id);
-            $purchase_total_items_price = $order->purchase_total_items_price;
-            $current_rate = $order->current_rate;
-            $purchase_order_service_fee = $form->purchase_order_service_fee;
-            $purchase_order_transport_fee = $form->purchase_order_transport_fee;
-
-            $final_total_price = ($purchase_total_items_price *  $current_rate) + $purchase_order_service_fee + $purchase_order_transport_fee;
-            $order->final_total_price = $final_total_price;
+            $order->purchase_order_service_fee = $form->purchase_order_service_fee;
+            $order->final_total_price = $order->finalPriceVND();
+            $order->deposit_default = $order->finalPriceVND() * 70 / 100;
             $order->save();
         });
 
@@ -560,7 +541,7 @@ EOT
                 ->width(200)
                 ->readonly()
                 ->digits(0)
-                ->default($order->final_total_price);
+                ->default($order->finalPriceVND());
             $form->currency('deposit_default', 'Số tiền phải cọc (70%)')
                 ->symbol('VND')
                 ->width(200)

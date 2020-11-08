@@ -213,29 +213,26 @@ class DetailOrderController extends AdminController
         Admin::script(
             <<<EOT
             $(document).on('click', '.btn-confirm-ordered', function () {
-                var isGood=confirm('Xác nhận Đã đặt hàng đơn hàng này ?');
-                if (isGood) {
-                    $.ajax({
-                        type: 'POST',
-                        url: '/api/confirm-ordered',
-                        data: {
-                            order_id: $(this).data('id'),
-                            user_id_created: $(this).data('user')
-                        },
-                        success: function(response) {
-                            if (response.error == false) {
-                                alert('Đã xác nhận đặt hàng thành công.');
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/confirm-ordered',
+                    data: {
+                        order_id: $(this).data('id'),
+                        user_id_created: $(this).data('user')
+                    },
+                    success: function(response) {
+                        if (response.error == false) {
+                            alert('Đã xác nhận đặt hàng thành công.');
 
-                                setTimeout(function () {
-                                    window.location.reload();
-                                }, 1000);
-                                
-                            } else {
-                                alert('Xảy ra lỗi: ' + response.msg);
-                            }
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 500);
+                            
+                        } else {
+                            alert('Xảy ra lỗi: ' + response.msg);
                         }
-                    });
-                }
+                    }
+                });
             });
 EOT
         );
@@ -276,10 +273,9 @@ EOT
             ['Tổng tiền thực đặt', number_format($total_price_reality) . " (Tệ)" . " = " . number_format($total_price_reality * $current_rate) . " (VND)", 'Nhân viên đặt hàng', $order->supporterOrder->name ?? "Đang cập nhật"],
             ['Tổng phí ship nội địa Trung Quốc', number_format($purchase_cn_transport_fee) . " (Tệ)"  . " = " . number_format($purchase_cn_transport_fee * $current_rate) . " (VND)", 'Nhân viên CSKH', $order->supporter->name ?? "Đang cập nhật"],
             ['Tổng phí dịch vụ', number_format($order->purchase_order_service_fee) . " (Tệ)" . " = " . number_format($order->purchase_order_service_fee * $current_rate) . " (VND)", 'Nhân viên Kho', $order->supporterWarehouse->name ?? "Đang cập nhật"],
-            ['Tổng số lượng', $qty, '<h6><b>Mã đơn hàng</b></h6>', '<h6><b>'.$order->order_number.'</b></h6>'],
-            ['Tổng thực đặt', $qty_reality, '<h6><b>Mã khách hàng</b></h6>', '<h6><b>'.$order->customer->symbol_name.'</b></h6>'],  
-            ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at)), 'Tỷ giá', number_format($current_rate) . " (VND)"],
-            ['Trạng thái đơn hàng', PurchaseOrder::STATUS[$order->status]]
+            ['Tổng số lượng', $qty, '<h6><b>Mã đơn hàng: '.$order->order_number.'</b></h6>', '<h6><b>Mã khách hàng: '.$order->customer->symbol_name.'</b></h6>'],
+            ['Tổng thực đặt', $qty_reality, 'Trạng thái đơn hàng', PurchaseOrder::STATUS[$order->status]],  
+            ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at)), 'Tỷ giá', number_format($current_rate) . " (VND)"]
         ];
 
         $table = new Table($headers, $rows);
