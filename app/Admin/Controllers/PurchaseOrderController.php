@@ -41,7 +41,7 @@ class PurchaseOrderController extends AdminController
     protected function grid()
     {
         $grid = new Grid(new PurchaseOrder());
-        $grid->model()->whereOrderType(1)->orderBy('created_at', 'desc');
+        $grid->model()->whereOrderType(1)->where('status', '!=', PurchaseOrder::STATUS_UNSENT)->orderBy('created_at', 'desc');
 
         $grid->filter(function($filter) {
             $filter->expand();

@@ -80,11 +80,11 @@ class OrderItemController extends AdminController
         });
         $grid->column('number', 'STT');
         $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary');
-        $grid->id('Mã SP')->display(function () {
-            return "SPMH-".str_pad($this->id, 5, 0, STR_PAD_LEFT);
-        });
+        // $grid->id('Mã SP')->display(function () {
+        //     return "SPMH-".str_pad($this->id, 5, 0, STR_PAD_LEFT);
+        // });
         $grid->column('customer_name', 'Mã khách hàng')->display(function () {
-            return $this->customer->symbol_name ?? "";
+            return $this->order->customer->symbol_name ?? "";
         })->help('Mã khách hàng');
         $grid->status('Trạng thái')->display(function () {
             $html = "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
