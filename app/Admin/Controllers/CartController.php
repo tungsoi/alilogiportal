@@ -54,7 +54,9 @@ class CartController extends AdminController
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 100, 'height' => 100]);
         $grid->shop_name('Tên shop');
         $grid->product_name('Tên sản phẩm');
-        $grid->product_link('Link sản phẩm')->link();
+        $grid->product_link('Link sản phẩm')->display(function () {
+            return "<a href=".$this->product_link." target='_blank'>Link sản phẩm</a>";
+        });
         $grid->product_size('Size');
         $grid->product_color('Màu');
         $grid->qty('Số lượng đặt');
