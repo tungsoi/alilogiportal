@@ -202,12 +202,6 @@ class CartController extends AdminController
         $form->disableCreatingCheck();
         $form->disableViewCheck();
 
-        $form->saving(function (Form $form) use ($id) {
-            $form->id = $id;
-            $form->qty_reality = $form->qty;
-
-        });
-
         return $form;
     }
 
@@ -216,6 +210,8 @@ class CartController extends AdminController
         # code...
 
         $data = $request->all();
+        $data['customer_id'] = Admin::user()->id;
+        $data['qty_reality'] = $data['qty'];
         OrderItem::find($data['xid'])->update($data);
 
         admin_toastr('Lưu thành công !', 'success');
