@@ -78,7 +78,7 @@ class Ordered extends BatchAction
 
     public function html()
     {
-        return "<a class='ordered btn btn-sm btn-primary'><i class='fa fa-cart-plus'></i> &nbsp; Đã đặt hàng sản phẩm</a>";
+        return "<a class='ordered btn btn-sm btn-primary' data-toggle='tooltip' title='Xác nhận đã đặt hàng các sản phẩm được chọn'><i class='fa fa-cart-plus'></i> &nbsp; Đã đặt hàng sản phẩm</a>";
     }
 
 }

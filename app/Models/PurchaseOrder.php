@@ -273,4 +273,134 @@ class PurchaseOrder extends Model
 
         return 0;
     }
+
+    # --------------------------- #
+    /**
+     * Tổng số lượng sản phẩm trong đơn
+     *
+     * @return void
+     */
+    public function sumQtyItem()
+    {
+        # code...
+        if ($this->items) {
+            
+            $total = 0;
+            foreach ($this->items as $item) {
+                if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
+                    $total += $item->qty;
+                }
+                
+            }
+
+            return $total;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Tổng số lượng sản phẩm thực đặt trong đơn
+     *
+     * @return void
+     */
+    public function sumQtyRealityItem()
+    {
+        # code...
+        if ($this->items) {
+            
+            $total = 0;
+            foreach ($this->items as $item) {
+                if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
+                    $total += $item->qty_reality;
+                }
+                
+            }
+
+            return $total;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Tổng phí dịch vụ trong đơn
+     *
+     * @return void
+     */
+    public function sumServiceFee()
+    {
+        # code...
+        return $this->purchase_service_fee;
+    }
+
+    /**
+     * Tổng phí ship trong đơn
+     *
+     * @return void
+     */
+    public function sumShipFee()
+    {
+        # code...
+        if ($this->items) {
+            
+            $total = 0;
+            foreach ($this->items as $item) {
+                if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
+                    $total += $item->purchase_cn_transport_fee;
+                }
+                
+            }
+
+            return $total;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Tổng tiền sản phẩm
+     *
+     * @return void
+     */
+    public function sumQtyRealityMoney()
+    {
+        # code...
+        if ($this->items) {
+            
+            $total = 0;
+            foreach ($this->items as $item) {
+                if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
+                    $total += $item->qty_reality * $item->price;
+                }
+                
+            }
+
+            return $total;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Tổng giá cuối
+     *
+     * @return void
+     */
+    public function totalBill()
+    {
+        # code...
+        return $this->sumQtyRealityMoney() + $this->sumShipFee() + $this->sumServiceFee();
+    }
+
+    /**
+     * Cọc mặc định
+     *
+     * @return void
+     */
+    public function depositeDefault()
+    {
+        # code...
+        return $this->totalBill() * 70 / 100;
+    }
 }

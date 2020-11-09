@@ -72,7 +72,7 @@ class PurchaseOrderController extends AdminController
             $user = User::find($this->customer_id);
             $symbol_name = $user->symbol_name != null ? $user->symbol_name : $user->email;
             
-            $html = "<span class='label label-primary'>".$symbol_name."</span>";
+            $html = $symbol_name;
             $html .= "<br> <a href=".route('admin.customers.rechargeHistory', $this->customer_id)." target='_blank'><i>" . number_format($user->wallet) . " (VND)</i> </a>";
 
             return $html;

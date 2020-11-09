@@ -37,6 +37,9 @@
     .option-hide {
         display: none;
     }
+    span.error {
+      color: red !important;
+    }
   </style>
 </head>
 
@@ -126,8 +129,23 @@
                   @endif
               </div>
 
+              <div class="form-group{{ $errors->has('mobile') ? ' has-error' : '' }}">
+                <label for="mobile" class="control-label">Số điện thoại  <span class="error">(*)</span></label>
+                <input id="mobile" type="text" class="form-control" 
+                    name="mobile" 
+                    value="{{ old('mobile') }}" 
+                    placeholder="..."
+                    >
+
+                @if ($errors->has('mobile'))
+                    <span class="help-block">
+                        <strong>{{ $errors->first('mobile') }}</strong>
+                    </span>
+                @endif
+            </div>
+
               <div class="form-group{{ isset($errors) && $errors->has('province') ? ' has-error' : '' }}">
-                <label for="address" class="control-label">Địa chỉ  <span class="error">(*)</span></label>
+                <label for="address" class="control-label">Địa chỉ</label>
 
                     <select name="province" id="province" class="form-control" value={{ old('province')}}>
                         <option value="" checked>{{ trans('admin.province') }}</option>
@@ -172,20 +190,6 @@
                 {{-- </div> --}}
             </div>
 
-              <div class="form-group{{ $errors->has('mobile') ? ' has-error' : '' }}">
-                  <label for="mobile" class="control-label">Số điện thoại  <span class="error">(*)</span></label>
-                  <input id="mobile" type="text" class="form-control" 
-                      name="mobile" 
-                      value="{{ old('mobile') }}" 
-                      placeholder="..."
-                      >
-
-                  @if ($errors->has('mobile'))
-                      <span class="help-block">
-                          <strong>{{ $errors->first('mobile') }}</strong>
-                      </span>
-                  @endif
-              </div>
 
               <div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
                   <label for="password" class="control-label">Mật khẩu  <span class="error">(*)</span></label>

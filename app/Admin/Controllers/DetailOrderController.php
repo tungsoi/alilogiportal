@@ -140,23 +140,19 @@ class DetailOrderController extends AdminController
         });
         $grid->column('number', 'STT');
         $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary')->display(function () {
-            $html = "<span class='label label-primary'>".$this->order->order_number."</span>";
+            $html = "<p class='label label-primary'>".$this->order->order_number."</p>";
             $customer = $this->order->customer->symbol_name ?? $this->order->customer->email;
 
-            $html .= "<br> <br> <span class='label label-info'>".$customer."</span>" ?? "";
+            $html .= "<br> <p class='label label-info'>".$customer."</p>" ?? "";
+            $html .= "<br> <p class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</p>";
+            $html .= "<br>" . date('H:i | d-m-Y', strtotime($this->created_at));
 
             return $html;
         });
-        $grid->status('Trạng thái')->display(function () {
-            $html = "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
-            $html .= "<br> <br>";
-            $html .= '<b><a href="'.$this->product_link.'" target="_blank"> Link sản phẩm </a></b>';
-            return $html;
-        });
-        $grid->created_at(trans('admin.created_at'))->display(function () {
-            return date('H:i | d-m-Y', strtotime($this->created_at));
-        });
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 50, 'height' => 50]);
+        $grid->status('Link sản phẩm')->display(function () {
+            return '<b><a href="'.$this->product_link.'" target="_blank"> Link SP</a></b>';
+        });
         $grid->product_size('Kích thước')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
         })->editable();
@@ -164,17 +160,18 @@ class DetailOrderController extends AdminController
         $grid->qty('Số lượng')->editable();
         $grid->qty_reality('Số lượng thực đặt')->editable();
         $grid->price('Giá (Tệ)');
-        $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
-            return $this->purchase_cn_transport_fee ?? 0;
-        })->help('Phí vận chuyển nội địa Trung quốc')->editable();
         $grid->column('total_price', 'Tổng tiền (Tệ)')->display(function () {
             $totalPrice = $this->qty_reality * $this->price + $this->purchase_cn_transport_fee ;
             return number_format($totalPrice) ?? 0; 
         })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
-        $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi')->editable();
-        $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
-            return $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null;
-        })->editable('date');
+        $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
+            return $this->purchase_cn_transport_fee;
+        })->help('Phí vận chuyển nội địa Trung quốc')->editable();
+        
+        // $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi')->editable();
+        // $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
+        //     return $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null;
+        // })->editable('date');
         $grid->cn_code('Mã vận đơn Alilogi')->editable();
         $grid->cn_order_number('Mã giao dịch')->editable();
         $grid->customer_note('Khách hàng ghi chú')->style('width: 100px')->editable();
@@ -190,7 +187,7 @@ class DetailOrderController extends AdminController
 
             $id = explode('/', request()->server()['REQUEST_URI'])[3];
 
-            $tools->append('<a class="btn-confirm-ordered btn btn-sm btn-warning" data-user="'.Admin::user()->id.'" data-id="'.$id.'"><i class="fa fa-check"></i> &nbsp; Xác nhận đã dặt hàng</a>');
+            $tools->append('<a class="btn-confirm-ordered btn btn-sm btn-warning" data-user="'.Admin::user()->id.'" data-id="'.$id.'" data-toggle="tooltip" title="Chốt chuyển trạng thái của đơn hàng thành Đã đặt hàng"><i class="fa fa-check"></i> &nbsp; Chốt đặt hàng đơn</a>');
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
@@ -214,7 +211,7 @@ class DetailOrderController extends AdminController
 
         });
         $grid->paginate(200);
-        Admin::style('.box {border-top:none;}');
+        Admin::style('.box {border-top:none;} .column-order.order_number span{margin-bottom: 10px;}');
 
         Admin::script(
             <<<EOT

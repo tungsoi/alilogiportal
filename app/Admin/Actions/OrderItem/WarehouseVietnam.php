@@ -91,7 +91,7 @@ class WarehouseVietnam extends BatchAction
 
     public function html()
     {
-        return "<a class='warehouse-vietnam btn btn-sm btn-success'><i class='fa fa-cart-plus'></i> &nbsp; Đã về kho Việt Nam</a>";
+        return "<a class='warehouse-vietnam btn btn-sm btn-success' data-toggle='tooltip' title='Xác nhận đã về Việt Nam các sản phẩm được chọn'><i class='fa fa-cart-plus'></i> &nbsp; Đã về kho Việt Nam</a>";
     }
 
 }
