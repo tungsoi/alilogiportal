@@ -92,6 +92,22 @@ class CartController extends AdminController
     }
 
     /**
+     * Edit interface.
+     *
+     * @param mixed   $id
+     * @param Content $content
+     *
+     * @return Content
+     */
+    public function addCart($id, Content $content)
+    {
+        return $content
+            ->title($this->title())
+            ->description($this->description['edit'] ?? trans('admin.edit'))
+            ->body($this->formEdit((int) $id)) ;
+    }
+
+    /**
      * Make a form builder.
      *
      * @return Form
@@ -131,7 +147,7 @@ class CartController extends AdminController
         
         $form->text('shop_name', 'Tên shop');
         $form->text('product_name', 'Tên sản phẩm');
-        $form->text('product_link', 'Link sản phẩm')->rules('required');
+        $form->text('product_link', 'Link sản phẩm')->rules('required')->width('200px');
         $form->image('product_image','Ảnh sản phẩm')->thumbnail('small', $width = 150, $height = 150);
         $form->text('product_size', 'Size sản phẩm')->rules('required');
         $form->text('product_color', 'Màu sắc sản phẩm')->rules('required');
@@ -151,6 +167,59 @@ class CartController extends AdminController
         });
 
         return $form;
+    }
+
+    /**
+     * Make a form builder.
+     *
+     * @return Form
+     */
+    protected function formEdit($id = "")
+    {
+        $form = new Form(new OrderItem);
+
+        $item = OrderItem::find($id);
+        $form->setAction(route('admin.carts.storeAddByTool'));
+
+        $form->text('shop_name', 'Tên shop')->default($item->shop_name);
+        $form->text('product_name', 'Tên sản phẩm')->default($item->product_name);
+        $form->text('product_link', 'Link sản phẩm')->rules('required')->default($item->product_link);
+        $form->html('<img src="'.$item->product_image.'" style="width: 150px;"/>');
+
+        $form->text('product_size', 'Size sản phẩm')->rules('required')->default($item->product_size);
+        $form->text('product_color', 'Màu sắc sản phẩm')->rules('required')->default($item->product_color);
+        $form->number('qty', 'Số lượng')->rules('required')->default($item->qty);
+        $form->currency('price', 'Giá sản phẩm (Tệ)')->rules('required')->symbol('￥')->digits(2)->default($item->price);
+        $form->textarea('customer_note', 'Ghi chú');
+        $form->hidden('customer_id')->default(Admin::user()->id);
+        $form->hidden('status')->default(OrderItem::PRODUCT_NOT_IN_CART);
+        $form->hidden('qty_reality');
+        $form->hidden('product_image')->default($item->product_image);
+
+        $form->hidden('xid','Id')->default($item->id);
+
+        $form->disableEditingCheck();
+        $form->disableCreatingCheck();
+        $form->disableViewCheck();
+
+        $form->saving(function (Form $form) use ($id) {
+            $form->id = $id;
+            $form->qty_reality = $form->qty;
+
+        });
+
+        return $form;
+    }
+
+    public function storeAddByTool(Request $request)
+    {
+        # code...
+
+        $data = $request->all();
+        OrderItem::find($data['xid'])->update($data);
+
+        admin_toastr('Lưu thành công !', 'success');
+        return redirect()->route('admin.carts.index');
     }
 
 }

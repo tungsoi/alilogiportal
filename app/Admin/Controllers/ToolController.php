@@ -28,8 +28,8 @@ class ToolController extends Controller
     public function show(Request $request)
     {
         # code...
-
-        dd($request->all());
+        $item_id = $request->id;
+        return redirect()->route('admin.carts.addCart', $item_id);
     }
 
     public function createProduct(array $data)
