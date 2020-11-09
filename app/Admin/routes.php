@@ -51,4 +51,5 @@ Route::group([
     $router->post('register', 'RegisterController@postRegister')->name('postRegister');
 });
 
+Route::get('/my-account/orders/temps', 'App\\Admin\\Controllers\\ToolController@show')->name('orders.temps.show')->middleware(['web']);
 Route::post('/my-account/orders/temps', 'App\\Admin\\Controllers\\ToolController@booking')->middleware(['web']);
