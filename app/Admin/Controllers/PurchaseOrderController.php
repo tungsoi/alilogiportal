@@ -546,8 +546,7 @@ EOT
                 ->symbol('VND')
                 ->width(200)
                 ->readonly()
-                ->digits(0)
-                ->default($order->finalPriceVND() * 70 / 100);
+                ->digits(0);
             $form->currency('deposite', 'Số tiền đặt cọc')->rules(['required'])
                 ->symbol('VND')
                 ->width(200)
