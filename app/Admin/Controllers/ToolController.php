@@ -11,11 +11,14 @@ class ToolController extends Controller
 {
     public function booking(Request $request)
     {
-        $data = $request->all();
-        $order = $data['data']['selected'];
-        dd($order);
-        $request->session()->push('booking_product', $order);
+        $data = $request->data['selected'];
+        return $data;
+    }
 
-        return redirect()->route('admin.carts.create');
+    public function show(Request $request)
+    {
+        # code...
+
+        dd($request->all());
     }
 }
