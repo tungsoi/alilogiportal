@@ -191,7 +191,7 @@ class CartController extends AdminController
         $form->number('qty', 'Số lượng')->rules('required')->default($item->qty);
         $form->currency('price', 'Giá sản phẩm (Tệ)')->rules('required')->symbol('￥')->digits(2)->default($item->price);
         $form->textarea('customer_note', 'Ghi chú');
-        $form->hidden('customer_id')->default(Admin::user()->id);
+        // $form->hidden('customer_id')->default(Admin::user()->id);
         $form->hidden('status')->default(OrderItem::PRODUCT_NOT_IN_CART);
         $form->hidden('qty_reality');
         $form->hidden('product_image')->default($item->product_image);
