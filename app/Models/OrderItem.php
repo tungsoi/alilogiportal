@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 class OrderItem extends Model
 {
     use AdminBuilder;
-    
+
     const PRODUCT_NOT_IN_CART   = 10;
     const STATUS_PURCHASE_ITEM_NOT_ORDER = 0;
     const STATUS_PURCHASE_ITEM_ORDERED = 1;
@@ -83,7 +83,8 @@ class OrderItem extends Model
         'type',
         'internal_note',
         'weight_date',
-        'order_id'
+        'order_id',
+        'customer_id'
     ];
 
     protected $casts = [
