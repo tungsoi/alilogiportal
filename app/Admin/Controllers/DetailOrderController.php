@@ -200,12 +200,18 @@ class DetailOrderController extends AdminController
             $actions->disableView();
             $actions->disableEdit();
 
+            // $actions->append('
+            //     <a href="'.route('admin.order_items.edit', $this->getKey()).'" class="grid-row-edit btn btn-primary btn-xs" target="_blank" data-toggle="tooltip" title="Chỉnh sửa đơn hàng">
+            //         <i class="fa fa-edit"></i>
+            //     </a>'
+            // );
+            
             $actions->append('
-                <a href="'.route('admin.order_items.edit', $this->getKey()).'" class="grid-row-edit btn btn-primary btn-xs" target="_blank">
-                    <i class="fa fa-edit"></i> &nbsp;Chỉnh sửa
+                <a class="grid-row-outstock btn btn-danger btn-xs" data-id="'.$this->getKey().'" data-toggle="tooltip" title="Hết hàng">
+                    <i class="fa fa-times"></i>
                 </a>'
             );
-            
+
         });
         $grid->paginate(200);
         Admin::style('.box {border-top:none;}');
@@ -223,6 +229,28 @@ class DetailOrderController extends AdminController
                     success: function(response) {
                         if (response.error == false) {
                             toastr.success('Đã xác nhận đặt hàng thành công.');
+
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 500);
+                            
+                        } else {
+                            alert('Xảy ra lỗi: ' + response.msg);
+                        }
+                    }
+                });
+            });
+
+            $(document).on('click', '.grid-row-outstock', function () {
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/confirm-outstock',
+                    data: {
+                        item_id: $(this).data('id')
+                    },
+                    success: function(response) {
+                        if (response.error == false) {
+                            toastr.success('Đã xác nhận hết hàng.');
 
                             setTimeout(function () {
                                 window.location.reload();
@@ -258,11 +286,14 @@ EOT
         $qty = $qty_reality = 0;
         $purchase_cn_transport_fee = 0; // Tổng phí ship nội địa TQ
         $total_price_reality = 0; // Tổng tiền thực đặt = Tổng thực đặt * giá 
+
         foreach ($items as $item) {
-            $qty_reality += $item->qty_reality;
-            $qty += $item->qty;
-            $purchase_cn_transport_fee += $item->purchase_cn_transport_fee;
-            $total_price_reality += $item->qty_reality * $item->price;
+            // if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
+                $qty_reality += $item->qty_reality;
+                $qty += $item->qty;
+                $purchase_cn_transport_fee += $item->purchase_cn_transport_fee;
+                $total_price_reality += $item->qty_reality * $item->price;
+            // }
         }
 
         $total_bill = ($total_price_reality + $purchase_cn_transport_fee + $order->purchase_order_service_fee);
@@ -310,36 +341,41 @@ EOT
         # code...
 
         $data = $request->all();
-        $id = $data['pk'];
-        $column = $data['name'];
-        $value = $data['value'];
-        $res = [];
-        $res[$column] = $value;
 
-        $item = OrderItem::find($id);
-        $qty_reality = $item->qty_reality;
+        OrderItem::find($data['pk'])->update([
+            $data['name']   =>  $data['value']
+        ]);
 
-        // qty_reality
-        if ($column == 'qty_reality' && $value == 0) {
-            $res['status'] = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
-        } else if ($data['name'] == 'qty_reality' && $data['value'] > 0) {
-            if ($qty_reality == 0) {
-                $res['status'] = OrderItem::STATUS_PURCHASE_ITEM_ORDERED;
-            }
-        }
+        // $id = $data['pk'];
+        // $column = $data['name'];
+        // $value = $data['value'];
+        // $res = [];
+        // $res[$column] = $value;
 
-        // cn_code alilogi
-        if ($column == 'cn_code' && $value == 0) {
-            $transport_item = TransportOrderItem::select('cn_code', 'kg', 'warehouse_cn_date')->where('cn_code', $value)->first();
+        // $item = OrderItem::find($id);
+        // $qty_reality = $item->qty_reality;
 
-            if ($transport_item) {
-                $res['weight'] = $transport_item->kg;
-                $res['weight_date'] =  $transport_item->warehouse_cn_date;
-            }
+        // // qty_reality
+        // if ($column == 'qty_reality' && $value == 0) {
+        //     $res['status'] = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
+        // } else if ($data['name'] == 'qty_reality' && $data['value'] > 0) {
+        //     if ($qty_reality == 0) {
+        //         $res['status'] = OrderItem::STATUS_PURCHASE_ITEM_ORDERED;
+        //     }
+        // }
+
+        // // cn_code alilogi
+        // if ($column == 'cn_code' && $value == 0) {
+        //     $transport_item = TransportOrderItem::select('cn_code', 'kg', 'warehouse_cn_date')->where('cn_code', $value)->first();
+
+        //     if ($transport_item) {
+        //         $res['weight'] = $transport_item->kg;
+        //         $res['weight_date'] =  $transport_item->warehouse_cn_date;
+        //     }
             
-        }
+        // }
 
-        OrderItem::find($data['pk'])->update($res);
+        // OrderItem::find($data['pk'])->update($res);
 
         return response()->json([
             'status'  => true,

@@ -108,3 +108,29 @@ Route::post('/confirm-ordered', function (Request $request) {
         ]);
     }
 });
+
+
+Route::post('/confirm-outstock', function (Request $request) {
+    $item_id = $request->item_id;
+
+    DB::beginTransaction();
+
+    try {
+        $item = OrderItem::find($item_id);
+        $item->status = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
+        $item->save();
+
+        DB::commit();
+        return response()->json([
+            'error' =>  false,
+            'msg'   =>  'success'
+        ]);
+    }
+    catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'error' =>  true,
+            'msg'   =>  $e->getMessage()
+        ]);
+    }
+});

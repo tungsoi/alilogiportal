@@ -37,7 +37,7 @@
             font-size: 12px !important;
         }
 
-        .grid-row-view, .grid-row-edit, .grid-row-deposite, .grid-row-cancle, .grid-row-confirm-ordered {
+        .grid-row-view, .grid-row-edit, .grid-row-deposite, .grid-row-cancle, .grid-row-confirm-ordered, .grid-row-outstock {
             margin-top: 5px;
         }
 

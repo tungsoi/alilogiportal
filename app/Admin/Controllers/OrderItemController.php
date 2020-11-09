@@ -176,6 +176,7 @@ class OrderItemController extends AdminController
     {
         $form = new Form(new OrderItem);
 
+        $form->select('status', 'Trạng thái')->options(OrderItem::STATUS);
         $form->text('product_size', 'Kích thước');
         $form->text('product_color', 'Màu sắc');
         $form->text('qty', 'Số lượng');
@@ -204,26 +205,26 @@ class OrderItemController extends AdminController
             $transport_item = TransportOrderItem::select('cn_code', 'kg', 'warehouse_cn_date')->where('cn_code', $cn_code)->first();
             if ($transport_item) {
                 OrderItem::find($form->model()->id)->update([
-                    'weight'    =>  $transport_item->kg,
+                    'weight'        =>  $transport_item->kg,
                     'weight_date'   =>  $transport_item->warehouse_cn_date
                 ]);
             } 
 
-            if ($form->qty_reality == 0) {
-                $status = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
-                OrderItem::find($form->model()->id)->update([
-                    'status'    =>  $status
-                ]);
-            } else if ($form->qty_reality > 0) {
-                $item =  OrderItem::find($form->model()->id);
+            // if ($form->qty_reality == 0) {
+            //     // $status = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
+            //     // OrderItem::find($form->model()->id)->update([
+            //     //     'status'    =>  $status
+            //     // ]);
+            // } else if ($form->qty_reality > 0) {
+            //     $item =  OrderItem::find($form->model()->id);
 
-                if ($item->qty_reality == 0) {
-                    $status = OrderItem::STATUS_PURCHASE_ITEM_ORDERED;
-                    OrderItem::find($form->model()->id)->update([
-                        'status'    =>  $status
-                    ]);
-                }
-            }
+            //     if ($item->qty_reality == 0) {
+            //         $status = OrderItem::STATUS_PURCHASE_ITEM_ORDERED;
+            //         OrderItem::find($form->model()->id)->update([
+            //             'status'    =>  $status
+            //         ]);
+            //     }
+            // }
             
         });
 
