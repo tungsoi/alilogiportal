@@ -111,7 +111,7 @@ class CartController extends AdminController
             $form->text('product_size', 'Size sản phẩm')->rules('required')->default($booking[0]['product_size']);
             $form->text('product_color', 'Màu sắc sản phẩm')->rules('required')->default($booking[0]['product_color']);
             $form->number('qty', 'Số lượng')->rules('required')->default($booking[0]['qty']);
-            $form->currency('price', 'Giá sản phẩm (Tệ)')->rules('required')->symbol('￥')->digits(0)->default($booking[0]['price']);
+            $form->currency('price', 'Giá sản phẩm (Tệ)')->rules('required')->symbol('￥')->digits(1)->default($booking[0]['price']);
             $form->textarea('customer_note', 'Ghi chú');
             $form->hidden('customer_id')->default(Admin::user()->id);
             $form->hidden('status')->default(OrderItem::PRODUCT_NOT_IN_CART);
@@ -136,7 +136,7 @@ class CartController extends AdminController
         $form->text('product_size', 'Size sản phẩm')->rules('required');
         $form->text('product_color', 'Màu sắc sản phẩm')->rules('required');
         $form->number('qty', 'Số lượng')->rules('required');
-        $form->currency('price', 'Giá sản phẩm (Tệ)')->rules('required')->symbol('￥')->digits(0);
+        $form->currency('price', 'Giá sản phẩm (Tệ)')->rules('required')->symbol('￥')->digits(1);
         $form->textarea('customer_note', 'Ghi chú');
         $form->hidden('customer_id')->default(Admin::user()->id);
         $form->hidden('status')->default(OrderItem::PRODUCT_NOT_IN_CART);
