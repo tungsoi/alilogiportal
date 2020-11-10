@@ -112,7 +112,7 @@ class PurchaseOrderController extends AdminController
         // });
         $grid->purchase_order_service_fee('Phí dịch vụ (Tệ)')->display(function () {
             return $this->purchase_order_service_fee;
-        });
+        })->editable();
         // ->totalRow(function ($amount) {
         //     $amount = number_format($amount);
         //     return '<span class="">'.$amount.'</span>';

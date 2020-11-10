@@ -318,7 +318,7 @@ class PurchaseOrder extends Model
     public function sumServiceFee()
     {
         # code...
-        return $this->purchase_service_fee;
+        return $this->purchase_order_service_fee;
     }
 
     /**
