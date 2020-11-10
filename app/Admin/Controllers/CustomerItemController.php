@@ -110,7 +110,7 @@ class CustomerItemController extends AdminController
         })->help('Phí vận chuyển nội địa Trung quốc');
         $grid->column('total_price', 'Tổng tiền (Tệ)')->display(function () {
             $totalPrice = ($this->qty_reality * $this->price) + $this->purchase_cn_transport_fee ;
-            return number_format($totalPrice) ?? 0; 
+            return number_format($totalPrice, 2) ?? 0; 
         })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
         $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi');
         $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
