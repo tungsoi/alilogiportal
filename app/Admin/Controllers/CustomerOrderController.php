@@ -360,7 +360,7 @@ class CustomerOrderController extends AdminController
             return $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null;
         });
         $grid->cn_code('Mã vận đơn Alilogi');
-        $grid->cn_order_number('Mã giao dịch');
+        // $grid->cn_order_number('Mã giao dịch');
         $grid->customer_note('Khách hàng ghi chú')->style('width: 100px')->editable();
         $grid->admin_note('Admin ghi chú');
 
