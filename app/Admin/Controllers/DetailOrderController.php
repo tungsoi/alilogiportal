@@ -116,24 +116,24 @@ class DetailOrderController extends AdminController
         $grid = new Grid(new OrderItem());
         $grid->model()->where('order_id',$id);
 
-        $grid->filter(function($filter) {
-            $filter->expand();
-            $filter->disableIdFilter();
-            $filter->column(1/2, function ($filter) {
-                $filter->where(function ($query) {
-                    $orders = PurchaseOrder::where('order_number', 'like', "%{$this->input}%")->get()->pluck('id');
+        // $grid->filter(function($filter) {
+        //     $filter->expand();
+        //     $filter->disableIdFilter();
+        //     $filter->column(1/2, function ($filter) {
+        //         $filter->where(function ($query) {
+        //             $orders = PurchaseOrder::where('order_number', 'like', "%{$this->input}%")->get()->pluck('id');
     
-                    $query->whereIn('order_id', $orders);
+        //             $query->whereIn('order_id', $orders);
                 
-                }, 'Mã đơn hàng');
-                $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
-            });
-            $filter->column(1/2, function ($filter) {
-                $filter->like('cn_code', 'Mã vận đơn');
-                $filter->like('cn_order_number', 'Mã giao dịch');
-            });
+        //         }, 'Mã đơn hàng');
+        //         $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
+        //     });
+        //     $filter->column(1/2, function ($filter) {
+        //         $filter->like('cn_code', 'Mã vận đơn');
+        //         $filter->like('cn_order_number', 'Mã giao dịch');
+        //     });
             
-        });
+        // });
         $grid->fixColumns(5);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
@@ -160,13 +160,14 @@ class DetailOrderController extends AdminController
         $grid->qty('Số lượng')->editable();
         $grid->qty_reality('Số lượng thực đặt')->editable();
         $grid->price('Giá (Tệ)');
-        $grid->column('total_price', 'Tổng tiền (Tệ)')->display(function () {
-            $totalPrice = $this->qty_reality * $this->price + $this->purchase_cn_transport_fee ;
-            return number_format($totalPrice) ?? 0; 
-        })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
         $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
             return $this->purchase_cn_transport_fee;
         })->help('Phí vận chuyển nội địa Trung quốc')->editable();
+
+        $grid->column('total_price', 'Tổng tiền (Tệ)')->display(function () {
+            $totalPrice = $this->qty_reality * $this->price + $this->purchase_cn_transport_fee ;
+            return number_format($totalPrice, 2) ?? 0; 
+        })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
         
         // $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi')->editable();
         // $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
@@ -187,7 +188,9 @@ class DetailOrderController extends AdminController
 
             $id = explode('/', request()->server()['REQUEST_URI'])[3];
 
-            $tools->append('<a class="btn-confirm-ordered btn btn-sm btn-warning" data-user="'.Admin::user()->id.'" data-id="'.$id.'" data-toggle="tooltip" title="Chốt chuyển trạng thái của đơn hàng thành Đã đặt hàng"><i class="fa fa-check"></i> &nbsp; Chốt đặt hàng đơn</a>');
+            $tools->append('<a class="btn-confirm-ordered btn btn-sm btn-warning" data-user="'.Admin::user()->id.'" data-id="'.$id.'" data-toggle="tooltip" title="Chuyển trạng thái của đơn hàng thành Đã đặt hàng"><i class="fa fa-check"></i> &nbsp; Chốt đặt hàng đơn</a>');
+            
+            $tools->append('<a href="'.route('admin.puchase_orders.deposite', $id).'" class="btn btn-sm btn-danger" data-toggle="tooltip" title="Vào tiền cọc cho đơn hàng" target="_blank"><i class="fa fa-money"></i> &nbsp; Vào tiền cọc cho đơn hàng</a>');
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
@@ -297,13 +300,14 @@ EOT
         $current_rate = $order->current_rate;
         $headers = ['Thông tin', 'Giá trị', ''];
         $rows = [
-            ['Tổng giá trị đơn hàng = Tổng tiền thực đặt + ship nội địa + dịch vụ', number_format($total_bill) . " (Tệ)" . " = " . number_format($total_bill * $current_rate) . " (VND)", 'Kho', $order->warehouse->name ?? "Đang cập nhật"],
-            ['Tổng tiền thực đặt', number_format($total_price_reality) . " (Tệ)" . " = " . number_format($total_price_reality * $current_rate) . " (VND)", 'Nhân viên đặt hàng', $order->supporterOrder->name ?? "Đang cập nhật"],
-            ['Tổng phí ship nội địa Trung Quốc', number_format($purchase_cn_transport_fee) . " (Tệ)"  . " = " . number_format($purchase_cn_transport_fee * $current_rate) . " (VND)", 'Nhân viên CSKH', $order->supporter->name ?? "Đang cập nhật"],
-            ['Tổng phí dịch vụ', number_format($order->purchase_order_service_fee) . " (Tệ)" . " = " . number_format($order->purchase_order_service_fee * $current_rate) . " (VND)", 'Nhân viên Kho', $order->supporterWarehouse->name ?? "Đang cập nhật"],
-            ['Tổng số lượng', $qty, '<h6><b>Mã đơn hàng: '.$order->order_number.'</b></h6>', '<h6><b>Mã khách hàng: '.$order->customer->symbol_name.'</b></h6>'],
-            ['Tổng thực đặt', $qty_reality, 'Trạng thái đơn hàng', PurchaseOrder::STATUS[$order->status]],  
-            ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at)), 'Tỷ giá', number_format($current_rate) . " (VND)"]
+            ['Tổng giá trị đơn hàng = Tổng tiền thực đặt + ship nội địa + dịch vụ', number_format($total_bill, 2) . " (Tệ)" . " = " . number_format($total_bill * $current_rate, 2) . " (VND)", 'Kho', $order->warehouse->name ?? "Đang cập nhật"],
+            ['Tổng tiền thực đặt', number_format($total_price_reality, 2) . " (Tệ)" . " = " . number_format($total_price_reality * $current_rate, 2) . " (VND)", 'Nhân viên đặt hàng', $order->supporterOrder->name ?? "Đang cập nhật"],
+            ['Tổng phí ship nội địa Trung Quốc', number_format($purchase_cn_transport_fee, 2) . " (Tệ)"  . " = " . number_format($purchase_cn_transport_fee * $current_rate, 2) . " (VND)", 'Nhân viên CSKH', $order->supporter->name ?? "Đang cập nhật"],
+            ['Tổng phí dịch vụ', number_format($order->purchase_order_service_fee, 2) . " (Tệ)" . " = " . number_format($order->purchase_order_service_fee * $current_rate, 2) . " (VND)", 'Nhân viên Kho', $order->supporterWarehouse->name ?? "Đang cập nhật"],
+            ['Tổng số lượng', $qty, '<b>'.$order->order_number.'</b> / <b>'.$order->customer->symbol_name.'</b>'],
+            ['Tổng thực đặt', $qty_reality, 'Trạng thái đơn hàng', "<span class='label label-".PurchaseOrder::LABEL[$order->status]."'>".PurchaseOrder::STATUS[$order->status]."</span>"],  
+            ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at)), 'Tỷ giá', number_format($current_rate) . " (VND)"],
+            ['Số tiền phải cọc', number_format($order->deposit_default, 2) . " (VND)"]
         ];
 
         $table = new Table($headers, $rows);

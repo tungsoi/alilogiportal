@@ -258,20 +258,7 @@ class PurchaseOrder extends Model
     public function finalPriceVND()
     {
         # code...
-
-        if ($this->items) {
-            $total = $total_transport = 0;
-            foreach ($this->items as $item) {
-                $total += $item->qty_reality * $item->price; // tong gia san pham
-                $total_transport += $item->purchase_cn_transport_fee; // tong phi ship
-            }
-
-            $total_bill = ($total + $total_transport + (int) str_replace(',', '', $this->purchase_order_service_fee));
-
-            return $total_bill * $this->current_rate;
-        }
-
-        return 0;
+        return $this->finalPriceRMB() * $this->current_rate;
     }
 
     # --------------------------- #
@@ -402,5 +389,43 @@ class PurchaseOrder extends Model
     {
         # code...
         return $this->totalBill() * 70 / 100;
+    }
+
+    public function totalWarehouseVietnamItems()
+    {
+        # code...
+        
+        if ($this->items) {
+            
+            $total = 0;
+            foreach ($this->items as $item) {
+                if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK && $item->status == OrderItem::STATUS_PURCHASE_WAREHOUSE_VN) {
+                    $total += $item->qty_reality;
+                }
+            }
+
+            return $total;
+        }
+
+        return 0;
+    }
+
+    public function totalOrderedItems()
+    {
+        # code...
+        
+        if ($this->items) {
+            
+            $total = 0;
+            foreach ($this->items as $item) {
+                if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK && $item->status == OrderItem::STATUS_PURCHASE_ITEM_ORDERED) {
+                    $total += $item->qty_reality;
+                }
+            }
+
+            return $total;
+        }
+
+        return 0;
     }
 }

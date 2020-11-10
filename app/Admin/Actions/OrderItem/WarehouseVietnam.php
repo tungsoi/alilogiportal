@@ -24,60 +24,80 @@ class WarehouseVietnam extends BatchAction
         $ids = []; // list tất cả id
         $orders = []; // list tất cả các order id đã được chọn
 
-        foreach ($collection as $model) {
-            $ids[] = $model->id;
-            if (! isset($orders[$model->order_id])) {
-                $orders[$model->order_id] = $model->order_id;
+        $items = [];
+
+        foreach ($collection as $model) 
+        {
+            if ($model->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK)
+            {
+                $items[] = $model->id;
+                $item_code = "SPMH-".str_pad($model->id, 5, 0, STR_PAD_LEFT);
+                if ($model->status == OrderItem::STATUS_PURCHASE_ITEM_NOT_ORDER) { // chưa đặt hàng
+                    // chưa được đặt hàng
+                    return $this->response()->error('Sản phẩm '.$item_code . ' chưa được đặt hàng. Không thể xác nhận Đã về kho Việt Nam. Vui lòng kiểm tra lại !"')->refresh();
+                } else if ($model->status == OrderItem::STATUS_PURCHASE_WAREHOUSE_VN) { // về kho việt nam
+                    // nếu trạng thái của sản phẩm là đã về kho Việt Nam
+                    return $this->response()->error("Sản phẩm ".$item_code." đã về kho Việt Nam. Không thể xác nhận Đã về kho Việt Nam. Vui lòng kiểm tra lại !")->refresh();
+                }
             }
-
-            $item_code = "SPMH-".str_pad($model->id, 5, 0, STR_PAD_LEFT);
-            // check trạng thái của sản phẩm
-            if ($model->status == OrderItem::STATUS_PURCHASE_ITEM_NOT_ORDER) {
-                // chưa được đặt hàng
-                return $this->response()->error('Sản phẩm '.$item_code . ' chưa được đặt hàng. Không thể xác nhận Đã về kho Việt Nam. Vui lòng kiểm tra lại !"')->refresh();
-            } else if ($model->status == OrderItem::STATUS_PURCHASE_WAREHOUSE_VN) {
-                // nếu trạng thái của sản phẩm là đã về kho Việt Nam
-                return $this->response()->error("Sản phẩm ".$item_code." đã về kho Việt Nam. Không thể xác nhận Đã về kho Việt Nam. Vui lòng kiểm tra lại !")->refresh();
-            } else if ($model->status == OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
-                // nếu trạng thái của sản phẩm là đã về kho Việt Nam
-                return $this->response()->error("Sản phẩm ".$item_code." đã hết hàng. Không thể xác nhận Đã đặt hàng. Vui lòng kiểm tra lại !")->refresh();
-            } 
         }
 
-        foreach ($collection as $model) {
-            OrderItem::find($model->id)->update([
-                'status'    =>  OrderItem::STATUS_PURCHASE_WAREHOUSE_VN
-            ]);
+        // duyệt từng sản phẩm hợp lệ
+        foreach ($items as $item_id)
+        {
+            $item = OrderItem::find($item_id);
+            $item->status = OrderItem::STATUS_PURCHASE_WAREHOUSE_VN;
+            $item->save();
 
-            PurchaseOrder::find($model->order_id)->update([
-                'status'    =>  PurchaseOrder::STATUS_IN_WAREHOUSE_VN
-            ]);
+            $order = PurchaseOrder::find($item->order_id);
+            $order->status = PurchaseOrder::STATUS_IN_WAREHOUSE_VN;
+            $order->save();
         }
 
-        foreach ($orders as $order_id) {
-            $order = PurchaseOrder::find($order_id);
-            if ($order->warehouseVietnamItems() == $order->totalItems()) {
+        // check só lượng sản phẩm trong đơn đã về hết chưa.
+        // nếu đã về hết thì chuyển trạng thái thành công.
+
+        foreach ($items as $item_id)
+        {
+            $order = PurchaseOrder::find($item->order_id);
+            if ($order->totalWarehouseVietnamItems() == $order->sumQtyRealityItem() && $order->status != PurchaseOrder::STATUS_SUCCESS)
+            {
                 $order->status = PurchaseOrder::STATUS_SUCCESS;
                 $order->save();
 
-                $deposited = $order->deposited; // da coc
-                $total_final_price = $order->finalPriceVND(); // tong tien
-
-                $owed = $total_final_price - $deposited; // con lai
+                $deposited = $order->deposited; // số tiền đã cọc
+                $total_final_price = $order->totalBill() * $order->current_rate; // tổng tiền đơn hiện tại
 
                 $customer = User::find($order->customer_id);
                 $wallet = $customer->wallet;
-                $customer->wallet = $wallet - $owed; 
-                $customer->save();
+                if ($deposited <= $total_final_price)
+                {
+                    # Đã cọc < tổng đơn -> còn lại : tổng đơn - đã cọc
+                    # -> trừ tiền của khách số còn lại
+
+                    $owed = $total_final_price - $deposited;
+                    $customer->wallet = $wallet - $owed; 
+                    $customer->save();
+                } else {
+
+                    # Đã cọc > tổng đơn 
+                    # -> còn lại: đã cọc - tổng đơn
+                    # -> cộng lại trả khách
+
+                    $owed = $deposited - $total_final_price;
+                    $customer->wallet = $wallet + $owed; 
+                    $customer->save();
+                }
 
                 TransportRecharge::create([
-                    'customer_id'       =>  $model->customer_id,
-                    'user_id_created'   =>  Admin::user()->id,
-                    'money'             =>  $owed > 0 ? $owed : -($owed),
+                    'customer_id'       =>  $order->customer_id,
+                    'user_id_created'   =>  1,
+                    'money'             =>  $owed,
                     'type_recharge'     =>  TransportRecharge::PAYMENT_ORDER,
-                    'content'           =>  'Thanh toán đơn hàng mua hộ. Mã đơn hàng '.$order->order_number.". Số tiền " . number_format($owed),
+                    'content'           =>  'Thanh toán đơn hàng mua hộ. Mã đơn hàng '.$order->order_number,
                     'order_type'        =>  TransportRecharge::TYPE_ORDER
                 ]);
+                
             }
         }
 
@@ -91,7 +111,7 @@ class WarehouseVietnam extends BatchAction
 
     public function html()
     {
-        return "<a class='warehouse-vietnam btn btn-sm btn-success' data-toggle='tooltip' title='Xác nhận đã về Việt Nam các sản phẩm được chọn'><i class='fa fa-cart-plus'></i> &nbsp; Đã về kho Việt Nam</a>";
+        return "<a class='warehouse-vietnam btn btn-sm btn-success' data-toggle='tooltip' title='Xác nhận các sản phẩm được chọn đã về kho Việt Nam'><i class='fa fa-cart-plus'></i> &nbsp; Đã về kho Việt Nam</a>";
     }
 
 }

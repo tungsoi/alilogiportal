@@ -90,15 +90,25 @@ Route::post('/confirm-ordered', function (Request $request) {
 
     try {
         $order = PurchaseOrder::find($order_id);
-        $order->status = PurchaseOrder::STATUS_ORDERED;
-        $order->user_id_confirm_ordered = $user_id_created;
-        $order->save();
+        $ordered_items = $order->totalOrderedItems();
+        $total_items = $order->sumQtyRealityItem();
+        if ($ordered_items != $total_items) {
+            return response()->json([
+                'error' =>  true,
+                'msg'   =>  'Đơn hàng này vẫn còn sản phẩm chưa được đặt hàng. Vui lòng xác nhận trạng thái của tất cả sản phẩm trước.'
+            ]);
+        }
+        else {
+            $order->status = PurchaseOrder::STATUS_ORDERED;
+            $order->user_id_confirm_ordered = $user_id_created;
+            $order->save();
 
-        DB::commit();
-        return response()->json([
-            'error' =>  false,
-            'msg'   =>  'success'
-        ]);
+            DB::commit();
+            return response()->json([
+                'error' =>  false,
+                'msg'   =>  'success'
+            ]);
+        }
     }
     catch (\Exception $e) {
         DB::rollBack();
@@ -117,6 +127,7 @@ Route::post('/confirm-outstock', function (Request $request) {
 
     try {
         $item = OrderItem::find($item_id);
+        $item->qty_reality = 0;
         $item->status = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
         $item->save();
 

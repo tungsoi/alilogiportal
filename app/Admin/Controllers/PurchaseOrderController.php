@@ -81,9 +81,9 @@ class PurchaseOrderController extends AdminController
         $grid->status('Trạng thái')->display(function () {
             $count = "";
             if ($this->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
-                $count = "( ".$this->orderedItems() . " / " . $this->totalItems()." )";
+                $count = "( ".$this->totalOrderedItems() . " / " . $this->sumQtyRealityItem()." )";
             } else if ($this->status == PurchaseOrder::STATUS_IN_WAREHOUSE_VN) {
-                $count = "( ".$this->warehouseVietnamItems() . " / " . $this->totalItems()." )";
+                $count = "( ".$this->totalWarehouseVietnamItems() . " / " . $this->sumQtyRealityItem()." )";
             }
 
             $html = "<span class='label label-".PurchaseOrder::LABEL[$this->status]."'>".PurchaseOrder::STATUS[$this->status]." " .$count. "</span>";
@@ -104,26 +104,19 @@ class PurchaseOrderController extends AdminController
             return $this->totalItemReality();
         });
         $grid->purchase_total_items_price('Tổng giá trị SP (Tệ)')->display(function () {
-            if ($this->items) {
-                $total = 0;
-                foreach ($this->items as $item) {
-                    $total += $item->qty_reality * $item->price;
-                }
-
-                return number_format($total);
-            }
-
-            return 0;
-        })->totalRow(function ($amount) {
-            $amount = number_format($amount);
-            return '<span class="">'.$amount.'</span>';
+            return number_format($this->sumQtyRealityMoney(), 2);
         });
+        // ->totalRow(function ($amount) {
+        //     $amount = number_format($amount, 2);
+        //     return '<span class="">'.$amount.'</span>';
+        // });
         $grid->purchase_order_service_fee('Phí dịch vụ (Tệ)')->display(function () {
             return $this->purchase_order_service_fee;
-        })->totalRow(function ($amount) {
-            $amount = number_format($amount);
-            return '<span class="">'.$amount.'</span>';
-        })->editable();
+        });
+        // ->totalRow(function ($amount) {
+        //     $amount = number_format($amount);
+        //     return '<span class="">'.$amount.'</span>';
+        // })->editable();
 
         $grid->purchase_order_transport_fee('Tổng phí VCNĐ (Tệ)')->display(function () {
             if ($this->items) {
@@ -132,7 +125,7 @@ class PurchaseOrderController extends AdminController
                     $total += $item->purchase_cn_transport_fee;
                 }
 
-                return number_format($total);
+                return number_format($total, 2);
             }
 
             return 0;
@@ -159,19 +152,21 @@ class PurchaseOrderController extends AdminController
             $html .= "<br> <i>".$deposited_at."</i>";
 
             return $html;
-        })->totalRow(function ($amount) {
-            $amount = number_format($amount);
-            return '<span class="">'.$amount.'</span>';
         });
+        // ->totalRow(function ($amount) {
+        //     $amount = number_format($amount);
+        //     return '<span class="">'.$amount.'</span>';
+        // });
         $grid->final_total_price('Tổng giá cuối (Tệ)')->display(function () {
             if ($this->items) {
-                return number_format($this->finalPriceRMB()) . "<br> <i>" . number_format($this->finalPriceVND()) . " (VND)</i>";
+                return number_format($this->totalBill(), 2) . "<br> <i>" . number_format($this->totalBill() * $this->current_rate, 2) . " (VND)</i>";
             }
             return 0;
-        })->totalRow(function ($amount) {
-            $amount = number_format($amount);
-            return '<span class="">'.$amount.'</span>';
         })
+        // ->totalRow(function ($amount) {
+        //     $amount = number_format($amount);
+        //     return '<span class="">'.$amount.'</span>';
+        // })
         ->help('Tổng giá cuối = Tổng giá trị SP + Phí dịch vụ + Tổng phí VCNĐ');
 
         $grid->final_payment('Tổng thanh toán (VND)')->display(function () {
@@ -455,9 +450,9 @@ EOT
        
         $form->column(1/2, function ($form) use ($purchase_total_items_price, $order) {
             $form->divider("Tổng tiền");
-            $form->currency('final_total_price', 'Tổng giá cuối (VND)')->symbol('VND')->width(200)->disable()->digits(0);
+            $form->currency('final_total_price', 'Tổng giá cuối (VND)')->symbol('VND')->width(200)->disable()->digits(2);
             $form->currency('final_payment', 'Tiền thanh toán (VND)')->symbol('VND')->width(200)->digits(0);
-            $form->currency('deposit_default', 'Số tiền phải cọc (70%) (VND)')->readonly()->symbol('VND')->width(200)->digits(0);
+            $form->currency('deposit_default', 'Số tiền phải cọc (70%) (VND)')->readonly()->symbol('VND')->width(200)->digits(2);
             $form->currency('deposited', 'Số tiền đã cọc (VND)')->symbol('VND')->width(200)->readonly()->digits(0);
             $form->text('deposited_at', 'Ngày vào cọc')->readonly();
 
@@ -476,7 +471,7 @@ EOT
                 '2.5% tổng tiền sản phẩm',
                 '3% tổng tiền sản phẩm',
             ]); // tinh % khi chon gia tri
-            $form->currency('purchase_order_service_fee', 'Phí dịch vụ (Tệ)')->symbol('￥')->width(200)->digits(0)->readonly();
+            $form->currency('purchase_order_service_fee', 'Phí dịch vụ (Tệ)')->symbol('￥')->width(200)->digits(2)->readonly();
             
             $form->divider();
             // $form->currency('purchase_order_transport_fee', 'Phí ship nội địa (VND)')->symbol('VND')->width(200)->digits(0);
