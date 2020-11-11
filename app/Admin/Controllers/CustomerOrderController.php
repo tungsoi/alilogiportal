@@ -132,16 +132,7 @@ class CustomerOrderController extends AdminController
             return $this->totalItemReality();
         });
         $grid->purchase_total_items_price('Tổng giá trị SP (Tệ)')->display(function () {
-            if ($this->items) {
-                $total = 0;
-                foreach ($this->items as $item) {
-                    $total += $item->qty_reality * $item->price;
-                }
-
-                return number_format($total, 2);
-            }
-
-            return 0;
+            return number_format($this->sumQtyRealityMoney(), 2);
         })->totalRow(function ($amount) {
             $amount = number_format($amount, 2);
             return '<span class="">'.$amount.'</span>';
@@ -194,21 +185,14 @@ class CustomerOrderController extends AdminController
         });
         $grid->final_total_price('Tổng giá cuối (Tệ)')->display(function () {
             if ($this->items) {
-                $total = $total_transport = 0;
-                foreach ($this->items as $item) {
-                    $total += $item->qty_reality * $item->price; // tong gia san pham
-                    $total_transport += $item->purchase_cn_transport_fee; // tong phi ship
-                }
-
-                $total_bill = ($total + $total_transport + $this->purchase_order_service_fee);
-                
-                return number_format($total_bill, 2) . "<br> <i>" . number_format($total_bill * $this->current_rate, 2) . " (VND)</i>";
+                return number_format($this->totalBill(), 2) . "<br> <i>" . number_format($this->totalBill() * $this->current_rate, 2) . " (VND)</i>";
             }
             return 0;
-        })->totalRow(function ($amount) {
-            $amount = number_format($amount);
-            return '<span class="">'.$amount.'</span>';
         })
+        // ->totalRow(function ($amount) {
+        //     $amount = number_format($amount);
+        //     return '<span class="">'.$amount.'</span>';
+        // })
         ->help('Tổng giá cuối = Tổng giá trị SP + Phí dịch vụ + Tổng phí VCNĐ');
 
         $grid->admin_note('Admin ghi chú');
