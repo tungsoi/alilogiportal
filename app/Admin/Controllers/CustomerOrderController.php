@@ -383,8 +383,8 @@ EOT
         // });
         $grid->product_size('Kích thước')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
-        })->width(100);
-        $grid->product_color('Màu')->width(100);
+        });
+        $grid->product_color('Màu');
         $grid->qty('Số lượng');
         $grid->qty_reality('Số lượng thực đặt');
         $grid->price('Đơn giá (Tệ)')->display(function () {
@@ -464,7 +464,7 @@ EOT
         });
 
         $grid->paginate(200);
-        Admin::style('.box {border-top:none;} table {font-size: 16px;} table th {font-size: 20px}');
+        Admin::style('.box {border-top:none;} table {font-size: 16px;} table th {font-size: 20px} td p {word-break:break-all;}');
 
         Admin::script(
             <<<EOT
