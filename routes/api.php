@@ -145,3 +145,47 @@ Route::post('/confirm-outstock', function (Request $request) {
         ]);
     }
 });
+
+Route::post('/customer-deposite', function (Request $request) {
+    DB::beginTransaction();
+    try {
+        $order = PurchaseOrder::find($request->order_id);
+        $deposite = $order->deposit_default;
+
+        PurchaseOrder::find($request->order_id)->update([
+            'deposited' =>  $deposite,
+            'user_id_deposited' => $order->customer_id,
+            'deposited_at'  =>  date('Y-m-d', strtotime(now())),
+            'status'    =>  PurchaseOrder::STATUS_DEPOSITED_ORDERING
+        ]);
+
+        $alilogi_user = User::find($order->customer_id);
+        $wallet = $alilogi_user->wallet;
+        $alilogi_user->wallet = $wallet - $deposite;
+        $alilogi_user->save();
+
+        TransportRecharge::create([
+            'customer_id'   =>  $order->customer_id,
+            'user_id_created'   => $order->customer_id,
+            'money' =>  $deposite,
+            'type_recharge' =>  TransportRecharge::DEPOSITE_ORDER,
+            'content'   =>  'Đặt cọc đơn hàng mua hộ. Mã đơn hàng '.$order->order_number,
+            'order_type'    =>  TransportRecharge::TYPE_ORDER
+        ]);
+
+        DB::commit();
+
+        return response()->json([
+            'error' =>  false,
+            'msg'   =>  'success'
+        ]);
+
+    }
+    catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'error' =>  true,
+            'msg'   =>  $e->getMessage()
+        ]);
+    }
+});

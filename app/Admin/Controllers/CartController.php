@@ -52,19 +52,23 @@ class CartController extends AdminController
         });
         $grid->column('number', 'STT');
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 100, 'height' => 100]);
-        $grid->shop_name('Tên shop');
-        $grid->product_name('Tên sản phẩm');
+        $grid->shop_name('Tên shop')->width(200);
+        $grid->product_name('Tên sản phẩm')->width(200);
         $grid->product_link('Link sản phẩm')->display(function () {
             return "<a href=".$this->product_link." target='_blank'>Link sản phẩm</a>";
         });
-        $grid->product_size('Size');
-        $grid->product_color('Màu');
+        $grid->product_size('Size')->width(200);
+        $grid->product_color('Màu')->width(200);
         $grid->qty('Số lượng đặt');
-        $grid->price('Giá (Tệ)');
+        $grid->price('Đơn giá (Tệ)');
+        $grid->column('total', 'Thành tiền (Tệ)')->display(function () {
+            return number_format($this->qty * $this->price, 2);
+        });
         $grid->customer_note('Ghi chú')->editable();
-        $grid->status('Trạng thái')->display(function () {
-            return OrderItem::STATUS[$this->status];
-        })->label('primary');
+        // $grid->status('Trạng thái')->display(function () {
+        //     return OrderItem::STATUS[$this->status];
+        // })->label('primary');
+        $grid->disableActions();
         $grid->actions(function ($actions) {
             $actions->disableView();
         });

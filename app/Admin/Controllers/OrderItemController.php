@@ -71,6 +71,7 @@ class OrderItemController extends AdminController
             $filter->column(1/2, function ($filter) {
                 $filter->like('cn_code', 'Mã vận đơn');
                 $filter->like('cn_order_number', 'Mã giao dịch');
+                $filter->equal('status', 'Trạng thái')->select(OrderItem::STATUS);
             });
             
         });
@@ -79,23 +80,34 @@ class OrderItemController extends AdminController
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
-        $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary');
+        $grid->column('info', 'Mã đơn hàng')->display(function () {
+            $order = $this->order;
+
+            $html = "<span class='label label-primary'>".$order->order_number."</span>";
+            $html .= "<br>"."<span class='label label-primary'>".$order->customer->symbol_name."</span>";
+            $html .= "<br>"."<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
+            $html .= "<br>".'<b><a href="'.$this->product_link.'" target="_blank"> Link sản phẩm </a></b>';
+            
+            return $html;
+        });
         // $grid->id('Mã SP')->display(function () {
         //     return "SPMH-".str_pad($this->id, 5, 0, STR_PAD_LEFT);
         // });
-        $grid->column('customer_name', 'Mã khách hàng')->display(function () {
-            return $this->order->customer->symbol_name ?? "";
-        })->help('Mã khách hàng');
-        $grid->status('Trạng thái')->display(function () {
-            $html = "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
-            $html .= "<br> <br>";
-            $html .= '<b><a href="'.$this->product_link.'" target="_blank"> Link sản phẩm </a></b>';
-            return $html;
-        });
-        $grid->created_at(trans('admin.created_at'))->display(function () {
-            return date('H:i | d-m-Y', strtotime($this->created_at));
-        });
-        $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 50, 'height' => 50]);
+        // $grid->column('customer_name', 'Mã khách hàng')->display(function () {
+        //     return $this->order->customer->symbol_name ?? "";
+        // })->help('Mã khách hàng');
+        // $grid->status('Trạng thái')->display(function () {
+        //     $html = "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
+        //     $html .= "<br> <br>";
+        //     $html .= '<b><a href="'.$this->product_link.'" target="_blank"> Link sản phẩm </a></b>';
+        //     return $html;
+        // });
+
+
+        // $grid->created_at(trans('admin.created_at'))->display(function () {
+        //     return date('H:i | d-m-Y', strtotime($this->created_at));
+        // });
+        $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 120, 'height' => 120]);
         $grid->product_size('Kích thước')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
         })->editable();
