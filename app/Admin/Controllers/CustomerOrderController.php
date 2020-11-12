@@ -419,6 +419,7 @@ EOT
         // $grid->cn_order_number('Mã giao dịch');
         $grid->customer_note('Khách hàng ghi chú')->style('width: 100px')->editable();
         $grid->admin_note('Admin ghi chú');
+        $grid->column('xxx', '-');
 
         $grid->disableCreateButton();
         $grid->disableActions();
