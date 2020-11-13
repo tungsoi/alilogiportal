@@ -217,10 +217,20 @@ class CustomerOrderController extends AdminController
             $actions->disableEdit();
 
             $actions->append('
-                <a href="'.route('admin.customer_orders.show', $this->getKey()).'" class="grid-row-view btn btn-success btn-xs" data-toggle="tooltip" title="Xem chi tiết đơn hàng">
-                    <i class="fa fa-eye"></i>
-                </a>'
+                <a href="'.route('admin.customer_orders.show', $this->getKey()).'" class="grid-row-view btn btn-success btn-xs">
+                    <i class="fa fa-eye"></i> Chi tiết
+                </a> <br>'
             );
+
+            $order = PurchaseOrder::find($this->getKey());
+
+            if ($order->status == PurchaseOrder::STATUS_NEW_ORDER) {
+                $actions->append('
+                    <a href="javascript:void(0);" data-id="'.$this->getKey().'" class="grid-row-delete btn btn-danger btn-xs btn-customer-delete">
+                        <i class="fa fa-trash"></i> Xoá
+                    </a>'
+                );
+            }
         });
 
         Admin::style('table {font-size: 16px;}');
@@ -237,7 +247,27 @@ class CustomerOrderController extends AdminController
                 $(this).insertAfter($(this).siblings('thead'));
             });
 
+            $(document).on('click', '.btn-customer-delete', function () {
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/customer-destroy',
+                    data: {
+                        order_id: $(this).data('id')
+                    },
+                    success: function(response) {
+                        if (response.error == false) {
+                            toastr.success('Đã xoá đơn hàng thành công.');
 
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1000);
+
+                        } else {
+                            toastr.error('Xảy ra lỗi: ' + response.msg);
+                        }
+                    }
+                });
+            });
 EOT
     );
         return $grid;
