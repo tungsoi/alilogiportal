@@ -201,36 +201,7 @@ Route::post('/customer-deposite', function (Request $request) {
 Route::post('/customer-destroy', function (Request $request) {
     DB::beginTransaction();
     try {
-        $order = PurchaseOrder::find($request->order_id);
-
-        $order->status = PurchaseOrder::STATUS_CANCEL;
-
-        if ($order->items->count() > 0) {
-            foreach ($order->items as $item) {
-                $item->status = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
-                $item->save();
-            }
-        }
-
-        $deposited = $order->deposited;
-
-        $alilogi_user = User::find($order->customer_id);
-        $wallet = $alilogi_user->wallet;
-
-        $alilogi_user->wallet = $wallet + $deposited;
-        $alilogi_user->save();
-
-        TransportRecharge::firstOrCreate([
-            'customer_id'   =>  $order->customer_id,
-            'user_id_created'   => $order->customer_id,
-            'money' =>  $deposited,
-            'type_recharge' =>  TransportRecharge::REFUND,
-            'content'   =>  'Khách hàng yêu cầu huỷ đơn hàng. Hoàn lại tiền cọc đơn hàng '.$order->order_number,
-            'order_type'    =>  TransportRecharge::TYPE_ORDER
-        ]);
-
-        $order->deposited = 0;
-        $order->save();
+        PurchaseOrder::find($request->order_id)->delete();
 
         DB::commit();
 
