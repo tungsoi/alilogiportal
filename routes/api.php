@@ -206,7 +206,7 @@ Route::post('/customer-destroy', function (Request $request) {
     DB::beginTransaction();
     try {
         PurchaseOrder::find($request->order_id)->delete();
-
+        OrderItem::where('order_id', $request->order_id)->delete();
         DB::commit();
 
         return response()->json([
