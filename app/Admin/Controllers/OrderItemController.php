@@ -85,10 +85,11 @@ class OrderItemController extends AdminController
         $grid->column('number', 'STT');
         $grid->column('info', 'Mã đơn hàng')->display(function () {
             $order = $this->order;
+
+            $html = "";
             if ($order && $order->order_number) {
                 $html = $order->order_number ?? "";
             }
-
             $html .= "<br>";
             $html .= $order->customer->symbol_name;
             $html .= "<br>";
