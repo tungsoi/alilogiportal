@@ -273,7 +273,7 @@ EOT
 
         $total_bill = ($total_price_reality + $purchase_cn_transport_fee + $order->purchase_order_service_fee);
         $current_rate = $order->current_rate;
-        $headers = ["Mã đơn hàng", "Trạng thái", "Tỷ giá"];
+        $headers = ["Mã đơn hàng", "Trạng thái", "Tỷ giá", ""];
         $rows = [
             [
                 "<b>".$order->order_number.' / '.$order->customer->symbol_name."</b>", 
@@ -299,10 +299,13 @@ EOT
                 'Tổng giá trị đơn hàng = Tổng tiền thực đặt + ship nội địa + dịch vụ', number_format($total_bill, 2) . " (Tệ)", " = " . number_format($total_bill * $current_rate, 2) . " (VND)"
             ],
             [
-                'Số tiền đã cọc', '', '<h4 style="color: green"><b>= '.number_format($order->deposited) . " (VND)</b></h4>"
+                'Số tiền cần cọc', '', '= '. number_format( ($total_bill * $current_rate) * 70 / 100, 2) . " (VND)"
             ],
             [
-                'Số tiền còn thiếu', '', '<h4 style="color: red"><b>= '.number_format( ($total_bill * $current_rate) - $order->deposited) . " (VND)</b></h4>"
+                'Số tiền đã cọc', '', '<b style="color: green">= '.number_format($order->deposited) . " (VND)</b>"
+            ],
+            [
+                'Số tiền còn thiếu', '', '<b style="color: red">= '.number_format( ($total_bill * $current_rate) - $order->deposited) . " (VND)</b>"
             ]
         ];
         // $rows = [
@@ -317,7 +320,8 @@ EOT
         // ];
 
         $table = new Table($headers, $rows);
-
+        $table->setStyle('th:nth-child(1) {width: 30%} th:nth-child(2) {width: 20%} th:nth-child(3) {width: 20%} th:nth-child(4) {width: 30%}');
+        // Admin::style('table:nth-child(1) th:nth-child(1) {width: 30%} table:nth-child(1) th:nth-child(2) {width: 20%} table:nth-child(1) th:nth-child(3) {width: 20%} table:nth-child(1) th:nth-child(4) {width: 30%}');
         return $table->render();
     }
 
@@ -458,7 +462,11 @@ EOT
             if ($order && $order->status == PurchaseOrder::STATUS_NEW_ORDER) {
                 $tools->append('<a class="btn-confirm-deposite btn btn-sm btn-warning" data-order="'.$id.'"><i class="fa fa-money"></i> &nbsp; Đặt cọc bằng số dư Tài khoản</a>');
             }
-            
+
+            if ($order->status != PurchaseOrder::STATUS_NEW_ORDER && $order->status != PurchaseOrder::STATUS_SUCCESS && $order->status != PurchaseOrder::STATUS_CANCEL) {
+                $tools->append('<a class="btn-customer-destroy btn btn-sm btn-danger" data-order="'.$id.'"><i class="fa fa-times"></i> &nbsp; Huỷ đơn hàng</a>');
+            }
+
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
@@ -511,6 +519,31 @@ EOT
                         success: function(response) {
                             if (response.error == false) {
                                 toastr.success('Đã đặt cọc thành công.');
+
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000);
+                                
+                            } else {
+                                toastr.error('Xảy ra lỗi: ' + response.msg);
+                            }
+                        }
+                    });
+                }
+            });
+
+            $(document).on('click', '.btn-customer-destroy', function () {
+                var isGood=confirm('Xác nhận Huỷ đơn hàng ?');
+                if (isGood) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/api/customer-destroy',
+                        data: {
+                            order_id: $(this).data('order')
+                        },
+                        success: function(response) {
+                            if (response.error == false) {
+                                toastr.success('Đã huỷ đơn hàng thành công.');
 
                                 setTimeout(function () {
                                     window.location.reload();
