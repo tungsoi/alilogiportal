@@ -68,7 +68,7 @@ class TransportRecharge extends Model
     const PAYMENT_ORDER = 6;
     const PAYMENT_ORDER_TEXT = "Thanh toán đơn hàng mua hộ";
 
-    const UP = [self::RECHARGE_MONEY, self::RECHARGE_BANK];
+    const UP = [self::RECHARGE_MONEY, self::RECHARGE_BANK, self::REFUND];
     const COLOR = [
         'warning',
         'success',
