@@ -37,7 +37,10 @@ class OrderItemController extends AdminController
     public function grid()
     {
         $grid = new Grid(new OrderItem);
-        $grid->model()->where('status', '!=', OrderItem::PRODUCT_NOT_IN_CART)->orderBy('created_at', 'desc');
+        $grid->model()
+        ->where('status', '!=', OrderItem::PRODUCT_NOT_IN_CART)
+        ->whereNotNull('order_id')
+        ->orderBy('created_at', 'desc');
 
         $grid->filter(function($filter) {
             $filter->expand();
@@ -82,10 +85,14 @@ class OrderItemController extends AdminController
         $grid->column('number', 'STT');
         $grid->column('info', 'Mã đơn hàng')->display(function () {
             $order = $this->order;
+            if ($order && $order->order_number) {
+                $html = $order->order_number ?? "";
+            }
 
-            $html = "<span class='label label-primary'>".$order->order_number ?? ""."</span>";
-            $html .= "<br>"."<span class='label label-primary'>".$order->customer->symbol_name."</span>";
-            $html .= "<br>"."<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
+            $html .= "<br>";
+            $html .= $order->customer->symbol_name;
+            $html .= "<br>";
+            $html .= "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
             $html .= "<br>".'<b><a href="'.$this->product_link.'" target="_blank"> Link sản phẩm </a></b>';
             
             return $html;
@@ -145,7 +152,7 @@ class OrderItemController extends AdminController
             // $actions->disableEdit();
             $actions->disableDelete();
         });
-        $grid->paginate(100);
+        $grid->paginate(50);
 
         return $grid;
     }
