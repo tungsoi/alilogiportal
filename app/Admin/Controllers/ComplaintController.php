@@ -48,10 +48,10 @@ class ComplaintController extends AdminController
         $grid->reason('Lý do')->editable();
         $grid->solution('Phương án xử lý')->editable();
         $grid->sale_staff_id('Nhân viên kinh doanh')->display(function () {
-            return $this->saleStaff->name;
+            return $this->saleStaff->name ?? "";
         });
         $grid->order_staff_id('Nhân viên đặt hàng')->display(function () {
-            return $this->orderStaff->name;
+            return $this->orderStaff->name ?? "";
         });
 
         $grid->created_at(trans('admin.created_at'))->display(function () {
