@@ -127,6 +127,12 @@ class CustomerOrderController extends AdminController
             return $html;
         });
 
+        $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 120, 'height' => 120])
+        ->display(function () {
+            return '<a href="'.asset($this->items->first()->product_image).'" class="grid-popup-link">
+            <img src="'.asset($this->items->first()->product_image).'" style="max-width:120px;max-height:120px" class="img img-thumbnail"></a>';
+        });
+
         // $grid->column('staff', 'Nhân viên phụ trách')->display(function () {
         //     $html = "<ul style='padding-left: 15px;'>";
         //     $html .= '<li>Đặt hàng: ' . ($this->supporterOrder->name ?? "...") . "</li>";
@@ -242,6 +248,8 @@ class CustomerOrderController extends AdminController
 
         Admin::script(
             <<<EOT
+
+            $('.grid-popup-link').magnificPopup({"type":"image"});
 
             $('tfoot').each(function () {
                 $(this).insertAfter($(this).siblings('thead'));
@@ -538,28 +546,27 @@ EOT
             });
 
             $(document).on('click', '.btn-confirm-deposite', function () {
-                var isGood=confirm('Xác nhận Đặt cọc đơn hàng này bằng số dư Ví tiền của bạn ?');
-                if (isGood) {
-                    $.ajax({
-                        type: 'POST',
-                        url: '/api/customer-deposite',
-                        data: {
-                            order_id: $(this).data('order')
-                        },
-                        success: function(response) {
-                            if (response.error == false) {
-                                toastr.success('Đã đặt cọc thành công.');
+                
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/customer-deposite',
+                    data: {
+                        order_id: $(this).data('order')
+                    },
+                    success: function(response) {
+                        if (response.error == false) {
+                            toastr.success('Đã đặt cọc thành công.');
 
-                                setTimeout(function () {
-                                    window.location.reload();
-                                }, 1000);
-                                
-                            } else {
-                                toastr.error('Xảy ra lỗi: ' + response.msg);
-                            }
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1000);
+                            
+                        } else {
+                            toastr.error('Xảy ra lỗi: ' + response.msg);
                         }
-                    });
-                }
+                    }
+                });
+
             });
 
             $(document).on('click', '.btn-customer-destroy', function () {
