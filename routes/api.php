@@ -151,42 +151,46 @@ Route::post('/customer-deposite', function (Request $request) {
     try {
         $order = PurchaseOrder::find($request->order_id);
 
-        $alilogi_user = User::find($order->customer_id);
-        $wallet = $alilogi_user->wallet;
+        $deposited = $order->deposited;
+        if (! $deposited > 0) {
+            $alilogi_user = User::find($order->customer_id);
 
-        $deposite = $order->deposit_default;
-        if ($wallet < $deposite) {
+            $wallet = $alilogi_user->wallet;
+    
+            $deposite = $order->deposit_default;
+            if ($wallet < $deposite) {
+                return response()->json([
+                    'error' =>  true,
+                    'msg'   =>  'Số dư trong ví của bạn không đủ để thanh toán. Vui lòng liên hệ bộ phận Sale để nạp tiền vào tài khoản'
+                ]); 
+            }
+    
+            PurchaseOrder::find($request->order_id)->update([
+                'deposited' =>  $deposite,
+                'user_id_deposited' => $order->customer_id,
+                'deposited_at'  =>  date('Y-m-d', strtotime(now())),
+                'status'    =>  PurchaseOrder::STATUS_DEPOSITED_ORDERING
+            ]);
+    
+            $alilogi_user->wallet = $wallet - $deposite;
+            $alilogi_user->save();
+    
+            TransportRecharge::create([
+                'customer_id'   =>  $order->customer_id,
+                'user_id_created'   => $order->customer_id,
+                'money' =>  $deposite,
+                'type_recharge' =>  TransportRecharge::DEPOSITE_ORDER,
+                'content'   =>  'Đặt cọc đơn hàng mua hộ. Mã đơn hàng '.$order->order_number,
+                'order_type'    =>  TransportRecharge::TYPE_ORDER
+            ]);
+    
+            DB::commit();
+    
             return response()->json([
-                'error' =>  true,
-                'msg'   =>  'Số dư trong ví của bạn không đủ để thanh toán. Vui lòng liên hệ bộ phận Sale để nạp tiền vào tài khoản'
-            ]); 
+                'error' =>  false,
+                'msg'   =>  'success'
+            ]);
         }
-
-        PurchaseOrder::find($request->order_id)->update([
-            'deposited' =>  $deposite,
-            'user_id_deposited' => $order->customer_id,
-            'deposited_at'  =>  date('Y-m-d', strtotime(now())),
-            'status'    =>  PurchaseOrder::STATUS_DEPOSITED_ORDERING
-        ]);
-
-        $alilogi_user->wallet = $wallet - $deposite;
-        $alilogi_user->save();
-
-        TransportRecharge::create([
-            'customer_id'   =>  $order->customer_id,
-            'user_id_created'   => $order->customer_id,
-            'money' =>  $deposite,
-            'type_recharge' =>  TransportRecharge::DEPOSITE_ORDER,
-            'content'   =>  'Đặt cọc đơn hàng mua hộ. Mã đơn hàng '.$order->order_number,
-            'order_type'    =>  TransportRecharge::TYPE_ORDER
-        ]);
-
-        DB::commit();
-
-        return response()->json([
-            'error' =>  false,
-            'msg'   =>  'success'
-        ]);
 
     }
     catch (\Exception $e) {
