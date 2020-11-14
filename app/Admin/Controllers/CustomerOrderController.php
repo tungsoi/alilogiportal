@@ -501,9 +501,9 @@ EOT
                 $tools->append('<a class="btn-confirm-deposite btn btn-sm btn-warning" data-order="'.$id.'"><i class="fa fa-money"></i> &nbsp; Đặt cọc bằng số dư Tài khoản</a>');
             }
 
-            if ($order->status != PurchaseOrder::STATUS_NEW_ORDER && $order->status != PurchaseOrder::STATUS_SUCCESS && $order->status != PurchaseOrder::STATUS_CANCEL) {
-                $tools->append('<a class="btn-customer-destroy btn btn-sm btn-danger" data-order="'.$id.'"><i class="fa fa-times"></i> &nbsp; Huỷ đơn hàng</a>');
-            }
+            // if ($order->status != PurchaseOrder::STATUS_NEW_ORDER && $order->status != PurchaseOrder::STATUS_SUCCESS && $order->status != PurchaseOrder::STATUS_CANCEL) {
+            //     $tools->append('<a class="btn-customer-destroy btn btn-sm btn-danger" data-order="'.$id.'"><i class="fa fa-times"></i> &nbsp; Huỷ đơn hàng</a>');
+            // }
 
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
