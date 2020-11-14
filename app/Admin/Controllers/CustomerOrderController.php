@@ -129,6 +129,9 @@ class CustomerOrderController extends AdminController
 
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 120, 'height' => 120])
         ->display(function () {
+            if (! $this->items->first()) {
+                return null;
+            }
             return '<a href="'.asset($this->items->first()->product_image).'" class="grid-popup-link">
             <img src="'.asset($this->items->first()->product_image).'" style="max-width:120px;max-height:120px" class="img img-thumbnail"></a>';
         });
