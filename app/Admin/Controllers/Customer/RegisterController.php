@@ -20,22 +20,27 @@ class RegisterController extends Controller {
     }
 
     public function postRegister(Request $request) {
-        $this->validator($request->all())->validate();
         $data = $request->all();
 
-        $user = User::create([
-            'username'  =>  $data['email'],
+        $this->validator($data)->validate();
+
+        $data = [
+            'username'  =>  $data['username'],
             'password'  =>  bcrypt($data['password']),
             'name'      =>  $data['symbol_name'],
-            'email'     =>  $data['email'],
+            'email'     =>  $data['username'],
             'phone_number'  =>  $data['mobile'],
             'wallet'    =>  0,
             'is_customer'   =>  1,
             'symbol_name'   =>  $data['symbol_name'],
             'ware_house_id' =>  null,
             'is_active' =>  1,
-            'address'  =>   $data['address']
-        ]);
+            'address'  =>   $data['address'],
+            'province'  =>  $data['province'],
+            'district'  =>  $data['district']
+        ];
+
+        $user = User::firstOrCreate($data);
 
         DB::table('admin_role_users')->insert([
             'user_id'   =>  $user->id,
@@ -43,18 +48,24 @@ class RegisterController extends Controller {
         ]);
 
         return redirect()->route('admin.login')->with('register', 'Đăng ký thành công');
+    
     }
 
     protected function validator(array $data)
     {
-        $valid = Validator::make($data, [
+        return Validator::make($data, [
             'symbol_name' => 'required|unique:admin_users,symbol_name',
-            'email' => 'email|unique:admin_users,email',
+            'username' => 'email|unique:admin_users,username',
             'password' => 'required|required_with:password_confirmation|same:password_confirmation',
-            'address'   =>  'required',
             'mobile'    =>  'required'
+        ], [
+            'symbol_name.required'  =>  'Vui lòng nhập mã khách hàng.',
+            'symbol_name.unique'    =>  'Mã khách hàng này đã tồn tại. Vui lòng nhập mã khách hàng khác.',
+            'username.email'    =>  'Định dạng email không đúng. VD: abc@gmail.com.',
+            'username.unique'   =>  'Email này đã được đăng ký. Vui lòng sử dụng email khác.',
+            'mobile.required'   =>  'Vui lòng nhập số điện thoại.',
+            'password.required' =>  'Vui lòng nhập mật khẩu.',
+            'password.same' =>  'Mật khẩu xác nhận không đúng.'
         ]);
-
-        return $valid;
     }
 }
