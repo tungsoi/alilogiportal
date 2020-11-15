@@ -375,12 +375,15 @@ EOT
             $actions->disableView();
             $actions->disableEdit();
 
-            $actions->append('
-                <a class="btn btn-xs btn-danger btn-customer-delete-item-from-order" data-id="'.$this->getKey().'">
-                    <i class="fa fa-trash"></i> Xoá
-                </a>'
-            );
-            
+            $item = OrderItem::find($this->getKey());
+            if ($item->order->status == PurchaseOrder::STATUS_NEW_ORDER)
+            {
+                $actions->append('
+                    <a class="btn btn-xs btn-danger btn-customer-delete-item-from-order" data-id="'.$this->getKey().'">
+                        <i class="fa fa-trash"></i> Xoá
+                    </a>'
+                );
+            }
         });
 
         $grid->disableBatchActions();

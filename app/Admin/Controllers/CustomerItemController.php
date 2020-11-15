@@ -38,6 +38,7 @@ class CustomerItemController extends AdminController
         $grid = new Grid(new OrderItem);
         $grid->model()
         ->where('customer_id', Admin::user()->id)
+        ->whereNotNull('order_id')
         ->where('status', '!=', OrderItem::PRODUCT_NOT_IN_CART)
         ->orderBy('created_at', 'desc');
 
@@ -51,7 +52,6 @@ class CustomerItemController extends AdminController
                     $query->whereIn('order_id', $orders);
                 
                 }, 'Mã đơn hàng');
-                // $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
 
                 $filter->where(function ($query) {
                     switch ($this->input) {
@@ -72,71 +72,80 @@ class CustomerItemController extends AdminController
             });
             $filter->column(1/2, function ($filter) {
                 $filter->like('cn_code', 'Mã vận đơn');
-                // $filter->like('cn_order_number', 'Mã giao dịch');
             });
             
         });
-        $grid->fixColumns(6);
+        // $grid->fixColumns(6);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
-        $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary');
-        // $grid->id('Mã SP')->display(function () {
-        //     return "SPMH-".str_pad($this->id, 5, 0, STR_PAD_LEFT);
-        // });
-        $grid->column('customer_name', 'Mã khách hàng')->display(function () {
-            return $this->order->customer->symbol_name ?? "";
-        })->help('Mã khách hàng');
-        $grid->status('Trạng thái')->display(function () {
-            $html = "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
+        $grid->column('info', 'Mã đơn hàng')->display(function () {
+            $html = "";
+            $html .= $this->order->order_number;
+            $html .= "<br><span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
             $html .= "<br> <br>";
             $html .= '<b><a href="'.$this->product_link.'" target="_blank"> Link sản phẩm </a></b>';
+            $html .= '<br>'.date('H:i | d-m-Y', strtotime($this->created_at));
             return $html;
-        });
-        $grid->created_at(trans('admin.created_at'))->display(function () {
-            return date('H:i | d-m-Y', strtotime($this->created_at));
-        });
-        $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 50, 'height' => 50]);
-        $grid->product_size('Kích thước')->display(function () {
+        })->width(150);
+        // $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary');
+        // $grid->column('customer_name', 'Mã khách hàng')->display(function () {
+        //     return $this->order->customer->symbol_name ?? "";
+        // })->help('Mã khách hàng');
+        // $grid->status('Trạng thái')->display(function () {
+        //     $html = "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
+        //     $html .= "<br> <br>";
+        //     $html .= '<b><a href="'.$this->product_link.'" target="_blank"> Link sản phẩm </a></b>';
+        //     return $html;
+        // });
+        // $grid->created_at(trans('admin.created_at'))->display(function () {
+        //     return date('H:i | d-m-Y', strtotime($this->created_at));
+        // });
+        $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 50, 'height' => 50])->width(150);
+        $grid->product_size('Size')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
-        });
-        $grid->product_color('Màu');
+        })->width(150);
+        $grid->product_color('Màu')->width(150);
         $grid->qty('Số lượng');
-        $grid->qty_reality('Số lượng thực đặt');
+        $grid->qty_reality('Thực đặt');
         $grid->price('Giá (Tệ)');
         $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
             return $this->purchase_cn_transport_fee ?? 0;
-        })->help('Phí vận chuyển nội địa Trung quốc');
+        });
         $grid->column('total_price', 'Tổng tiền (Tệ)')->display(function () {
             $totalPrice = ($this->qty_reality * $this->price) + $this->purchase_cn_transport_fee ;
             return number_format($totalPrice, 2) ?? 0; 
-        })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
-        $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi');
-        $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
-            return $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null;
+        });
+        $grid->weight('Cân nặng (KG)')->display(function () {
+            
+            if ($this->weight != null) {
+                $html = "<p>".$this->weight."</p>";
+                $html .= "<p>" . $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null."</p>";
+
+                return $html;
+            }
+            
+            return null;
         });
         $grid->cn_code('Mã vận đơn Alilogi');
-        // $grid->cn_order_number('Mã giao dịch');
-        $grid->customer_note('Khách hàng ghi chú')->style('width: 100px')->editable();
+        $grid->customer_note('Ghi chú')->width(100)->editable();
         $grid->admin_note('Admin ghi chú');
 
         $grid->disableCreateButton();
         $grid->disableActions();
+        $grid->disablePagination();
         
         $grid->tools(function (Grid\Tools $tools) {
-            // $tools->append(new Ordered());
-            // $tools->append(new WarehouseVietnam());
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
         });
         $grid->actions(function ($actions) {
             $actions->disableView();
-            // $actions->disableEdit();
             $actions->disableDelete();
         });
-        $grid->paginate(100);
+        $grid->paginate(1000);
 
         return $grid;
     }
