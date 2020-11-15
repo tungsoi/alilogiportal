@@ -15,11 +15,12 @@
             </div>
         </div>
 
-        <ul class="sidebar-menu" id="customer-info">
-            <li class="header">MKH: {{ Admin::user()->symbol_name }}</li>
-            <li class="header">Số dư: {{ number_format(Admin::user()->wallet) }} VND</li>
-        </ul>
-
+        @if (Admin::user()->isRole('customer_order'))
+            <ul class="sidebar-menu" id="customer-info">
+                <li class="header">MKH: {{ Admin::user()->symbol_name }}</li>
+                <li class="header">Số dư: {{ number_format(Admin::user()->wallet) }} VND</li>
+            </ul>
+        @endif
         <br>
 
         @if(config('admin.enable_menu_search'))

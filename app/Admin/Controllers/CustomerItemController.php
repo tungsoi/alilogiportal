@@ -89,19 +89,6 @@ class CustomerItemController extends AdminController
             $html .= '<br>'.date('H:i | d-m-Y', strtotime($this->created_at));
             return $html;
         })->width(150);
-        // $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary');
-        // $grid->column('customer_name', 'Mã khách hàng')->display(function () {
-        //     return $this->order->customer->symbol_name ?? "";
-        // })->help('Mã khách hàng');
-        // $grid->status('Trạng thái')->display(function () {
-        //     $html = "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
-        //     $html .= "<br> <br>";
-        //     $html .= '<b><a href="'.$this->product_link.'" target="_blank"> Link sản phẩm </a></b>';
-        //     return $html;
-        // });
-        // $grid->created_at(trans('admin.created_at'))->display(function () {
-        //     return date('H:i | d-m-Y', strtotime($this->created_at));
-        // });
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 50, 'height' => 50])->width(150);
         $grid->product_size('Size')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
