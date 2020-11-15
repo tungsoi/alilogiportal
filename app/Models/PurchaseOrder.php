@@ -428,4 +428,21 @@ class PurchaseOrder extends Model
 
         return 0;
     }
+
+    public static function totalItemsByCustomerId($customer_id = "")
+    {
+        # code...
+        $orders = PurchaseOrder::whereCustomerId($customer_id)->get();
+        $total = 0;
+
+        if ($orders) 
+        {
+            foreach ($orders as $order)
+            {
+                $total += $order->items->count();
+            }
+            return $total;
+        }
+        return 0;
+    }
 }

@@ -7,6 +7,7 @@ use App\User;
 use Encore\Admin\Facades\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use phpDocumentor\Reflection\Types\Null_;
 
 /*
 |--------------------------------------------------------------------------
@@ -217,6 +218,72 @@ Route::post('/customer-destroy', function (Request $request) {
     }
     catch (\Exception $e) {
         DB::rollBack();
+        return response()->json([
+            'error' =>  true,
+            'msg'   =>  $e->getMessage()
+        ]);
+    }
+});
+
+
+Route::post('/customer-delete-item-from-cart', function (Request $request) {
+    DB::beginTransaction();
+    try {
+        OrderItem::find($request->id)->delete();
+        DB::commit();
+
+        return response()->json([
+            'error' =>  false,
+            'msg'   =>  'success'
+        ]);
+
+    }
+    catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'error' =>  true,
+            'msg'   =>  $e->getMessage()
+        ]);
+    }
+});
+
+
+Route::post('/customer-delete-item-from-order', function (Request $request) {
+    
+    try {
+        $item = OrderItem::find($request->id);
+        $order = PurchaseOrder::find($item->order_id);
+
+        $item->order_id = NULL;
+        $item->save();
+
+        $current_items = $order->items;
+        if ($current_items->count() > 0)
+        {
+            $purchase_total_items_price = 0;
+            $purchase_cn_transport_fee = 0;
+            foreach ($current_items as $current_item) {
+                if ($current_item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
+                    $purchase_cn_transport_fee += $item->purchase_cn_transport_fee;
+                    $purchase_total_items_price += $item->qty_reality * $item->price;
+                }
+            }
+    
+            $total_bill = ($purchase_total_items_price + $purchase_cn_transport_fee + $order->purchase_order_service_fee);
+            
+        } 
+        dd($current_items);
+        // OrderItem::find($request->id)->delete();
+        // DB::commit();
+
+        return response()->json([
+            'error' =>  false,
+            'msg'   =>  'success'
+        ]);
+
+    }
+    catch (\Exception $e) {
+        
         return response()->json([
             'error' =>  true,
             'msg'   =>  $e->getMessage()

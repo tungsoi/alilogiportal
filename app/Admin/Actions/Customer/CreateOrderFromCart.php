@@ -83,7 +83,7 @@ class CreateOrderFromCart extends BatchAction
 
     public function html()
     {
-        return "<a class='create-order btn btn-sm btn-danger'><i class='fa fa-plus'></i> ".$this->name."</a>";
+        return "<a class='create-order btn btn-sm btn-danger'><i class='fa fa-cart-plus'></i>&nbsp; ".$this->name."</a>";
     }
 
 }

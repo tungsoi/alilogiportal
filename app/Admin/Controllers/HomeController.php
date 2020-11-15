@@ -13,8 +13,6 @@ use Encore\Admin\Layout\Content;
 use Encore\Admin\Layout\Row;
 use Encore\Admin\Widgets\Callout;
 use Encore\Admin\Widgets\InfoBox;
-use Encore\Admin\Widgets\Box;
-use Encore\Admin\Grid;
 
 class HomeController extends Controller
 {
@@ -22,21 +20,16 @@ class HomeController extends Controller
     {
         return $content
         ->header('Bảng điều khiển')
-        ->description('...')
-        ->row(function (Row $row) {
-            $words = 'Hệ thống đang trong quá trình triển khai và nâng cấp tính năng, mọi yêu cầu hoặc đóng góp ý kiến vui lòng gửi về địa chỉ hòm thư: thanhtung.atptit@gmail.com<br>Số điện thoại IT support: 0345.513.889';
-            $row->column(12, function (Column $column) use ($words) {
-                $column->append((new Callout($words))->style('success'));
-            });
-            
-        })
+        ->description(' ')
         ->row(function (Row $row) {
             if (Admin::user()->isRole('administrator')) {
                 $row->column(4, new InfoBox('Quản trị viên', 'users', 'aqua', 'admin/auth/users', User::where('is_customer', 0)->count()));
                 $row->column(4, new InfoBox('Khách hàng', 'book', 'green', '/admin/customers', User::where('is_customer', 1)->count()));
                 $row->column(4, new InfoBox('Đơn hàng mua hộ', 'tag', 'yellow', '/admin/puchase_orders', PurchaseOrder::count()));
             } else {
-                $row->column(3, new InfoBox('Số dư ví', 'users', 'aqua', 'admin/auth/users', number_format(Admin::user()->wallet)));
+                $row->column(3, new InfoBox('Số dư ví', '', 'aqua', 'admin/customer_recharges', number_format(Admin::user()->wallet)  . " VND"));
+                $row->column(3, new InfoBox('Số đơn hàng', '', 'green', 'admin/customer_orders', PurchaseOrder::whereCustomerId(Admin::user()->id)->count()));
+                $row->column(3, new InfoBox('Số sản phẩm', '', 'orange', 'admin/customer_items', PurchaseOrder::totalItemsByCustomerId(Admin::user()->id)));
                 // $row->column(12, function (Column $column) {
                 //     $column->append($this->grid()->render());
                 // });

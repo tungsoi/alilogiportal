@@ -9,10 +9,8 @@ use Encore\Admin\Grid;
 use Encore\Admin\Show;
 use App\Models\OrderItem;
 use Encore\Admin\Facades\Admin;
-use App\User;
 use Encore\Admin\Layout\Content;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 
 class CartController extends AdminController
 {
@@ -26,6 +24,21 @@ class CartController extends AdminController
     public function __construct()
     {
         $this->title = trans('Giỏ hàng');
+    }
+
+    /**
+     * Index interface.
+     *
+     * @param Content $content
+     *
+     * @return Content
+     */
+    public function index(Content $content)
+    {
+        return $content
+            ->title($this->title())
+            ->description('Danh sách sản phẩm trong giỏ')
+            ->body($this->grid());
     }
 
     /**
@@ -50,31 +63,82 @@ class CartController extends AdminController
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
+        $grid->header(function () {
+            return '
+                - Hướng dẫn: <br>
+                - Để thêm sản phẩm bạn muốn mua, hãy nhấn chọn nút "Thêm sản phẩm vào giỏ hàng" <br>
+                - Để tạo đơn hàng, vui lòng nhấn chọn từng sản phẩm, sau đó nhấn chọn nút "Tạo đơn hàng"
+            ';
+        });
         $grid->column('number', 'STT');
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 100, 'height' => 100]);
         $grid->shop_name('Tên shop')->width(200);
         $grid->product_name('Tên sản phẩm')->width(200);
         $grid->product_link('Link sản phẩm')->display(function () {
             return "<a href=".$this->product_link." target='_blank'>Link sản phẩm</a>";
-        });
-        $grid->product_size('Size')->width(200);
-        $grid->product_color('Màu')->width(200);
-        $grid->qty('Số lượng đặt');
-        $grid->price('Đơn giá (Tệ)');
+        })->width(150);
+        $grid->product_size('Size')->width(150);
+        $grid->product_color('Màu')->width(150);
+        $grid->qty('Số lượng')->editable();
+        $grid->price('Đơn giá (Tệ)')->editable();
         $grid->column('total', 'Thành tiền (Tệ)')->display(function () {
             return number_format($this->qty * $this->price, 2);
         });
-        $grid->customer_note('Ghi chú')->editable();
-        // $grid->status('Trạng thái')->display(function () {
-        //     return OrderItem::STATUS[$this->status];
-        // })->label('primary');
-        $grid->disableActions();
+        $grid->customer_note('Ghi chú')->editable()->width(200);
+
+        $grid->disableColumnSelector();
+        $grid->disableExport();
+        $grid->disableFilter();
+
+        $grid->setActionClass(\Encore\Admin\Grid\Displayers\Actions::class);
         $grid->actions(function ($actions) {
             $actions->disableView();
+            $actions->disableEdit();
+            $actions->disableDelete();
+            $actions->append('
+                <a class="btn btn-xs btn-danger btn-customer-delete-item" data-id="'.$this->getKey().'">
+                    <i class="fa fa-trash"></i><span class="hidden-xs">&nbsp; Xoá</span>
+                </a>
+            ');
         });
+        $grid->disableCreateButton();
         $grid->tools(function (Grid\Tools $tools) {
+            $tools->append('
+                <a href="'.route('admin.carts.create').'" class="btn btn-sm btn-success">
+                    <i class="fa fa-plus"></i><span class="hidden-xs">&nbsp;&nbsp;Thêm sản phẩm vào giỏ</span>
+                </a>
+            ');
             $tools->append(new CreateOrderFromCart());
         });
+        $grid->paginate(100);
+
+        Admin::script(
+            <<<EOT
+            
+            $(document).on('click', '.btn-customer-delete-item', function () {
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/customer-delete-item-from-cart',
+                    data: {
+                        id: $(this).data('id')
+                    },
+                    success: function(response) {
+                        if (response.error == false) {
+                            toastr.success('Xoá thành công.');
+
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 500);
+                            
+                        } else {
+                            alert('Xảy ra lỗi: ' + response.msg);
+                        }
+                    }
+                });
+            });
+EOT
+    );
+
         return $grid;
     }
 
@@ -134,7 +198,7 @@ class CartController extends AdminController
             $form->text('product_color', 'Màu sắc sản phẩm')->rules('required')->default($booking[0]['product_color']);
             $form->number('qty', 'Số lượng')->rules('required')->default($booking[0]['qty']);
             $form->currency('price', 'Giá sản phẩm (Tệ)')->rules('required')->symbol('￥')->digits(2)->default($booking[0]['price']);
-            $form->textarea('customer_note', 'Ghi chú');
+            $form->textarea('customer_note', 'Ghi chú của bạn');
             $form->hidden('customer_id')->default(Admin::user()->id);
             $form->hidden('status')->default(OrderItem::PRODUCT_NOT_IN_CART);
             $form->hidden('qty_reality');
@@ -153,13 +217,13 @@ class CartController extends AdminController
         
         $form->text('shop_name', 'Tên shop');
         $form->text('product_name', 'Tên sản phẩm');
-        $form->text('product_link', 'Link sản phẩm')->rules('required')->width('200px');
+        $form->text('product_link', 'Link sản phẩm')->rules('required');
         $form->image('product_image','Ảnh sản phẩm')->thumbnail('small', $width = 150, $height = 150);
         $form->text('product_size', 'Size sản phẩm')->rules('required');
         $form->text('product_color', 'Màu sắc sản phẩm')->rules('required');
         $form->number('qty', 'Số lượng')->rules('required');
         $form->currency('price', 'Giá sản phẩm (Tệ)')->rules('required')->symbol('￥')->digits(2);
-        $form->textarea('customer_note', 'Ghi chú');
+        $form->textarea('customer_note', 'Ghi chú của bạn');
         $form->hidden('customer_id')->default(Admin::user()->id);
         $form->hidden('status')->default(OrderItem::PRODUCT_NOT_IN_CART);
         $form->hidden('qty_reality');
@@ -167,6 +231,11 @@ class CartController extends AdminController
         $form->disableEditingCheck();
         $form->disableCreatingCheck();
         $form->disableViewCheck();
+
+        $form->tools(function (Form\Tools $tools) {
+            $tools->disableDelete();
+            $tools->disableView();
+        });
 
         $form->saving(function (Form $form) {
             $form->qty_reality = $form->qty;

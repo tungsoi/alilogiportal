@@ -2,9 +2,6 @@
 
 namespace App\Admin\Controllers;
 
-use App\Admin\Actions\Order\Deposite;
-use App\Admin\Actions\Order\SuccessOrder;
-use App\Models\Alilogi\Warehouse;
 use App\Models\OrderItem;
 use Encore\Admin\Controllers\AdminController;
 use Encore\Admin\Form;
@@ -18,6 +15,7 @@ use Encore\Admin\Layout\Row;
 use Encore\Admin\Widgets\Box;
 use Encore\Admin\Widgets\Table;
 use Encore\Admin\Layout\Column;
+use Illuminate\Http\Request;
 
 class CustomerOrderController extends AdminController
 {
@@ -79,12 +77,16 @@ class CustomerOrderController extends AdminController
         $grid->filter(function($filter) {
             $filter->expand();
             $filter->disableIdFilter();
-            $filter->like('order_number', 'Mã đơn hàng');
-            $filter->equal('status', 'Trạng thái')->select(PurchaseOrder::STATUS);
-            $filter->between('created_at', 'Ngày đặt hàng')->date();
+            $filter->column(1/2, function ($filter) {
+                $filter->like('order_number', 'Mã đơn hàng');
+                $filter->equal('status', 'Trạng thái')->select(PurchaseOrder::STATUS);
+            });
+            $filter->column(1/2, function ($filter) {
+                $filter->between('created_at', 'Ngày đặt hàng')->date();
+            });
         });
 
-        $grid->fixColumns(6);
+        // $grid->fixColumns(6);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
@@ -100,17 +102,7 @@ class CustomerOrderController extends AdminController
             $html .= "<br> <i>".date('H:i | d-m-Y', strtotime($this->created_at))."</i>";
 
             return $html;
-        });
-        // $grid->customer_id('Mã khách hàng')->display(function () {
-        //     $user = User::find($this->customer_id);
-        //     $symbol_name = $user->symbol_name != null ? $user->symbol_name : $user->email;
-            
-        //     $html = "<span class='label label-primary'>".$symbol_name."</span>";
-        //     // $html .= "<br> <i>" . number_format($user->wallet) . " (VND)</i>";
-
-        //     return $html;
-        // });
-
+        })->width(150);
         $grid->status('Trạng thái')->display(function () {
             $count = "";
             if ($this->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
@@ -120,47 +112,43 @@ class CustomerOrderController extends AdminController
             }
 
             $html = "<span class='label label-".PurchaseOrder::LABEL[$this->status]."'>".PurchaseOrder::STATUS[$this->status]." " .$count. "</span>";
-            $html .= "<br> Đã cọc: ".number_format($this->deposited);
-            $deposited_at = $this->deposited_at != null ? date('d-m-Y', strtotime($this->deposited_at)) : "";
-            $html .= "<br> <i>Ngày cọc: ".$deposited_at."</i>";
-
+            if ($this->deposited != "") {
+                $html .= "<br> Đã cọc: ".number_format($this->deposited);
+                $deposited_at = $this->deposited_at != null ? date('d-m-Y', strtotime($this->deposited_at)) : "";
+                $html .= "<br> <i>Ngày cọc: ".$deposited_at."</i>";
+            }
+        
             return $html;
-        });
+        })->width(180);
 
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 120, 'height' => 120])
         ->display(function () {
+            
             if (! $this->items->first()) {
                 return null;
             }
-            return '<a href="'.asset($this->items->first()->product_image).'" class="grid-popup-link">
-            <img src="'.asset($this->items->first()->product_image).'" style="max-width:120px;max-height:120px" class="img img-thumbnail"></a>';
+            return '<a href="'.$this->items->first()->product_image.'" class="grid-popup-link">
+            <img src="'.$this->items->first()->product_image.'" style="max-width:120px;max-height:120px" class="img img-thumbnail"></a>';
         });
-
-        // $grid->column('staff', 'Nhân viên phụ trách')->display(function () {
-        //     $html = "<ul style='padding-left: 15px;'>";
-        //     $html .= '<li>Đặt hàng: ' . ($this->supporterOrder->name ?? "...") . "</li>";
-        //     $html .= '<li>CSKH: ' . ($this->supporter->name ?? "...") . "</li>";
-        //     $html .= '<li>Kho: ' . ($this->supporterWarehouse->name ?? "...") . "</li>";
-        //     $html .= "</ul>";
-
-        //     return $html;
-        // });
         $grid->column('total_items', 'Số sản phẩm')->display(function () {
             return $this->totalItemReality();
         });
         $grid->purchase_total_items_price('Tổng giá trị SP (Tệ)')->display(function () {
             $html = number_format($this->sumQtyRealityMoney(), 2);
-            $html .= "<br> <i>( Cần cọc ".number_format($this->deposit_default) . " VND)</i>";
+            if ($this->deposited == "") {
+                $html .= "<br> <i>( Cần cọc ".number_format($this->deposit_default) . " VND)</i>";
+            }
+            
             return $html;
         })->totalRow(function ($amount) {
             $amount = number_format($amount, 2);
             return '<span class="">'.$amount.'</span>';
-        });
+        })->width(200);
         $grid->purchase_order_service_fee('Phí dịch vụ (Tệ)')->display(function () {
             $html = number_format($this->purchase_order_service_fee, 2);
             return $html;
         })->totalRow(function ($amount) {
-            $amount = number_format($amount);
+            $amount = number_format($amount, 2);
             return '<span class="">'.$amount.'</span>';
         });
 
@@ -175,7 +163,7 @@ class CustomerOrderController extends AdminController
             }
 
             return 0;
-        });
+        })->width(200);
         $grid->column('total_kg', 'Tổng KG')->display(function () {
             if ($this->items) {
                 $total = 0;
@@ -190,30 +178,12 @@ class CustomerOrderController extends AdminController
 
             return 0;
         });
-        // $grid->column('price_weight', 'Giá KG (VND)')->display(function () {
-        //     return number_format($this->price_weight);
-        // });
-        // $grid->warehouse()->name('Kho');
-        // $grid->deposited('Đã cọc (VND)')->display(function () {
-        //     $html = number_format($this->deposited);
-        //     $deposited_at = $this->deposited_at != null ? date('d-m-Y', strtotime($this->deposited_at)) : "";
-        //     $html .= "<br> <i>".$deposited_at."</i>";
-
-        //     return $html;
-        // })->totalRow(function ($amount) {
-        //     $amount = number_format($amount);
-        //     return '<span class="">'.$amount.'</span>';
-        // });
         $grid->final_total_price('Tổng giá cuối (Tệ)')->display(function () {
             if ($this->items) {
                 return number_format($this->totalBill(), 2) . "<br> <i>" . number_format($this->totalBill() * $this->current_rate) . " (VND)</i>";
             }
             return 0;
         })
-        // ->totalRow(function ($amount) {
-        //     $amount = number_format($amount);
-        //     return '<span class="">'.$amount.'</span>';
-        // })
         ->help('Tổng giá cuối = Tổng giá trị SP + Phí dịch vụ + Tổng phí VCNĐ');
 
         $grid->admin_note('Admin ghi chú');
@@ -235,19 +205,22 @@ class CustomerOrderController extends AdminController
 
             if ($order->status == PurchaseOrder::STATUS_NEW_ORDER) {
                 $actions->append('
-                    <a href="javascript:void(0);" data-id="'.$this->getKey().'" class="grid-row-delete btn btn-danger btn-xs btn-customer-delete">
+                    <a href="javascript:void(0);" data-id="'.$this->getKey().'" class="grid-row-delete btn btn-danger btn-xs btn-customer-delete mg-t-10">
                         <i class="fa fa-trash"></i> Xoá
                     </a>'
                 );
             }
         });
 
-        Admin::style('table {font-size: 16px;}');
-
+        Admin::style('table {font-size: 14px;};');
+        $grid->disableExport();
+        $grid->disableColumnSelector();
         $grid->batchActions(function ($batch) {
             $batch->disableDelete();
         });
-        $grid->paginate(20);
+        $grid->paginate(200);
+        $grid->disablePerPageSelector();
+        $grid->disablePagination();
 
         Admin::script(
             <<<EOT
@@ -294,76 +267,28 @@ EOT
     {
         $order = PurchaseOrder::find($id);
 
-        if (! isset($order->items)) {
-            admin_error('Đơn hàng bạn vừa chọn xem chi tiết không tồn tại. Vui lòng kiểm tra lại.');
-            return redirect()->route('admin.puchase_orders.index');
-        }
         $items = $order->items;
         $qty = $qty_reality = 0;
         $purchase_cn_transport_fee = 0; // Tổng phí ship nội địa TQ
         $total_price_reality = 0; // Tổng tiền thực đặt = Tổng thực đặt * giá 
 
         foreach ($items as $item) {
-            // if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
+            if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
                 $qty_reality += $item->qty_reality;
                 $qty += $item->qty;
                 $purchase_cn_transport_fee += $item->purchase_cn_transport_fee;
                 $total_price_reality += $item->qty_reality * $item->price;
-            // }
+            }
         }
 
         $total_bill = ($total_price_reality + $purchase_cn_transport_fee + $order->purchase_order_service_fee);
         $current_rate = $order->current_rate;
-        $headers = ["Mã đơn hàng", "Trạng thái", "Tỷ giá", ""];
-        $rows = [
-            [
-                "<b>".$order->order_number.' / '.$order->customer->symbol_name."</b>", 
-                "<span class='label label-".PurchaseOrder::LABEL[$order->status]."'>".PurchaseOrder::STATUS[$order->status]."</span>", 
-                number_format($current_rate) . " (VND)"
-            ],
-            [
-                'Tổng số lượng', $qty
-            ],
-            [
-                'Tổng thực đặt', $qty_reality
-            ],
-            [
-                'Tổng tiền thực đặt', number_format($total_price_reality, 2) . " (Tệ)", " = " . number_format($total_price_reality * $current_rate, 2) . " (VND)"
-            ],
-            [
-                'Tổng phí dịch vụ', number_format($order->purchase_order_service_fee, 2) . " (Tệ)", " = " . number_format($order->purchase_order_service_fee * $current_rate, 2) . " (VND)"
-            ],
-            [
-                'Tổng phí ship nội địa Trung Quốc', number_format($purchase_cn_transport_fee, 2) . " (Tệ)", " = " . number_format($purchase_cn_transport_fee * $current_rate, 2) . " (VND)"
-            ],
-            [
-                'Tổng giá trị đơn hàng = Tổng tiền thực đặt + ship nội địa + dịch vụ', number_format($total_bill, 2) . " (Tệ)", " = " . number_format($total_bill * $current_rate, 2) . " (VND)"
-            ],
-            [
-                'Số tiền cần cọc', '', '= '. number_format( ($total_bill * $current_rate) * 70 / 100, 2) . " (VND)"
-            ],
-            [
-                'Số tiền đã cọc', '', '<b style="color: green">= '.number_format($order->deposited) . " (VND)</b>"
-            ],
-            [
-                'Số tiền còn thiếu', '', '<b style="color: red">= '.number_format( ($total_bill * $current_rate) - $order->deposited) . " (VND)</b>"
-            ]
-        ];
-        // $rows = [
-        //     ['Tổng giá trị đơn hàng = Tổng tiền thực đặt + ship nội địa + dịch vụ', number_format($total_bill, 2) . " (Tệ)" . " = " . number_format($total_bill * $current_rate, 2) . " (VND)"],
-        //     ['Tổng tiền thực đặt', number_format($total_price_reality, 2) . " (Tệ)" . " = " . number_format($total_price_reality * $current_rate, 2) . " (VND)"],
-        //     ['Tổng phí ship nội địa Trung Quốc', number_format($purchase_cn_transport_fee, 2) . " (Tệ)"  . " = " . number_format($purchase_cn_transport_fee * $current_rate, 2) . " (VND)"],
-        //     ['Tổng phí dịch vụ', number_format($order->purchase_order_service_fee, 2) . " (Tệ)" . " = " . number_format($order->purchase_order_service_fee * $current_rate, 2) . " (VND)"],
-        //     ['Tổng số lượng', $qty, '<b>'.$order->order_number.'</b> / <b>'.$order->customer->symbol_name.'</b>'],
-        //     ['Tổng thực đặt', $qty_reality, 'Trạng thái đơn hàng', "<span class='label label-".PurchaseOrder::LABEL[$order->status]."'>".PurchaseOrder::STATUS[$order->status]."</span>"],  
-        //     ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at)), 'Tỷ giá', number_format($current_rate) . " (VND)"],
-        //     ['Số tiền phải cọc', number_format($order->deposit_default, 2) . " (VND)"]
-        // ];
 
-        $table = new Table($headers, $rows);
-        $table->setStyle('th:nth-child(1) {width: 30%} th:nth-child(2) {width: 20%} th:nth-child(3) {width: 20%} th:nth-child(4) {width: 30%}');
-        // Admin::style('table:nth-child(1) th:nth-child(1) {width: 30%} table:nth-child(1) th:nth-child(2) {width: 20%} table:nth-child(1) th:nth-child(3) {width: 20%} table:nth-child(1) th:nth-child(4) {width: 30%}');
-        return $table->render();
+        $status = "<span class='label label-".PurchaseOrder::LABEL[$order->status]."'>".PurchaseOrder::STATUS[$order->status]."</span>";
+        return view('admin.customer-detail-order', compact(
+            'order', 'status', 'qty', 'qty_reality', 'total_price_reality', 'current_rate', 'purchase_cn_transport_fee',
+            'total_bill'
+        ))->render();
     }
 
     /**
@@ -389,47 +314,22 @@ EOT
         $grid->disableFilter();
         $grid->disableColumnSelector();
         $grid->disableExport();
-        // $grid->filter(function($filter) {
-        //     $filter->expand();
-        //     $filter->disableIdFilter();
-        //     // $filter->column(1/2, function ($filter) {
-        //         $filter->where(function ($query) {
-        //             $orders = PurchaseOrder::where('order_number', 'like', "%{$this->input}%")->get()->pluck('id');
-    
-        //             $query->whereIn('order_id', $orders);
-                
-        //         }, 'Mã đơn hàng');
-        //         // $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
-        //     // });
-        //     // $filter->column(1/2, function ($filter) {
-        //         $filter->like('cn_code', 'Mã vận đơn');
-        //         $filter->like('cn_order_number', 'Mã giao dịch');
-        //     // });
-            
-        // });
-        $grid->fixColumns(3);
+        // $grid->fixColumns(3);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
         $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary')->display(function () {
-            // $html = "<p class='label label-primary'>".$this->order->order_number."</p>";
-            // $customer = $this->order->customer->symbol_name ?? $this->order->customer->email;
             $html = "";
-            // $html .= "<br> <p class='label label-info'>".$customer."</p>" ?? "";
             $html .= "<p class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</p>";
-            // $html .= "<br>" . date('H:i | d-m-Y', strtotime($this->created_at));
             $html .= '<br><br><b><a href="'.$this->product_link.'" target="_blank"> Link SP</a></b>';
             return $html;
         });
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 120, 'height' => 120]);
-        // $grid->status('Link sản phẩm')->display(function () {
-        //     return '<b><a href="'.$this->product_link.'" target="_blank"> Link SP</a></b>';
-        // });
         $grid->product_size('Kích thước')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
-        });
-        $grid->product_color('Màu');
+        })->width(100);
+        $grid->product_color('Màu')->width(100);
         $grid->qty('Số lượng');
         $grid->qty_reality('Số lượng thực đặt');
         $grid->price('Đơn giá (Tệ)')->display(function () {
@@ -457,27 +357,15 @@ EOT
             $html .= "<br> <i>".$date."</i>";
             return $html;
         });
-        // $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
-        //     return $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null;
-        // });
         $grid->cn_code('Mã vận đơn Alilogi');
-        // $grid->cn_order_number('Mã giao dịch');
-        $grid->customer_note('Khách hàng ghi chú')->style('width: 100px')->editable();
+        $grid->customer_note('Ghi chú')->width(100)->editable();
         $grid->admin_note('Admin ghi chú');
-        $grid->column('xxx', '-');
 
         $grid->disableCreateButton();
-        $grid->disableActions();
 
         $grid->setActionClass(\Encore\Admin\Grid\Displayers\Actions::class);
         
         $grid->tools(function (Grid\Tools $tools) {
-            // $tools->append(new Ordered());
-            // $tools->append(new WarehouseVietnam());
-
-            // $id = explode('/', request()->server()['REQUEST_URI'])[3];
-
-            // $tools->append('<a class="btn-confirm-ordered btn btn-sm btn-warning" data-user="'.Admin::user()->id.'" data-id="'.$id.'"><i class="fa fa-check"></i> &nbsp; Xác nhận đã dặt hàng</a>');
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
@@ -488,8 +376,8 @@ EOT
             $actions->disableEdit();
 
             $actions->append('
-                <a href="'.route('admin.order_items.edit', $this->getKey()).'" class="grid-row-edit btn btn-primary btn-xs" target="_blank">
-                    <i class="fa fa-edit"></i> &nbsp;Chỉnh sửa
+                <a class="btn btn-xs btn-danger btn-customer-delete-item-from-order" data-id="'.$this->getKey().'">
+                    <i class="fa fa-trash"></i> Xoá
                 </a>'
             );
             
@@ -504,17 +392,14 @@ EOT
                 $tools->append('<a class="btn-confirm-deposite btn btn-sm btn-warning" data-order="'.$id.'"><i class="fa fa-money"></i> &nbsp; Đặt cọc bằng số dư Tài khoản</a>');
             }
 
-            // if ($order->status != PurchaseOrder::STATUS_NEW_ORDER && $order->status != PurchaseOrder::STATUS_SUCCESS && $order->status != PurchaseOrder::STATUS_CANCEL) {
-            //     $tools->append('<a class="btn-customer-destroy btn btn-sm btn-danger" data-order="'.$id.'"><i class="fa fa-times"></i> &nbsp; Huỷ đơn hàng</a>');
-            // }
-
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
         });
 
         $grid->paginate(200);
-        Admin::style('.box {border-top:none;} table {font-size: 16px;} table th {font-size: 20px} td p {word-break:break-all;}');
+        $grid->disablePagination();
+        Admin::style('.box {border-top:none;} table {font-size: 14px}');
 
         Admin::script(
             <<<EOT
@@ -596,9 +481,50 @@ EOT
                     });
                 }
             });
+
+            $(document).on('click', '.btn-customer-delete-item-from-order', function () {
+                // $(this).remove();
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/customer-delete-item-from-order',
+                    data: {
+                        id: $(this).data('id')
+                    },
+                    success: function(response) {
+                        if (response.error == false) {
+                            toastr.success('Lưu thành công.');
+
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1000);
+                            
+                        } else {
+                            toastr.error('Xảy ra lỗi: ' + response.msg);
+                        }
+                    }
+                });
+
+            });
 EOT
         );
 
         return $grid;
     }
+
+    public function editable(Request $request)
+    {
+        # code...
+
+        $data = $request->all();
+
+        OrderItem::find($data['pk'])->update([
+            $data['name']   =>  $data['value']
+        ]);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Lưu thành công !'
+        ]);
+    }
+
 }
