@@ -82,7 +82,7 @@ class CustomerItemController extends AdminController
         $grid->column('number', 'STT');
         $grid->column('info', 'Mã đơn hàng')->display(function () {
             $html = "";
-            $html .= $this->order->order_number;
+            $html .= $this->order->order_number ?? "";
             $html .= "<br><span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
             $html .= "<br> <br>";
             $html .= '<b><a href="'.$this->product_link.'" target="_blank"> Link sản phẩm </a></b>';
