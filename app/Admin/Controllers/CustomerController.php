@@ -308,17 +308,10 @@ EOT
 
     public function recharge($id, Content $content)
     {
-        if (Admin::user()->inRoles(['arr_staff'])) {
-            return $content
-            ->header($this->title)
-            ->description('Nạp tiền vào tài khoản')
-            ->body($this->rechargeForm($id));
-        } 
-        else {
-            admin_error('Không có quyền truy cập.');
-            return redirect()->route('admin.customers.index');
-        }
-        
+        return $content
+        ->header($this->title)
+        ->description('Nạp tiền vào tài khoản')
+        ->body($this->rechargeForm($id));
     }
 
     public function rechargeStore(Request $request) {
