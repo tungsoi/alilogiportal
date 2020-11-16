@@ -49,6 +49,9 @@ class CustomerController extends AdminController
     {
         $grid = new Grid(new User);
         $grid->model()->where('is_customer', 1)->orderBy('id', 'desc');
+        
+        $sales = DB::connection('aloorder')->table('admin_role_users')->where('role_id', 3)->get()->pluck('user_id');
+        $saleStaff = User::whereIn('id', $sales)->get()->pluck('symbol_name', 'id');
 
         $grid->filter(function($filter) {
             $filter->expand();
@@ -122,6 +125,8 @@ class CustomerController extends AdminController
             }
         });
         $grid->note('Ghi chú')->editable();
+        $grid->staff_sale_id('Nhân viên kinh doanh')
+        ->editable('select', $saleStaff);
         $grid->created_at(trans('admin.created_at'))->display(function () {
             return $this->created_at != "" ? date('H:i | d-m-Y', strtotime($this->created_at)) : "";
         });
@@ -202,6 +207,12 @@ class CustomerController extends AdminController
             ->creationRules(['required', 'unique:admin_users,email'])
             ->updateRules(['required', "unique:admin_users,email,{{id}}"]);
             $form->hidden('is_customer')->default(1);
+
+            $sales = DB::connection('aloorder')->table('admin_role_users')->where('role_id', 3)->get()->pluck('user_id');
+            
+            $form->select('staff_sale_id', 'Nhân viên kinh doanh')->options(
+                User::whereIn('id', $sales)->get()->pluck('symbol_name', 'id')
+            );
         });
         
         $form->column(1/2, function ($form) {

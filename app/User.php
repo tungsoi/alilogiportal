@@ -173,5 +173,9 @@ class User extends Model implements AuthenticatableContract
         return self::where('is_customer', 1)->get();
     }
 
-
+    public function saleStaff()
+    {
+        # code...
+        return $this->hasOne(User::class, 'id', 'staff_sale_id');
+    }
 }
