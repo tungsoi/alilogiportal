@@ -125,8 +125,15 @@ class CustomerController extends AdminController
             }
         });
         $grid->note('Ghi chú')->editable();
-        $grid->staff_sale_id('Nhân viên kinh doanh')
-        ->editable('select', $saleStaff);
+        if (Admin::user()->isRole('head_sale')) 
+        {
+            $grid->staff_sale_id('Nhân viên kinh doanh')
+            ->editable('select', $saleStaff);
+        } else {
+            $grid->staff_sale_id('Nhân viên kinh doanh')->display(function () {
+                return User::find($this->staff_sale_id)->symbol_name ?? "";
+            });
+        }
         $grid->created_at(trans('admin.created_at'))->display(function () {
             return $this->created_at != "" ? date('H:i | d-m-Y', strtotime($this->created_at)) : "";
         });
