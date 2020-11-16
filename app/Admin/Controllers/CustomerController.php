@@ -125,15 +125,15 @@ class CustomerController extends AdminController
             }
         });
         $grid->note('Ghi chú')->editable();
-        if (Admin::user()->isRole('head_sale')) 
-        {
+        // if (Admin::user()->isRole('head_sale')) 
+        // {
             $grid->staff_sale_id('Nhân viên kinh doanh')
             ->editable('select', $saleStaff);
-        } else {
-            $grid->staff_sale_id('Nhân viên kinh doanh')->display(function () {
-                return User::find($this->staff_sale_id)->symbol_name ?? "";
-            });
-        }
+        // } else {
+        //     $grid->staff_sale_id('Nhân viên kinh doanh')->display(function () {
+        //         return User::find($this->staff_sale_id)->symbol_name ?? "";
+        //     });
+        // }
         $grid->created_at(trans('admin.created_at'))->display(function () {
             return $this->created_at != "" ? date('H:i | d-m-Y', strtotime($this->created_at)) : "";
         });
@@ -217,16 +217,16 @@ class CustomerController extends AdminController
 
             $sales = DB::connection('aloorder')->table('admin_role_users')->where('role_id', 3)->get()->pluck('user_id');
 
-            if (Admin::user()->isRole('head_sale')) 
-            {
+            // if (Admin::user()->isRole('head_sale')) 
+            // {
                 $form->select('staff_sale_id', 'Nhân viên kinh doanh')->options(
                     User::whereIn('id', $sales)->get()->pluck('symbol_name', 'id')
                 );
-            } else {
-                $form->select('staff_sale_id', 'Nhân viên kinh doanh')->options(
-                    User::whereIn('id', $sales)->get()->pluck('symbol_name', 'id')
-                )->disable();
-            }
+            // } else {
+            //     $form->select('staff_sale_id', 'Nhân viên kinh doanh')->options(
+            //         User::whereIn('id', $sales)->get()->pluck('symbol_name', 'id')
+            //     )->disable();
+            // }
         });
         
         $form->column(1/2, function ($form) {
