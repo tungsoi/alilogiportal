@@ -216,10 +216,17 @@ class CustomerController extends AdminController
             $form->hidden('is_customer')->default(1);
 
             $sales = DB::connection('aloorder')->table('admin_role_users')->where('role_id', 3)->get()->pluck('user_id');
-            
-            $form->select('staff_sale_id', 'Nhân viên kinh doanh')->options(
-                User::whereIn('id', $sales)->get()->pluck('symbol_name', 'id')
-            );
+
+            if (Admin::user()->isRole('head_sale')) 
+            {
+                $form->select('staff_sale_id', 'Nhân viên kinh doanh')->options(
+                    User::whereIn('id', $sales)->get()->pluck('symbol_name', 'id')
+                );
+            } else {
+                $form->select('staff_sale_id', 'Nhân viên kinh doanh')->options(
+                    User::whereIn('id', $sales)->get()->pluck('symbol_name', 'id')
+                )->disable();
+            }
         });
         
         $form->column(1/2, function ($form) {
@@ -301,10 +308,17 @@ EOT
 
     public function recharge($id, Content $content)
     {
-        return $content
+        if (Admin::user()->isRole('arr_staff')) {
+            return $content
             ->header($this->title)
             ->description('Nạp tiền vào tài khoản')
             ->body($this->rechargeForm($id));
+        } 
+        else {
+            admin_error('Không có quyền truy cập.');
+            return redirect()->route('admin.customers.index');
+        }
+        
     }
 
     public function rechargeStore(Request $request) {
