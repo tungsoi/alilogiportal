@@ -308,7 +308,7 @@ EOT
 
     public function recharge($id, Content $content)
     {
-        if (Admin::user()->isRole('arr_staff')) {
+        if (Admin::user()->inRoles(['arr_staff'])) {
             return $content
             ->header($this->title)
             ->description('Nạp tiền vào tài khoản')
