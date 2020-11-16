@@ -568,30 +568,34 @@ EOT
     {
         # code...
         $deposite = (int) $request->deposite;
+        $order = PurchaseOrder::find($request->id);
 
-        PurchaseOrder::find($request->id)->update([
-            'deposited' =>  $deposite,
-            'user_id_deposited' =>  $request->user_id_deposited,
-            'deposited_at'  =>  date('Y-m-d', strtotime(now())),
-            'status'    =>  PurchaseOrder::STATUS_DEPOSITED_ORDERING
-        ]);
-
-        $alilogi_user = User::find($request->customer_id);
-        $wallet = $alilogi_user->wallet;
-        $alilogi_user->wallet = $wallet - $deposite;
-        $alilogi_user->save();
-
-        TransportRecharge::create([
-            'customer_id'   =>  $request->customer_id,
-            'user_id_created'   => $request->user_id_deposited,
-            'money' =>  $deposite,
-            'type_recharge' =>  TransportRecharge::DEPOSITE_ORDER,
-            'content'   =>  'Đặt cọc đơn hàng mua hộ. Mã đơn hàng '.PurchaseOrder::find($request->id)->order_number,
-            'order_type'    =>  TransportRecharge::TYPE_ORDER
-        ]);
-
-        admin_toastr('Vào cọc thành công !', 'success');
-        return redirect()->route('admin.puchase_orders.index');
-
+        if ($order->deposited == "")
+        {
+            PurchaseOrder::find($request->id)->update([
+                'deposited' =>  $deposite,
+                'user_id_deposited' =>  $request->user_id_deposited,
+                'deposited_at'  =>  date('Y-m-d', strtotime(now())),
+                'status'    =>  PurchaseOrder::STATUS_DEPOSITED_ORDERING
+            ]);
+    
+            $alilogi_user = User::find($request->customer_id);
+            $wallet = $alilogi_user->wallet;
+            $alilogi_user->wallet = $wallet - $deposite;
+            $alilogi_user->save();
+    
+            TransportRecharge::create([
+                'customer_id'   =>  $request->customer_id,
+                'user_id_created'   => $request->user_id_deposited,
+                'money' =>  $deposite,
+                'type_recharge' =>  TransportRecharge::DEPOSITE_ORDER,
+                'content'   =>  'Đặt cọc đơn hàng mua hộ. Mã đơn hàng '.PurchaseOrder::find($request->id)->order_number,
+                'order_type'    =>  TransportRecharge::TYPE_ORDER
+            ]);
+    
+            admin_toastr('Vào cọc thành công !', 'success');
+            
+            return redirect()->route('admin.puchase_orders.index');    
+        }
     }
 }
