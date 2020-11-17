@@ -130,7 +130,7 @@ class CustomerOrderController extends AdminController
             else {
                 $route = "";
 
-                if (filter_var($this->items->first()->product_image, FILTER_VALIDATE_URL) === FALSE) {
+                if (substr( $this->items->first()->product_image, 0, 7 ) === "images/") {
                     $route = asset('storage/admin/'.$this->items->first()->product_image);
                 } else {
                     $route = $this->items->first()->product_image;
