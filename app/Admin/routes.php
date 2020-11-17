@@ -15,6 +15,15 @@ Route::group([
     'as'    =>  'admin.'
 ], function (Router $router) {
 
+    Route::group([
+        'prefix'        => 'auth',
+        'as'    =>  'auth.'
+    ], function (Router $router) {
+        $router->resources([
+            'users'       =>  UserController::class,
+        ]);
+    });
+
     $router->get('/', 'HomeController@index')->name('admin.home');
 
     $router->get('/customers/{id}/recharge', 'CustomerController@recharge')->name('customers.recharge');
