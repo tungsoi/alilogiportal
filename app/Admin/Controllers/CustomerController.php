@@ -51,7 +51,7 @@ class CustomerController extends AdminController
         $grid->model()->where('is_customer', 1)->orderBy('id', 'desc');
         
         $sales = DB::connection('aloorder')->table('admin_role_users')->where('role_id', 3)->get()->pluck('user_id');
-        $saleStaff = User::whereIn('id', $sales)->get()->pluck('symbol_name', 'id');
+        $saleStaff = User::whereIn('id', $sales)->get()->pluck('name', 'id');
 
         $grid->filter(function($filter) {
             $filter->expand();
@@ -220,7 +220,7 @@ class CustomerController extends AdminController
             // if (Admin::user()->isRole('head_sale')) 
             // {
                 $form->select('staff_sale_id', 'Nhân viên kinh doanh')->options(
-                    User::whereIn('id', $sales)->get()->pluck('symbol_name', 'id')
+                    User::whereIn('id', $sales)->get()->pluck('name', 'id')
                 );
             // } else {
             //     $form->select('staff_sale_id', 'Nhân viên kinh doanh')->options(
