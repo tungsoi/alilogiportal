@@ -129,13 +129,14 @@ class CustomerOrderController extends AdminController
             }
             else {
                 $route = "";
+
                 if (filter_var($this->items->first()->product_image, FILTER_VALIDATE_URL) === FALSE) {
                     $route = asset($this->items->first()->product_image);
                 } else {
                     $route = $this->items->first()->product_image;
                 }
-                return '<a href="'.$this->items->first()->product_image.'" class="grid-popup-link">
-                <img src="'.$this->items->first()->product_image.'" style="max-width:120px;max-height:120px" class="img img-thumbnail"></a>';
+                return '<a href="'.$route.'" class="grid-popup-link">
+                <img src="'.$route.'" style="max-width:120px;max-height:120px" class="img img-thumbnail"></a>';
             }
             });
         $grid->column('total_items', 'Số sản phẩm')->display(function () {
