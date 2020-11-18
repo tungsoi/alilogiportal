@@ -32,6 +32,10 @@ class ToolController extends Controller
         return redirect()->route('admin.carts.addCart', $item_id);
     }
 
+    public function show1688(Request $request) {
+        dd($request->all());
+    }
+
     public function createProduct(array $data)
     {
         $orderTempIds = [];
