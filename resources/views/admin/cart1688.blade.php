@@ -10,7 +10,8 @@
     <!-- /.box-header -->
     <!-- form start -->
     <form action="{{ route('admin.carts.storeAdd1688') }}" method="post" class="form-horizontal model-form-5fb4b7979388b" accept-charset="UTF-8" enctype="multipart/form-data" pjax-container="">
-       <div class="box-body">
+       {{ csrf_field() }}
+        <div class="box-body">
           <div class="fields-group">
              <div class="col-md-12">
                  <table class="table table-bordered">
