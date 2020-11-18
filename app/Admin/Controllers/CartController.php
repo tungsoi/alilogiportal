@@ -95,6 +95,11 @@ class CartController extends AdminController
             $actions->disableView();
             $actions->disableEdit();
             $actions->disableDelete();
+            
+            $actions->append('
+            <a href="'.route('admin.carts.edit', $this->getKey()).'" class="btn btn-xs btn-info ">
+                <i class="fa fa-edit"></i> Sửa
+            </a>');
             $actions->append('
                 <a class="btn btn-xs btn-danger btn-customer-delete-item" data-id="'.$this->getKey().'">
                     <i class="fa fa-trash"></i><span class="hidden-xs">&nbsp; Xoá</span>
@@ -293,4 +298,51 @@ EOT
         return redirect()->route('admin.carts.index');
     }
 
+    public function addCart1688($id, Content $content)
+    {
+        return $content
+            ->title($this->title())
+            ->description($this->description['edit'] ?? trans('admin.edit'))
+            ->body($this->formEdit1688((string) $id)) ;
+    }
+
+    /**
+     * Make a form builder.
+     *
+     * @return Form
+     */
+    protected function formEdit1688($id = "")
+    {
+        $ids = explode(',', $id);
+        $items = OrderItem::whereIn('id', $ids)->get();
+
+        return view('admin.cart1688', compact('items'))->render();
+    }
+
+    public function storeAdd1688(Request $request)
+    {
+        # code...
+        $data = $request->all();
+        $customer_id = Admin::user()->id;
+        foreach ($data['id'] as $item_id => $raw) {
+            $res = [
+                'shop_name' =>  $data['shop_name'][$item_id],
+                'product_name' =>  $data['product_name'][$item_id],
+                'product_link' =>  $data['product_link'][$item_id],
+                'product_size' =>  $data['product_size'][$item_id],
+                'product_color' =>  $data['product_color'][$item_id],
+                'qty' =>  $data['qty'][$item_id],
+                'price' =>  $data['price'][$item_id],
+                'customer_note' =>  $data['customer_note'][$item_id],
+                'qty_reality'   =>  $data['qty'][$item_id],
+                'customer_id'   =>  Admin::user()->id,
+                'status'  =>  OrderItem::PRODUCT_NOT_IN_CART
+            ];
+
+            OrderItem::find($item_id)->update($res);
+        }
+
+        admin_toastr('Lưu thành công', 'success');
+        return redirect()->route('admin.carts.index');
+    }
 }

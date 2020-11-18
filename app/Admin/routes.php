@@ -33,7 +33,9 @@ Route::group([
     $router->put('/puchase_orders/postDeposite', 'PurchaseOrderController@postDeposite')->name('puchase_orders.postDeposite');
     $router->put('/detail_orders/{order_id}/{item_id}', 'DetailOrderController@editable')->name('detail_orders.editable');
     $router->get('/carts/{item_id}/addCart', 'CartController@addCart')->name('carts.addCart');
+    $router->get('/carts/{item_id}/addCart1688', 'CartController@addCart1688')->name('carts.addCart1688');
     $router->post('/carts/storeAddByTool', 'CartController@storeAddByTool')->name('carts.storeAddByTool');
+    $router->post('/carts/storeAdd1688', 'CartController@storeAdd1688')->name('carts.storeAdd1688');
     $router->put('/customer_orders/{order_id}/{item_id}', 'CustomerOrderController@editable')->name('customer_orders.editable');
 
     $router->resources([
