@@ -53,10 +53,10 @@ class CustomerController extends AdminController
         $sales = DB::connection('aloorder')->table('admin_role_users')->where('role_id', 3)->get()->pluck('user_id');
         $saleStaff = User::whereIn('id', $sales)->get()->pluck('name', 'id');
 
-        $grid->filter(function($filter) {
+        $grid->filter(function($filter) use($saleStaff) {
             $filter->expand();
             $filter->disableIdFilter();
-            $filter->column(1/2, function ($filter) {
+            $filter->column(1/2, function ($filter) use ($saleStaff) {
                 $filter->like('name', 'Họ và tên');
                 $filter->like('symbol_name', 'Mã KH');
                 $filter->where(function ($query) {
@@ -72,6 +72,7 @@ class CustomerController extends AdminController
                             break;
                     }
                 }, 'Số dư tài khoản', 'wallet')->select(['Công nợ', 'Số dư', 'Tất cả'])->default(2);
+                $filter->equal('staff_sale_id', 'Nhân viên kinh doanh')->select($saleStaff);
             });
             $filter->column(1/2, function ($filter) {
                 $filter->like('email');
