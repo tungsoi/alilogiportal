@@ -50,7 +50,8 @@ class User extends Model implements AuthenticatableContract
         'wallet_order',
         'province_id',
         'district_id',
-        'sale_staff_id'
+        'staff_sale_id',
+        'customer_percent_service'
     ];
 
     /**
