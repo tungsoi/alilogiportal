@@ -48,10 +48,11 @@ class User extends Model implements AuthenticatableContract
         'password',
         'note',
         'wallet_order',
-        'province_id',
-        'district_id',
+        'province',
+        'district',
         'staff_sale_id',
-        'customer_percent_service'
+        'customer_percent_service',
+        'type_customer'
     ];
 
     /**
