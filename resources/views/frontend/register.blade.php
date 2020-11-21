@@ -42,7 +42,7 @@
     }
 
     .form-group {
-      margin: 30px;
+      margin: 30px 0px;
     }
   </style>
 </head>
@@ -93,110 +93,62 @@
 
         <div class="row">
 
-          <div class="col-lg-12" data-aos="fade-right">
+          <div class="col-lg-12 col-md-12" data-aos="fade-right">
             <form action="{{ route('customer.postRegister') }}" id="register-form" method="post">
               {{ csrf_field() }}
               @if (isset($errors))
                 {{-- {{ dd($errors) }} --}}
               @endif
-              
-              <div class="form-group{{ $errors->has('symbol_name') ? ' has-error' : '' }}">
-                  <label for="symbol_name" class="control-label">Mã khách hàng <span class="error">(*)</span></label>
-                  <input id="symbol_name" type="text" class="form-control" 
-                      name="symbol_name" value="{{ old('symbol_name') }}" 
-                      placeholder="VD: thuyanh234">
-                  
-                  {{-- <i class="" style="font-size: 12px;">
-                      <i class="fa fa-info-circle" aria-hidden="true"></i> 
-                      Mã khách hàng là mã khách ghi trên kiện hàng để kho có thể phân loại được. Mã khách hàng để bên cạnh tên người nhận tiếng trung.
-                  </i> <br> --}}
-
-                  @if ($errors->has('symbol_name'))
-                      <span class="help-block">
-                          <strong>{{ $errors->first('symbol_name') }}</strong>
-                      </span>
-                  @endif
-              </div>
-
-              <div class="form-group{{ $errors->has('username') ? ' has-error' : '' }}">
-                  <label for="username" class="control-label">E-Mail  <span class="error">(*)</span></label>
-                  <input id="username" type="username" class="form-control" 
-                      name="username" 
-                      value="{{ old('username') }}" 
-                      placeholder="VD: abc@gmail.com"
-                      >
-
-                  @if ($errors->has('username'))
-                      <span class="help-block">
-                          <strong>{{ $errors->first('username') }}</strong>
-                      </span>
-                  @endif
-              </div>
-
-              <div class="form-group{{ $errors->has('mobile') ? ' has-error' : '' }}">
-                <label for="mobile" class="control-label">Số điện thoại  <span class="error">(*)</span></label>
-                <input id="mobile" type="text" class="form-control" 
-                    name="mobile" 
-                    value="{{ old('mobile') }}" 
-                    placeholder="VD: 0345513889"
-                    >
-
-                @if ($errors->has('mobile'))
-                    <span class="help-block">
-                        <strong>{{ $errors->first('mobile') }}</strong>
-                    </span>
-                @endif
-              </div>
-
-                <div class="form-group{{ isset($errors) && $errors->has('province') ? ' has-error' : '' }}">
-                  <label for="address" class="control-label">Địa chỉ</label>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group{{ $errors->has('symbol_name') ? ' has-error' : '' }}">
+                    <label for="symbol_name" class="control-label">Mã khách hàng <span class="error">(*)</span></label>
+                    <input id="symbol_name" type="text" class="form-control" 
+                        name="symbol_name" value="{{ old('symbol_name') }}" 
+                        placeholder="VD: thuyanh234">
+                    
+                    {{-- <i class="" style="font-size: 12px;">
+                        <i class="fa fa-info-circle" aria-hidden="true"></i> 
+                        Mã khách hàng là mã khách ghi trên kiện hàng để kho có thể phân loại được. Mã khách hàng để bên cạnh tên người nhận tiếng trung.
+                    </i> <br> --}}
   
-                      <select name="province" id="province" class="form-control" value={{ old('province')}}>
-                          <option value="" checked>{{ trans('admin.province') }}</option>
-                          @foreach ($provinces as $province)
-                              <option value="{{ $province->province_id }}">{{ $province->name }}</option>
-                          @endforeach
-                      </select>
-                      @if (isset($errors) && $errors->has('province'))
-                          <label id="province-error" class="error" for="province" >{{ $errors->first('province') }}</label>
-                      @endif
-                </div>
-              
-
-              <div class="form-group{{ isset($errors) && $errors->has('district') ? ' has-error' : '' }}">
-                {{-- <div class="col-md-12"> --}}
-                    <select name="district" id="district" class="form-control">
-                        <option value="" checked>{{ trans('admin.district') }}</option>
-                        @foreach ($districts as $district)
-                            <option value="{{ $district->district_id }}" class="option-hide" data-parent-province={{$district->province_id}}
-                                >{{ $district->name }}</option>
-                        @endforeach
-                    </select>
-                    @if (isset($errors) && $errors->has('district'))
-                        <label id="district-error" class="error" for="district">{{ $errors->first('district') }}</label>
-                    @endif
-                {{-- </div> --}}
-              </div>
-
-              <div class="form-group{{ $errors->has('address') ? ' has-error' : '' }}">
-               
-                {{-- <div class="col-md-12"> --}}
-                    <input id="address" type="text" class="form-control" 
-                        name="address" 
-                        value="{{ old('address') }}" 
-                        placeholder="VD: Số 1, ngõ Bạch Mai"
-                        >
-
-                    @if ($errors->has('address'))
+                    @if ($errors->has('symbol_name'))
                         <span class="help-block">
-                            <strong>{{ $errors->first('address') }}</strong>
+                            <strong>{{ $errors->first('symbol_name') }}</strong>
                         </span>
                     @endif
-                {{-- </div> --}}
-              </div>
-
-
-              <div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
+                </div>
+  
+                <div class="form-group{{ $errors->has('username') ? ' has-error' : '' }}">
+                    <label for="username" class="control-label">E-Mail  <span class="error">(*)</span></label>
+                    <input id="username" type="username" class="form-control" 
+                        name="username" 
+                        value="{{ old('username') }}" 
+                        placeholder="VD: abc@gmail.com"
+                        >
+  
+                    @if ($errors->has('username'))
+                        <span class="help-block">
+                            <strong>{{ $errors->first('username') }}</strong>
+                        </span>
+                    @endif
+                </div>
+  
+                <div class="form-group{{ $errors->has('mobile') ? ' has-error' : '' }}">
+                  <label for="mobile" class="control-label">Số điện thoại  <span class="error">(*)</span></label>
+                  <input id="mobile" type="text" class="form-control" 
+                      name="mobile" 
+                      value="{{ old('mobile') }}" 
+                      placeholder="VD: 0345513889"
+                      >
+  
+                  @if ($errors->has('mobile'))
+                      <span class="help-block">
+                          <strong>{{ $errors->first('mobile') }}</strong>
+                      </span>
+                  @endif
+                </div>
+                <div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
                   <label for="password" class="control-label">Mật khẩu  <span class="error">(*)</span></label>
                   <input id="password" type="password" class="form-control" 
                       name="password" 
@@ -218,6 +170,98 @@
                       placeholder="Mật khẩu xác nhận"
                       >
               </div>
+                </div>
+                <div class="col-md-6">
+
+                  {{-- <div class="row"> --}}
+                    {{-- <div class="col-md-4"> --}}
+                      <div class="form-group{{ isset($errors) && $errors->has('province') ? ' has-error' : '' }}">
+                        <label for="address" class="control-label">Thành phố</label>
+        
+                            <select name="province" id="province" class="form-control" value={{ old('province')}}>
+                                <option value="" checked>Chọn tỉnh / thành phố</option>
+                                @foreach ($provinces as $province)
+                                    <option value="{{ $province->province_id }}">{{ $province->name }}</option>
+                                @endforeach
+                            </select>
+                            @if (isset($errors) && $errors->has('province'))
+                                <label id="province-error" class="error" for="province" >{{ $errors->first('province') }}</label>
+                            @endif
+                      </div>
+                    {{-- </div> --}}
+
+                    {{-- <div class="col-md-4"> --}}
+                      <div class="form-group{{ isset($errors) && $errors->has('district') ? ' has-error' : '' }}">
+                        <label for="address" class="control-label">Quận / huyện</label>
+
+                        {{-- <div class="col-md-12"> --}}
+                            <select name="district" id="district" class="form-control">
+                                <option value="" checked>Chọn quận / huyện</option>
+                                @foreach ($districts as $district)
+                                    <option value="{{ $district->district_id }}" class="option-hide" data-parent-province={{$district->province_id}}
+                                        >{{ $district->name }}</option>
+                                @endforeach
+                            </select>
+                            @if (isset($errors) && $errors->has('district'))
+                                <label id="district-error" class="error" for="district">{{ $errors->first('district') }}</label>
+                            @endif
+                        {{-- </div> --}}
+                      </div>
+                    {{-- </div> --}}
+
+                    {{-- <div class="col-md-4"> --}}
+                      <div class="form-group{{ $errors->has('address') ? ' has-error' : '' }}">
+                        <label for="address" class="control-label">Địa chỉ</label>
+
+                        {{-- <div class="col-md-12"> --}}
+                            <input id="address" type="text" class="form-control" 
+                                name="address" 
+                                value="{{ old('address') }}" 
+                                placeholder="VD: Số 1, ngõ Bạch Mai"
+                                >
+        
+                            @if ($errors->has('address'))
+                                <span class="help-block">
+                                    <strong>{{ $errors->first('address') }}</strong>
+                                </span>
+                            @endif
+                        {{-- </div> --}}
+                      </div>
+                    {{-- </div>
+                  </div>
+                 
+                  <div class="row"> --}}
+                    
+                    <div class="form-group{{ $errors->has('mobile') ? ' has-error' : '' }}">
+                      <label for="mobile" class="control-label">Bạn là khách hàng nào ?</label>
+                      <select name="type_customer" id="type_customer" class="form-control">
+                          <option value="2" checked>Khách hàng vận chuyển ký gửi</option>
+                          <option value="1" checked>Khách hàng order</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group{{ $errors->has('mobile') ? ' has-error' : '' }}">
+                      <label for="mobile" class="control-label">Nhân viên chăm sóc bạn là ai ?</label>
+                      <select name="staff_sale_id" id="staff_sale_id" class="form-control">
+                        <option value="" checked>Chọn nhân viên</option>
+                        @foreach ($saleStaff as $key => $name)
+                      <option value="{{ $key }}">{{ $name }}</option>
+                          @endforeach
+                      </select>
+                    </div>
+                  {{-- </div> --}}
+  
+               
+  
+               
+  
+  
+                
+                </div>
+              </div>
+             
+
+                
 
               <div class="form-group">
                 <button type="submit" class="btn btn-info">

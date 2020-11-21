@@ -37,7 +37,9 @@ class RegisterController extends Controller {
             'is_active' =>  1,
             'address'  =>   $data['address'],
             'province'  =>  $data['province'],
-            'district'  =>  $data['district']
+            'district'  =>  $data['district'],
+            'type_customer' =>  $data['type_customer'],
+            'staff_sale_id' =>  $data['staff_sale_id']
         ];
 
         $user = User::firstOrCreate($data);

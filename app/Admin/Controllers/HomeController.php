@@ -4,6 +4,7 @@ namespace App\Admin\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\PurchaseOrder;
 use App\Models\TransportOrderItem;
 use App\User;
@@ -22,10 +23,17 @@ class HomeController extends Controller
         ->header('Bảng điều khiển')
         ->description(' ')
         ->row(function (Row $row) {
+            $row->column(12, function (Column $column) {
+                $html = "<h4>".Admin::user()->roles->first()->name." : ".Admin::user()->name."</h4>";
+                $column->append((new Callout($html))->style('success'));
+            });
+        })
+        ->row(function (Row $row) {
             if (Admin::user()->isRole('administrator')) {
-                $row->column(4, new InfoBox('Quản trị viên', 'users', 'aqua', 'admin/auth/users', User::where('is_customer', 0)->count()));
-                $row->column(4, new InfoBox('Khách hàng', 'book', 'green', '/admin/customers', User::where('is_customer', 1)->count()));
-                $row->column(4, new InfoBox('Đơn hàng mua hộ', 'tag', 'yellow', '/admin/puchase_orders', PurchaseOrder::count()));
+                $row->column(3, new InfoBox('Quản trị viên', 'users', 'aqua', 'admin/auth/users', User::where('is_customer', 0)->count()));
+                $row->column(3, new InfoBox('Khách hàng', 'book', 'green', '/admin/customers', User::where('is_customer', 1)->count()));
+                $row->column(3, new InfoBox('Đơn hàng mua hộ', 'tag', 'yellow', '/admin/puchase_orders', PurchaseOrder::count()));
+                $row->column(3, new InfoBox('Sản phẩm Order', 'tag', 'red', '/admin/order_items', OrderItem::count()));
             } 
             else if (Admin::user()->isRole('customer_order')) {
                 $row->column(3, new InfoBox('Số dư ví', '', 'aqua', 'admin/customer_recharges', number_format(Admin::user()->wallet)  . " VND"));
@@ -36,7 +44,10 @@ class HomeController extends Controller
                 // });
             }
             else {
-                
+                $row->column(3, new InfoBox('Quản trị viên', 'users', 'aqua', 'admin/auth/users', User::where('is_customer', 0)->count()));
+                $row->column(3, new InfoBox('Khách hàng', 'book', 'green', '/admin/customers', User::where('is_customer', 1)->count()));
+                $row->column(3, new InfoBox('Đơn hàng mua hộ', 'tag', 'yellow', '/admin/puchase_orders', PurchaseOrder::count()));
+                $row->column(3, new InfoBox('Sản phẩm Order', 'tag', 'red', '/admin/order_items', OrderItem::count()));
             }
         });
     }

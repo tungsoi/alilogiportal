@@ -63,6 +63,10 @@ class PurchaseOrder extends Model
     const PERCENT = [
         '0%', '1%', '1.5%', '2%', '2.5%', '3%'
     ];
+
+    const PERCENT_NUMBER = [
+        0, 1, 1.5, 2, 2.5, 3
+    ];
     
     /**
      * Table name

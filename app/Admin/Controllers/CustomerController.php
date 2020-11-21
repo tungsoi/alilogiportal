@@ -14,6 +14,7 @@ use App\Models\Alilogi\District;
 use App\Models\Alilogi\Province;
 use App\Models\Alilogi\TransportRecharge;
 use App\Models\Order;
+use App\Models\PurchaseOrder;
 use App\Models\TransportOrderItem;
 use Encore\Admin\Facades\Admin;
 use Encore\Admin\Layout\Content;
@@ -228,6 +229,8 @@ class CustomerController extends AdminController
             //         User::whereIn('id', $sales)->get()->pluck('symbol_name', 'id')
             //     )->disable();
             // }
+
+            $form->select('customer_percent_service', 'Phí dịch vụ')->options(PurchaseOrder::PERCENT);
         });
         
         $form->column(1/2, function ($form) {
@@ -309,10 +312,16 @@ EOT
 
     public function recharge($id, Content $content)
     {
-        return $content
-        ->header($this->title)
-        ->description('Nạp tiền vào tài khoản')
-        ->body($this->rechargeForm($id));
+        if (Admin::user()->can('admin-recharge-customer')) {
+            return $content
+                ->header($this->title)
+                ->description('Nạp tiền vào tài khoản')
+                ->body($this->rechargeForm($id));
+        }
+        else {
+            admin_error('Không có quyền truy cập');
+            return redirect()->back();
+        }
     }
 
     public function rechargeStore(Request $request) {

@@ -94,10 +94,11 @@ class CustomerOrderController extends AdminController
         $grid->order_number('Mã đơn hàng')->display(function () {
             $html = "<span class='label label-primary'>".$this->order_number."</span>";
             $user = User::find($this->customer_id);
-            $symbol_name = $user->symbol_name != null ? $user->symbol_name : $user->email;
-            
-            $html .= "<br> <span class='label label-primary'>".$symbol_name."</span>";
-
+            if ($user) {
+                $symbol_name = $user->symbol_name;
+                $html .= "<br> <span class='label label-primary'>".$symbol_name."</span>";
+            }
+        
             $html .= "<br> <i>Tỷ giá: ".number_format($this->current_rate)." (VND) </i>";
             $html .= "<br> <i>".date('H:i | d-m-Y', strtotime($this->created_at))."</i>";
 

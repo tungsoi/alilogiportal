@@ -194,20 +194,25 @@ class PurchaseOrderController extends AdminController
                     <i class="fa fa-edit"></i>
                 </a>'
             );
-
-            if ($this->row->status == PurchaseOrder::STATUS_NEW_ORDER) {
-                $actions->append('
-                    <a href="'.route('admin.puchase_orders.deposite', $this->getKey()).'" class="grid-row-deposite btn btn-info btn-xs" data-toggle="tooltip" title="Đặt cọc tiền">
-                        <i class="fa fa-money"></i>
-                    </a>'
-                );
+            
+            if (Admin::user()->can('admin-deposite-order')) {
+                if ($this->row->status == PurchaseOrder::STATUS_NEW_ORDER) {
+                    $actions->append('
+                        <a href="'.route('admin.puchase_orders.deposite', $this->getKey()).'" class="grid-row-deposite btn btn-info btn-xs" data-toggle="tooltip" title="Đặt cọc tiền">
+                            <i class="fa fa-money"></i>
+                        </a>'
+                    );
+                }
             }
-
-            $actions->append('
+            
+            if (Admin::user()->can('admin-recharge-customer')) {
+                $actions->append(
+                    '
                 <a href="'.route('admin.customers.recharge', $this->row->customer_id).'" class="grid-row-edit btn btn-warning btn-xs" target="_blank" data-toggle="tooltip" title="Nạp tài khoản khách hàng">
                     <i class="fa fa-plus"></i>
                 </a>'
-            );
+                );
+            }
 
             $order = PurchaseOrder::find($this->getKey());
             if ($this->row->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING && $order->orderedItems() == $order->totalItems()) {
@@ -219,7 +224,7 @@ class PurchaseOrderController extends AdminController
             }
             
 
-            if ($this->row->status != PurchaseOrder::STATUS_CANCEL && $this->row->status != PurchaseOrder::STATUS_SUCCESS) {
+            if ($this->row->status == PurchaseOrder::STATUS_NEW_ORDER) {
                 $actions->append('
                     <a data-id="'.$this->getKey().'" data-user="'.Admin::user()->id.'" class="grid-row-cancle btn btn-danger btn-xs" data-toggle="tooltip" title="Huỷ đơn hàng">
                         <i class="fa fa-times"></i>
@@ -496,10 +501,16 @@ EOT
     }
 
     public function deposite($id, Content $content) {
-        return $content
+        if (Admin::user()->can('admin-deposite-order')) {
+            return $content
             ->title($this->title)
             ->description("Đặt tiền cọc")
             ->body($this->formDeposite()->edit($id));
+        }
+        else {
+            admin_error('Không có quyền truy cập');
+            return redirect()->back();
+        }
     }
 
     /**
