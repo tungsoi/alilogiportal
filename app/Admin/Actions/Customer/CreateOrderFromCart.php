@@ -65,7 +65,8 @@ class CreateOrderFromCart extends BatchAction
                 'purchase_total_items_price'    =>  $purchase_total_items_price,
                 'final_total_price'             =>  $final_total_price,
                 'deposit_default'               =>  $deposit_default,
-                'purchase_order_service_fee'    =>  $purchase_order_service_fee
+                'purchase_order_service_fee'    =>  $purchase_order_service_fee,
+                'supporter_id'  => Admin::user()->staff_sale_id ?? ""
             ]);
             
             DB::commit();
