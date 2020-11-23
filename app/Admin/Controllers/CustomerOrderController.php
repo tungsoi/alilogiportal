@@ -2,6 +2,7 @@
 
 namespace App\Admin\Controllers;
 
+use App\Models\Alilogi\TransportOrderItem;
 use App\Models\ExchangeRate;
 use App\Models\OrderItem;
 use Encore\Admin\Controllers\AdminController;
@@ -43,6 +44,12 @@ class CustomerOrderController extends AdminController
      */
     public function show($id, Content $content)
     {
+        $order = PurchaseOrder::find($id);
+        if ($order->customer_id != Admin::user()->id) {
+            admin_error('Đây không phải đơn hàng của bạn. Không có quyền truy cập.');
+
+            return redirect()->route('admin.admin.home');
+        }
         return $content->header('Đơn hàng mua hộ')
         ->description('Chi tiết đơn hàng')
         ->row(function (Row $row) use ($id)
@@ -332,8 +339,22 @@ EOT
         $grid->column('number', 'STT');
         $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary')->display(function () {
             $html = "";
-            $html .= "<p class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</p>";
-            $html .= '<br><br><b><a href="'.$this->product_link.'" target="_blank"> Link SP</a></b>';
+            $html .= "<p class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</p> <br>";
+            $html .= '<a href="'.$this->product_link.'" target="_blank"> Link sản phẩm</a>';
+
+            $logi = TransportOrderItem::whereCnCode($this->cn_code)->first();
+
+            if ($logi) {
+                $html .= "<br> <br>";
+                $html .= "<ul style='padding-left: 20px'>";
+                $html .= "<li>Về Kho VN: <br>".date('H:i | d-m-Y', strtotime($logi->warehouse_vn_date))."</li>";
+                if ($logi->order) {
+                    $html .= "<li>Xuất Kho: ".date('H:i | d-m-Y', strtotime($logi->order->created_at))."</li>";
+                }
+               
+                $html .= "</ul>";
+            }
+
             return $html;
         });
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 120, 'height' => 120]);
@@ -371,12 +392,30 @@ EOT
             return $html;
         })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
         $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi')->display(function () {
-            $weight = $this->weight != null ? $this->weight : 0;
-            $html = $weight;
-            $html .= "<br> <i>".number_format($weight * $this->order->price_weight) . " (VND) </i> <br>";
-            $date = $this->weight_date;
-            $html .= "<br> <i>".$date."</i>";
-            return $html;
+            if ($this->cn_code != "") {
+                $logi = TransportOrderItem::whereCnCode($this->cn_code)->first();
+                if ($logi) {
+                    $html = $logi->kg;
+                    $html .= "<br> <i>".$logi->price_service."</i>";
+                }
+                else {
+                    $html = "";
+                }
+
+                return $html;
+            }
+
+            return "";
+            
+
+            // $html = $logi-
+            // return $logi->kg;
+            // $weight = $this->weight != null ? $this->weight : 0;
+            // $html = $weight;
+            // $html .= "<br> <i>".number_format($weight * $this->order->price_weight) . " (VND) </i> <br>";
+            // $date = $this->weight_date;
+            // $html .= "<br> <i>".$date."</i>";
+            // return $html;
         });
         $grid->cn_code('Mã vận đơn Alilogi');
         $grid->customer_note('Ghi chú')->width(100)->editable();

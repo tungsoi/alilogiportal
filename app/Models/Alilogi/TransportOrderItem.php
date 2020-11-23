@@ -112,7 +112,7 @@ class TransportOrderItem extends Model
      * @return void
      */
     public function order() {
-        return $this->hasOne('App\Models\Order', 'id', 'order_id');
+        return $this->hasOne('App\Models\Alilogi\Order', 'id', 'order_id');
     }
 
     
