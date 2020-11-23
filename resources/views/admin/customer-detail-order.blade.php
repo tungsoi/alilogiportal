@@ -50,7 +50,7 @@
         <tr style="background: green; color: white;">
             <td>Số tiền cần cọc</td>
             <td></td>
-            <td>{{ number_format( ($total_bill * $current_rate) * 70 / 100) . " VND" }}</td>
+            <td>{{ number_format($order->deposit_default) . " VND" }}</td>
         </tr>
         <tr>
             <td>Số tiền đã cọc</td>

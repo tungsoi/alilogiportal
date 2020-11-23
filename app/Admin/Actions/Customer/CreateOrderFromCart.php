@@ -55,8 +55,8 @@ class CreateOrderFromCart extends BatchAction
                 $purchase_total_items_price += ($model->qty_reality * $model->price); // Te
             }
 
-            $final_total_price = $purchase_total_items_price * $exchange_rate; // vnd
-            $deposit_default    =   $final_total_price * 70 / 100; // vnd
+            $final_total_price = round($purchase_total_items_price * $exchange_rate); // vnd
+            $deposit_default    =   round($final_total_price * 70 / 100); // vnd
 
             $percent = (float) PurchaseOrder::PERCENT_NUMBER[Admin::user()->customer_percent_service];
             $purchase_order_service_fee = round($purchase_total_items_price / 100 * $percent, 2);

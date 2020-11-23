@@ -91,7 +91,7 @@ class OrderItemController extends AdminController
                 $html = $order->order_number ?? "";
             }
             $html .= "<br>";
-            $html .= $order->customer->symbol_name;
+            $html .= $order->customer->symbol_name ?? "";
             $html .= "<br>";
             $html .= "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
             $html .= "<br>".'<b><a href="'.$this->product_link.'" target="_blank"> Link sản phẩm </a></b>';

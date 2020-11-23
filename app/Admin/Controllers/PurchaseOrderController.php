@@ -2,7 +2,6 @@
 
 namespace App\Admin\Controllers;
 
-use App\Admin\Actions\Order\Deposite;
 use App\Admin\Actions\OrderItem\Ordered;
 use App\Admin\Actions\OrderItem\WarehouseVietnam;
 use App\Models\Alilogi\TransportRecharge;
@@ -94,7 +93,7 @@ class PurchaseOrderController extends AdminController
         $grid->column('staff', 'Nhân viên phụ trách')->display(function () {
             $html = "<ul style='padding-left: 15px;'>";
             $html .= '<li>Đặt hàng: ' . ($this->supporterOrder->name ?? "...") . "</li>";
-            $html .= '<li>CSKH: ' . ($this->supporter->name ?? "...") . "</li>";
+            $html .= '<li>CSKH: ' . ($this->customer->saleStaff->name ?? "...") . "</li>";
             $html .= '<li>Kho: ' . ($this->supporterWarehouse->name ?? "...") . "</li>";
             $html .= "</ul>";
 

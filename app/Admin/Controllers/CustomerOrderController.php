@@ -2,6 +2,7 @@
 
 namespace App\Admin\Controllers;
 
+use App\Models\ExchangeRate;
 use App\Models\OrderItem;
 use Encore\Admin\Controllers\AdminController;
 use Encore\Admin\Form;
@@ -340,8 +341,18 @@ EOT
             return $this->product_size != "null" ? $this->product_size : null;
         })->width(100);
         $grid->product_color('Màu')->width(100);
-        $grid->qty('Số lượng');
+
+        
+        $order = PurchaseOrder::find($id);
+
+        if ($order->status == PurchaseOrder::STATUS_NEW_ORDER) {
+            $grid->qty('Số lượng')->editable();
+        }
+        else {
+            $grid->qty('Số lượng');
+        }
         $grid->qty_reality('Số lượng thực đặt');
+       
         $grid->price('Đơn giá (Tệ)')->display(function () {
             $html = $this->price;
             $html .= "<br>  <i>" . number_format($this->price * $this->order->current_rate) . " (VND)</i>";
@@ -529,10 +540,35 @@ EOT
         # code...
 
         $data = $request->all();
+        $item = OrderItem::find($data['pk']);
 
-        OrderItem::find($data['pk'])->update([
-            $data['name']   =>  $data['value']
-        ]);
+        if ($data['name'] == 'qty') {
+            $item->qty = $data['value'];
+            $item->qty_reality = $data['value'];
+            $item->save();
+
+            $order = PurchaseOrder::find($item->order_id);
+            $purchase_total_items_price = 0;
+            foreach ($order->items as $item) {
+                $purchase_total_items_price += $item->qty_reality * $item->price;
+            }
+
+            $exchange_rate = ExchangeRate::first()->vnd;
+            $final_total_price = round($purchase_total_items_price * $exchange_rate); // vnd
+            $deposit_default   = round($final_total_price * 70 / 100); // vnd
+
+            $order->purchase_total_items_price = $purchase_total_items_price;
+            $order->final_total_price = $final_total_price;
+            $order->deposit_default = $deposit_default;
+            $order->save();
+        } 
+        else {
+            OrderItem::find($data['pk'])->update([
+                $data['name']   =>  $data['value']
+            ]);
+        }
+
+
 
         return response()->json([
             'status'  => true,
