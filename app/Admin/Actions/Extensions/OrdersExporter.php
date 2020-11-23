@@ -17,18 +17,15 @@ class OrdersExporter extends AbstractExporter
 
                 $this->chunk(function ($records) use ($sheet) {
 
-                    $data = [];
-                    $data[] = $this->header();
-
                     $flag = 1;
-                    $rows = $records->map(function ($item) use ($flag, $data) {
+                    $rows = $records->map(function ($item) use ($flag) {
 
                         $res = [
                             $flag,
                             $item->order_number,
                             $item->current_rate,
                             $item->created_at,
-                            $item->customer->name,
+                            $item->customer->symbol_name,
                             PurchaseOrder::STATUS[$item->status],
                             $item->supporter->name ?? "",
                             $item->supporterOrder->name ?? "",
@@ -38,9 +35,9 @@ class OrdersExporter extends AbstractExporter
                             $item->purchase_order_service_fee,
                             $this->totalShip($item),
                             $this->totalWeight($item),
-                            $item->price_weight,
+                            $item->price_weight != "" ? $item->price_weight : 0,
                             $item->warehouse->name ?? "",
-                            $item->deposited,
+                            $item->deposited != "" ? $item->deposited : 0,
                             $item->deposited != "" ? $item->deposited_at : "",
                             $item->totalBill(),
                             $item->admin_note,
@@ -51,8 +48,9 @@ class OrdersExporter extends AbstractExporter
 
                         return $res;
                     });
+                    $rows->prepend($this->header());
 
-                    $sheet->rows($rows->first());
+                    $sheet->rows($rows);
 
                 });
 
