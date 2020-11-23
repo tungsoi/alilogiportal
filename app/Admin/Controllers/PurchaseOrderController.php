@@ -4,6 +4,7 @@ namespace App\Admin\Controllers;
 
 use App\Admin\Actions\OrderItem\Ordered;
 use App\Admin\Actions\OrderItem\WarehouseVietnam;
+use App\Admin\Actions\Extensions\OrdersExporter;
 use App\Models\Alilogi\TransportRecharge;
 use App\Models\Alilogi\Warehouse;
 use App\Models\OrderItem;
@@ -17,6 +18,7 @@ use Encore\Admin\Facades\Admin;
 use Encore\Admin\Layout\Content;
 use Encore\Admin\Widgets\Table;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseOrderController extends AdminController
 {
@@ -41,6 +43,12 @@ class PurchaseOrderController extends AdminController
     {
         $grid = new Grid(new PurchaseOrder());
         $grid->model()->whereOrderType(1)->where('status', '!=', PurchaseOrder::STATUS_UNSENT)->orderBy('created_at', 'desc');
+
+        if (Admin::user()->isRole('sale_staff')) 
+        {
+            $customer = User::whereStaffSaleId(Admin::user()->id)->get()->pluck('id');
+            $grid->model()->whereIn('customer_id', $customer);
+        }
 
         $grid->filter(function($filter) {
             $filter->expand();
@@ -93,7 +101,16 @@ class PurchaseOrderController extends AdminController
         $grid->column('staff', 'Nhân viên phụ trách')->display(function () {
             $html = "<ul style='padding-left: 15px;'>";
             $html .= '<li>Đặt hàng: ' . ($this->supporterOrder->name ?? "...") . "</li>";
-            $html .= '<li>CSKH: ' . ($this->customer->saleStaff->name ?? "...") . "</li>";
+
+
+            if ($this->supporter_id != "") {
+                $sale = $this->supporter->name ?? "";
+            } 
+            else {
+                $sale = $this->customer->saleStaff->name ?? "";
+            }
+            
+            $html .= '<li>CSKH: ' . ($sale ?? "...") . "</li>";
             $html .= '<li>Kho: ' . ($this->supporterWarehouse->name ?? "...") . "</li>";
             $html .= "</ul>";
 
@@ -232,6 +249,9 @@ class PurchaseOrderController extends AdminController
             }
   
         });
+
+        $grid->exporter(new OrdersExporter());
+
 
         // Admin::style('.btn {display: block;}');
 
@@ -443,8 +463,13 @@ EOT
             $form->select('status', 'Trạng thái')->options(PurchaseOrder::STATUS);
 
             $form->divider("Nhân viên phụ trách");
-            $form->select('supporter_order_id', 'Đặt hàng')->options(User::whereIsCustomer(0)->get()->pluck('name', 'id'));
-            $form->select('supporter_id', 'Chăm sóc KH')->options(User::whereIsCustomer(0)->get()->pluck('name', 'id'));
+
+            $order_users = DB::connection('aloorder')->table('admin_role_users')->where('role_id',4)->get()->pluck('user_id');
+            $form->select('supporter_order_id', 'Đặt hàng')->options(User::whereIn('id', $order_users)->get()->pluck('name', 'id'));
+
+            $sale_users = DB::connection('aloorder')->table('admin_role_users')->where('role_id',3)->get()->pluck('user_id');
+            $form->select('supporter_id', 'Chăm sóc KH')->options(User::whereIn('id', $sale_users)->get()->pluck('name', 'id'));
+            
             $form->select('support_warehouse_id', 'Quản lý kho')->options(User::whereIsCustomer(0)->get()->pluck('name', 'id'));
             
             $form->text('admin_note', 'Admin ghi chú');
