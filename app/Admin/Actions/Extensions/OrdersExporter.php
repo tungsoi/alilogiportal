@@ -23,7 +23,7 @@ class OrdersExporter extends AbstractExporter
                     $flag = 1;
                     $rows = $records->map(function ($item) use ($flag, $data) {
 
-                        $data[] = [
+                        $res = [
                             $flag,
                             $item->order_number,
                             $item->current_rate,
@@ -49,7 +49,7 @@ class OrdersExporter extends AbstractExporter
 
                         $flag++;
 
-                        return $data;
+                        return $res;
                     });
 
                     $sheet->rows($rows->first());
