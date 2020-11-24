@@ -497,7 +497,7 @@ EOT
             });
 
             $(document).on('click', '.btn-confirm-deposite', function () {
-                
+                $(this).remove();
                 $.ajax({
                     type: 'POST',
                     url: '/api/customer-deposite',

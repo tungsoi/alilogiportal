@@ -245,7 +245,7 @@ class PurchaseOrderController extends AdminController
             }
             
 
-            if ($this->row->status == PurchaseOrder::STATUS_NEW_ORDER) {
+            if ($this->row->status == PurchaseOrder::STATUS_NEW_ORDER || $this->row->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
                 $actions->append('
                     <a data-id="'.$this->getKey().'" data-user="'.Admin::user()->id.'" class="grid-row-cancle btn btn-danger btn-xs" data-toggle="tooltip" title="Huỷ đơn hàng">
                         <i class="fa fa-times"></i>
@@ -274,32 +274,26 @@ class PurchaseOrderController extends AdminController
 
             var bar = "bar";
             $(document).on('click', '.grid-row-cancle', function () {
-                var foo = bar;
-                if ( foo == "bar" ) {
-                    var isGood=confirm('Xác nhận Huỷ đơn hàng ?');
-                    if (isGood) {
-                        $.ajax({
-                            type: 'POST',
-                            url: '/api/cancle-purchase-order',
-                            data: {
-                                order_id: $(this).data('id'),
-                                user_id_created: $(this).data('user')
-                            },
-                            success: function(response) {
-                                if (response.error == false) {
-                                    alert('Đã huỷ đơn hàng thành công.');
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/cancle-purchase-order',
+                    data: {
+                        order_id: $(this).data('id'),
+                        user_id_created: $(this).data('user')
+                    },
+                    success: function(response) {
+                        if (response.error == false) {
+                            toastr.success('Đã huỷ đơn hàng thành công.');
 
-                                    setTimeout(function () {
-                                        window.location.reload();
-                                    }, 1000);
-                                    
-                                } else {
-                                    alert('Xảy ra lỗi: ' + response.msg);
-                                }
-                            }
-                        });
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1000);
+                            
+                        } else {
+                            toastr.error('Xảy ra lỗi: ' + response.msg);
+                        }
                     }
-                }
+                });
             });
 
             var bar = "bar";
