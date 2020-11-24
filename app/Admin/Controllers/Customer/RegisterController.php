@@ -57,7 +57,7 @@ class RegisterController extends Controller {
     {
         return Validator::make($data, [
             'symbol_name' => 'required|unique:admin_users,symbol_name',
-            'username' => 'email|unique:admin_users,username',
+            'username' => 'email|unique:alilogi.admin_users',
             'password' => 'required|required_with:password_confirmation|same:password_confirmation',
             'mobile'    =>  'required'
         ], [
