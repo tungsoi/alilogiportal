@@ -153,6 +153,7 @@ Route::post('/confirm-ordered', function (Request $request) {
             else {
                 $order->status = PurchaseOrder::STATUS_ORDERED;
                 $order->user_id_confirm_ordered = $user_id_created;
+                $order->order_at = now();
                 $order->save();
     
                 DB::commit();
