@@ -19,6 +19,11 @@
             <ul class="sidebar-menu" id="customer-info">
                 <li class="header">MKH: {{ Admin::user()->symbol_name }}</li>
                 <li class="header">Số dư: {{ number_format(Admin::user()->wallet) }} VND</li>
+                @php
+                    $rate = App\Models\ExchangeRate::first()->vnd;
+
+                @endphp
+                <li class="header">Tỷ giá: {{ number_format($rate) }} VND</li>
             </ul>
         @endif
         <br>

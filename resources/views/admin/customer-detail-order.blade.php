@@ -4,38 +4,83 @@
             <th>Mã đơn hàng</th>
             <th>Trạng thái</th>
             <th>Tỷ giá</th>
+
+            @if (isset($role) && $role == 'admin')
+            <th>Ngày tạo</th>
+            @endif
         </tr>
         <tr>
             <td style="width: 20%"><b>{{ $order->order_number.' / '.$order->customer->symbol_name }}</b></td>
             <td style="width: 20%">{!! $status !!}</td>
-            <td style="width: 60%">{{ $order->current_rate }}</td>
+            
+            @if (isset($role) && $role == 'admin')
+                <td style="width: 20%">{{ $order->current_rate }}</td>
+                <td style="width: 40%">{{ date('H:i | d-m-Y', strtotime($order->created_at)) }}</td>
+            @else
+                <td style="width: 60%">{{ $order->current_rate }}</td>
+            @endif
         </tr>
     </thead>
 </table>
 
 <br> <br>
-
-<table style="font-size: 16px;" class="table table-bordered">
+@php
+    if (isset($role) && $role == 'admin')
+    {
+        $style = "font-size: 14px";
+    } 
+    else {
+        $style = "font-size: 16px";
+    }
+@endphp
+<table style="{{ $style }}" class="table table-bordered">
     <tbody>   
         <tr>
             <td style="width: 40%">Tổng số lượng</td>
             <td style="width: 10%">{{ $qty }}</td>
-            <td style="width: 50%"></td>
+            
+            @if (isset($role) && $role == 'admin')
+                <td style="width: 20%"></td>
+                <td style="width: 15%">Kho</td>
+                <td style="width: 15%">{{ $order->warehouse->name ?? "" }}</td>
+            @else
+                <td style="width: 50%"></td>
+            @endif
         </tr>  
         <tr>
             <td>Tổng thực đặt</td>
             <td>{{ $qty_reality }}</td>
-            <td></td>
+            @if (isset($role) && $role == 'admin')
+                <td></td>
+                <td>Nhân viên Sale</td>
+                <td>{{ $order->supporter->name ?? "" }}</td>
+            @else
+                <td></td>
+            @endif
         </tr>  
         <tr>
             <td>Tổng tiền thực đặt</td>
             <td>{{ number_format($total_price_reality, 2) . " Tệ" }}</td>
-            <td>{{ number_format($total_price_reality * $current_rate) . " VND" }}</td>
+            
+            @if (isset($role) && $role == 'admin')
+                <td>{{ number_format($total_price_reality * $current_rate) . " VND" }}</td>
+                <td>Nhân viên Order</td>
+                <td>{{ $order->supporterOrder->name ?? "..." }}</td>
+            @else
+                <td>{{ number_format($total_price_reality * $current_rate) . " VND" }}</td>
+            @endif
         </tr>  
         <tr>
             <td>Tổng phí dịch vụ</td>
             <td>{{ number_format($order->purchase_order_service_fee, 2) . " Tệ "}}</td>
-            <td>{{ number_format($order->purchase_order_service_fee * $current_rate) . " VND"  }}</td>
+
+            @if (isset($role) && $role == 'admin')
+                <td>{{ number_format($order->purchase_order_service_fee * $current_rate) . " VND"  }}</td>
+                <td>Nhân viên Kho</td>
+                <td>{{ $order->supporterWarehouse->name ?? "..." }}</td>
+            @else
+                <td>{{ number_format($order->purchase_order_service_fee * $current_rate) . " VND"  }}</td>
+            @endif
         </tr>  
         <tr>
             <td>Tổng phí ship nội địa Trung Quốc</td>

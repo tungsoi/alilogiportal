@@ -45,11 +45,12 @@ class CustomerOrderController extends AdminController
     public function show($id, Content $content)
     {
         $order = PurchaseOrder::find($id);
-        if ($order->customer_id != Admin::user()->id) {
+        if (! $order || $order->customer_id != Admin::user()->id) {
             admin_error('Đây không phải đơn hàng của bạn. Không có quyền truy cập.');
 
-            return redirect()->route('admin.admin.home');
+            return redirect()->route('admin.customer_orders.index');
         }
+        
         return $content->header('Đơn hàng mua hộ')
         ->description('Chi tiết đơn hàng')
         ->row(function (Row $row) use ($id)
@@ -69,7 +70,7 @@ class CustomerOrderController extends AdminController
     }
 
     /**
-     * Make a grid builder.
+     * Danh sach don hang cua 1 khach hang
      *
      * @return Grid
      */
@@ -94,7 +95,6 @@ class CustomerOrderController extends AdminController
             });
         });
 
-        // $grid->fixColumns(6);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
@@ -239,6 +239,7 @@ class CustomerOrderController extends AdminController
         $grid->paginate(200);
         $grid->disablePerPageSelector();
         $grid->disablePagination();
+        $grid->disableBatchActions();
 
         Admin::script(
             <<<EOT
@@ -250,23 +251,43 @@ class CustomerOrderController extends AdminController
             });
 
             $(document).on('click', '.btn-customer-delete', function () {
-                $.ajax({
-                    type: 'POST',
-                    url: '/api/customer-destroy',
-                    data: {
-                        order_id: $(this).data('id')
-                    },
-                    success: function(response) {
-                        if (response.error == false) {
-                            toastr.success('Đã xoá đơn hàng thành công.');
+                let flag_submit_ajax = false;
+                Swal.fire({
+                    title: 'Bạn có muốn xoá đơn hàng này ?',
+                    showDenyButton: false,
+                    showCancelButton: true,
+                    confirmButtonText: `Xoá`,
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (! flag_submit_ajax)
+                        {
+                            $.ajax({
+                                type: 'POST',
+                                url: '/api/customer-destroy',
+                                data: {
+                                    order_id: $(this).data('id')
+                                },
+                                success: function(response) {
+                                    if (response.error == false) {
+                                        Swal.fire('Đã xoá đơn hàng !', '', 'success');
+            
+                                        setTimeout(function () {
+                                            window.location.reload();
+                                        }, 100);
+            
+                                    } else {
+                                        Swal.fire('Xảy ra lỗi !', '', 'danger');
 
-                            setTimeout(function () {
-                                window.location.reload();
-                            }, 1000);
-
-                        } else {
-                            toastr.error('Xảy ra lỗi: ' + response.msg);
+                                        setTimeout(function () {
+                                            window.location.reload();
+                                        }, 500);
+                                    }
+                                }
+                            });
                         }
+                    }
+                    else {
+                        return false;
                     }
                 });
             });
@@ -332,12 +353,12 @@ EOT
         $grid->disableFilter();
         $grid->disableColumnSelector();
         $grid->disableExport();
-        // $grid->fixColumns(3);
+
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
-        $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary')->display(function () {
+        $grid->order()->order_number('Trạng thái')->label('primary')->display(function () {
             $html = "";
             $html .= "<p class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</p> <br>";
             $html .= '<a href="'.$this->product_link.'" target="_blank"> Link sản phẩm</a>';
@@ -406,16 +427,6 @@ EOT
             }
 
             return "";
-            
-
-            // $html = $logi-
-            // return $logi->kg;
-            // $weight = $this->weight != null ? $this->weight : 0;
-            // $html = $weight;
-            // $html .= "<br> <i>".number_format($weight * $this->order->price_weight) . " (VND) </i> <br>";
-            // $date = $this->weight_date;
-            // $html .= "<br> <i>".$date."</i>";
-            // return $html;
         });
         $grid->cn_code('Mã vận đơn Alilogi');
         $grid->customer_note('Ghi chú')->width(100)->editable();
@@ -466,106 +477,113 @@ EOT
 
         Admin::script(
             <<<EOT
-            var bar = "bar";
-            $(document).on('click', '.btn-confirm-ordered', function () {
-                var foo = bar;
-                if ( foo == "bar" ) {
-                    var isGood=confirm('Xác nhận Đã đặt hàng đơn hàng này ?');
-                    if (isGood) {
-                        $.ajax({
-                            type: 'POST',
-                            url: '/api/confirm-ordered',
-                            data: {
-                                order_id: $(this).data('id'),
-                                user_id_created: $(this).data('user')
-                            },
-                            success: function(response) {
-                                if (response.error == false) {
-                                    alert('Đã xác nhận đặt hàng thành công.');
-
-                                    setTimeout(function () {
-                                        window.location.reload();
-                                    }, 1000);
-                                    
-                                } else {
-                                    alert('Xảy ra lỗi: ' + response.msg);
-                                }
-                            }
-                        });
-                    }
-                }
-            });
 
             $(document).on('click', '.btn-confirm-deposite', function () {
-                $(this).remove();
-                $.ajax({
-                    type: 'POST',
-                    url: '/api/customer-deposite',
-                    data: {
-                        order_id: $(this).data('order')
-                    },
-                    success: function(response) {
-                        if (response.error == false) {
-                            toastr.success('Đã đặt cọc thành công.');
+                let flag_submit_ajax = false;
+                Swal.fire({
+                    title: 'Xác nhận đặt cọc đơn hàng bằng số dư tài khoản ?',
+                    showDenyButton: false,
+                    showCancelButton: true,
+                    confirmButtonText: `Đồng ý`,
+                    cancelButtonText: 'Huỷ bỏ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (! flag_submit_ajax)
+                        {
+                            $.ajax({
+                                type: 'POST',
+                                url: '/api/customer-deposite',
+                                data: {
+                                    order_id: $(this).data('order')
+                                },
+                                success: function(response) {
+                                    if (response.error == false) {
+                                        Swal.fire('Đã đặt cọc đơn hàng !', '', 'success');
+            
+                                        setTimeout(function () {
+                                            window.location.reload();
+                                        }, 100);
+            
+                                    } else {
+                                        Swal.fire(response.msg, '', 'danger');
 
-                            setTimeout(function () {
-                                window.location.reload();
-                            }, 1000);
-                            
-                        } else {
-                            toastr.error('Xảy ra lỗi: ' + response.msg);
+                                        setTimeout(function () {
+                                            window.location.reload();
+                                        }, 500);
+                                    }
+                                }
+                            });
                         }
                     }
+                    else {
+                        return false;
+                    }
                 });
-
-            });
-
-            $(document).on('click', '.btn-customer-destroy', function () {
-                var isGood=confirm('Xác nhận Huỷ đơn hàng ?');
-                if (isGood) {
-                    $.ajax({
-                        type: 'POST',
-                        url: '/api/customer-destroy',
-                        data: {
-                            order_id: $(this).data('order')
-                        },
-                        success: function(response) {
-                            if (response.error == false) {
-                                toastr.success('Đã huỷ đơn hàng thành công.');
-
-                                setTimeout(function () {
-                                    window.location.reload();
-                                }, 1000);
-                                
-                            } else {
-                                toastr.error('Xảy ra lỗi: ' + response.msg);
-                            }
-                        }
-                    });
-                }
             });
 
             $(document).on('click', '.btn-customer-delete-item-from-order', function () {
-                // $(this).remove();
-                $.ajax({
-                    type: 'POST',
-                    url: '/api/customer-delete-item-from-order',
-                    data: {
-                        id: $(this).data('id')
-                    },
-                    success: function(response) {
-                        if (response.error == false) {
-                            toastr.success('Lưu thành công.');
 
-                            setTimeout(function () {
-                                window.location.reload();
-                            }, 1000);
-                            
-                        } else {
-                            toastr.error('Xảy ra lỗi: ' + response.msg);
+                let flag_submit_ajax = false;
+                Swal.fire({
+                    title: 'Xoá sản phẩm khỏi đơn hàng ?',
+                    showDenyButton: false,
+                    showCancelButton: true,
+                    confirmButtonText: `Đồng ý`,
+                    cancelButtonText: 'Huỷ bỏ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (! flag_submit_ajax)
+                        {
+                            $.ajax({
+                                type: 'POST',
+                                url: '/api/customer-delete-item-from-order',
+                                data: {
+                                    id: $(this).data('id')
+                                },
+                                success: function(response) {
+                                    if (response.error == false) {
+                                        Swal.fire('Đã xoá sản phẩm khỏi đơn hàng !', '', 'success');
+            
+                                        setTimeout(function () {
+                                            window.location.reload();
+                                        }, 100);
+            
+                                    } else {
+                                        Swal.fire(response.msg, '', 'danger');
+
+                                        setTimeout(function () {
+                                            window.location.reload();
+                                        }, 500);
+                                    }
+                                }
+                            });
                         }
                     }
+                    else {
+                        return false;
+                    }
                 });
+
+                // $(this).remove();
+                // $.ajax({
+                //     type: 'POST',
+                //     url: '/api/customer-delete-item-from-order',
+                //     data: {
+                //         id: $(this).data('id')
+                //     },
+                //     success: function(response) {
+                //         if (response.error == false) {
+                //             toastr.success('Lưu thành công.');
+
+                //             setTimeout(function () {
+                //                 window.location.reload();
+                //             }, 1000);
+                            
+                //         } else {
+                //             toastr.error('Xảy ra lỗi: ' + response.msg);
+                //         }
+                //     }
+                // });
 
             });
 EOT

@@ -107,7 +107,6 @@ class PurchaseOrderController extends AdminController
             $html = "<ul style='padding-left: 15px;'>";
             $html .= '<li>Đặt hàng: ' . ($this->supporterOrder->name ?? "...") . "</li>";
 
-
             if ($this->supporter_id != "") {
                 $sale = $this->supporter->name ?? "";
             } 
@@ -127,17 +126,9 @@ class PurchaseOrderController extends AdminController
         $grid->purchase_total_items_price('Tổng giá trị SP (Tệ)')->display(function () {
             return number_format($this->sumQtyRealityMoney(), 2);
         });
-        // ->totalRow(function ($amount) {
-        //     $amount = number_format($amount, 2);
-        //     return '<span class="">'.$amount.'</span>';
-        // });
         $grid->purchase_order_service_fee('Phí dịch vụ (Tệ)')->display(function () {
             return $this->purchase_order_service_fee;
         })->editable();
-        // ->totalRow(function ($amount) {
-        //     $amount = number_format($amount);
-        //     return '<span class="">'.$amount.'</span>';
-        // })->editable();
 
         $grid->purchase_order_transport_fee('Tổng phí VCNĐ (Tệ)')->display(function () {
             if ($this->items) {
@@ -174,20 +165,12 @@ class PurchaseOrderController extends AdminController
 
             return $html;
         });
-        // ->totalRow(function ($amount) {
-        //     $amount = number_format($amount);
-        //     return '<span class="">'.$amount.'</span>';
-        // });
         $grid->final_total_price('Tổng giá cuối (Tệ)')->display(function () {
             if ($this->items) {
-                return number_format($this->totalBill(), 2) . "<br> <i>" . number_format($this->totalBill() * $this->current_rate, 2) . " (VND)</i>";
+                return number_format($this->totalBill(), 2) . "<br> <i>" . number_format($this->totalBill() * $this->current_rate) . " (VND)</i>";
             }
             return 0;
         })
-        // ->totalRow(function ($amount) {
-        //     $amount = number_format($amount);
-        //     return '<span class="">'.$amount.'</span>';
-        // })
         ->help('Tổng giá cuối = Tổng giá trị SP + Phí dịch vụ + Tổng phí VCNĐ');
 
         $grid->final_payment('Tổng thanh toán (VND)')->display(function () {
@@ -247,7 +230,7 @@ class PurchaseOrderController extends AdminController
 
             if ($this->row->status == PurchaseOrder::STATUS_NEW_ORDER || $this->row->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
                 $actions->append('
-                    <a data-id="'.$this->getKey().'" data-user="'.Admin::user()->id.'" class="grid-row-cancle btn btn-danger btn-xs" data-toggle="tooltip" title="Huỷ đơn hàng">
+                    <a data-id="'.$this->getKey().'" data-user="'.Admin::user()->id.'" class="grid-row-cancle btn btn-danger btn-xs btn-admin-destroy-order" data-toggle="tooltip" title="Huỷ đơn hàng">
                         <i class="fa fa-times"></i>
                     </a>'
                 );
@@ -256,9 +239,6 @@ class PurchaseOrderController extends AdminController
         });
 
         $grid->exporter(new OrdersExporter());
-
-
-        // Admin::style('.btn {display: block;}');
 
         $grid->batchActions(function ($batch) {
             $batch->disableDelete();
@@ -272,26 +252,46 @@ class PurchaseOrderController extends AdminController
                 $(this).insertAfter($(this).siblings('thead'));
             });
 
-            var bar = "bar";
-            $(document).on('click', '.grid-row-cancle', function () {
-                $.ajax({
-                    type: 'POST',
-                    url: '/api/cancle-purchase-order',
-                    data: {
-                        order_id: $(this).data('id'),
-                        user_id_created: $(this).data('user')
-                    },
-                    success: function(response) {
-                        if (response.error == false) {
-                            toastr.success('Đã huỷ đơn hàng thành công.');
+            $(document).on('click', '.btn-admin-destroy-order', function () {
+                let flag_submit_ajax = false;
+                Swal.fire({
+                    title: 'Xác nhận huỷ đơn hàng ?',
+                    showDenyButton: false,
+                    showCancelButton: true,
+                    confirmButtonText: `Đồng ý`,
+                    cancelButtonText: 'Huỷ bỏ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (! flag_submit_ajax)
+                        {
+                            $.ajax({
+                                type: 'POST',
+                                url: '/api/cancle-purchase-order',
+                                data: {
+                                    order_id: $(this).data('id'),
+                                    user_id_created: $(this).data('user')
+                                },
+                                success: function(response) {
+                                    if (response.error == false) {
+                                        Swal.fire('Đã huỷ đơn hàng !', '', 'success');
+            
+                                        setTimeout(function () {
+                                            window.location.reload();
+                                        }, 100);
+            
+                                    } else {
+                                        Swal.fire(response.msg, '', 'danger');
 
-                            setTimeout(function () {
-                                window.location.reload();
-                            }, 1000);
-                            
-                        } else {
-                            toastr.error('Xảy ra lỗi: ' + response.msg);
+                                        // setTimeout(function () {
+                                        //     window.location.reload();
+                                        // }, 500);
+                                    }
+                                }
+                            });
                         }
+                    }
+                    else {
+                        return false;
                     }
                 });
             });

@@ -116,47 +116,26 @@ class DetailOrderController extends AdminController
         $grid = new Grid(new OrderItem());
         $grid->model()->where('order_id',$id);
 
-        // $grid->filter(function($filter) {
-        //     $filter->expand();
-        //     $filter->disableIdFilter();
-        //     $filter->column(1/2, function ($filter) {
-        //         $filter->where(function ($query) {
-        //             $orders = PurchaseOrder::where('order_number', 'like', "%{$this->input}%")->get()->pluck('id');
-    
-        //             $query->whereIn('order_id', $orders);
-                
-        //         }, 'Mã đơn hàng');
-        //         $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
-        //     });
-        //     $filter->column(1/2, function ($filter) {
-        //         $filter->like('cn_code', 'Mã vận đơn');
-        //         $filter->like('cn_order_number', 'Mã giao dịch');
-        //     });
-            
-        // });
-        $grid->fixColumns(5);
+        $grid->disableFilter();
+        $grid->disableColumnSelector();
+
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
-        $grid->order()->order_number('Mã đơn hàng')->help('Mã đơn hàng mua hộ')->label('primary')->display(function () {
-            $html = "<p class='label label-primary'>".$this->order->order_number."</p>";
-            $customer = $this->order->customer->symbol_name ?? $this->order->customer->email;
-
-            $html .= "<br> <p class='label label-info'>".$customer."</p>" ?? "";
-            $html .= "<br> <p class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</p>";
+        $grid->order()->order_number('Trạng thái')->help('Mã đơn hàng mua hộ')->label('primary')->display(function () {
+            $html = "";
+            $html .= "<p class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</p>";
             $html .= "<br>" . date('H:i | d-m-Y', strtotime($this->created_at));
+            $html .= '<br> <a href="'.$this->product_link.'" target="_blank"> Link sản phẩm</a>';
 
             return $html;
         });
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 50, 'height' => 50]);
-        $grid->status('Link sản phẩm')->display(function () {
-            return '<b><a href="'.$this->product_link.'" target="_blank"> Link SP</a></b>';
-        });
         $grid->product_size('Kích thước')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
-        })->editable();
-        $grid->product_color('Màu')->editable();
+        })->editable()->width(100);
+        $grid->product_color('Màu')->editable()->width(100);
         $grid->qty('Số lượng')->editable();
         $grid->qty_reality('Số lượng thực đặt')->editable();
         $grid->price('Giá (Tệ)');
@@ -169,14 +148,10 @@ class DetailOrderController extends AdminController
             return number_format($totalPrice, 2) ?? 0; 
         })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
         
-        // $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi')->editable();
-        // $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
-        //     return $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null;
-        // })->editable('date');
         $grid->cn_code('Mã vận đơn Alilogi')->editable();
         $grid->cn_order_number('Mã giao dịch')->editable();
-        $grid->customer_note('Khách hàng ghi chú')->style('width: 100px')->editable();
-        $grid->admin_note('Admin ghi chú')->editable();
+        $grid->customer_note('Khách hàng ghi chú')->width(100)->editable();
+        $grid->admin_note('Admin ghi chú')->editable()->width(100);
 
         $grid->disableCreateButton();
 
@@ -187,10 +162,16 @@ class DetailOrderController extends AdminController
             $tools->append(new WarehouseVietnam());
 
             $id = explode('/', request()->server()['REQUEST_URI'])[3];
+            $order = PurchaseOrder::find($id);
 
-            $tools->append('<a class="btn-confirm-ordered btn btn-sm btn-warning" data-user="'.Admin::user()->id.'" data-id="'.$id.'" data-toggle="tooltip" title="Chuyển trạng thái của đơn hàng thành Đã đặt hàng"><i class="fa fa-check"></i> &nbsp; Chốt đặt hàng đơn</a>');
+            if ($order->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
+                $tools->append('<a class="btn-confirm-ordered btn btn-sm btn-warning" data-user="'.Admin::user()->id.'" data-id="'.$id.'" data-toggle="tooltip" title="Chuyển trạng thái của đơn hàng thành Đã đặt hàng"><i class="fa fa-check"></i> &nbsp; Chốt đặt hàng đơn</a>');
+            }
             
-            $tools->append('<a href="'.route('admin.puchase_orders.deposite', $id).'" class="btn btn-sm btn-danger" data-toggle="tooltip" title="Vào tiền cọc cho đơn hàng" target="_blank"><i class="fa fa-money"></i> &nbsp; Vào tiền cọc cho đơn hàng</a>');
+            if ($order->status == PurchaseOrder::STATUS_NEW_ORDER) {
+                $tools->append('<a href="'.route('admin.puchase_orders.deposite', $id).'" class="btn btn-sm btn-danger" data-toggle="tooltip" title="Vào tiền cọc cho đơn hàng" target="_blank"><i class="fa fa-money"></i> &nbsp; Vào tiền cọc cho đơn hàng</a>');
+            }
+            
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
@@ -199,66 +180,105 @@ class DetailOrderController extends AdminController
             $actions->disableDelete();
             $actions->disableView();
             $actions->disableEdit();
-
-            // $actions->append('
-            //     <a href="'.route('admin.order_items.edit', $this->getKey()).'" class="grid-row-edit btn btn-primary btn-xs" target="_blank" data-toggle="tooltip" title="Chỉnh sửa đơn hàng">
-            //         <i class="fa fa-edit"></i>
-            //     </a>'
-            // );
             
-            $actions->append('
-                <a class="grid-row-outstock btn btn-danger btn-xs" data-id="'.$this->getKey().'" data-toggle="tooltip" title="Hết hàng">
-                    <i class="fa fa-times"></i>
-                </a>'
-            );
+            if ($this->row->status == OrderItem::STATUS_PURCHASE_ITEM_NOT_ORDER) {
+                $actions->append('
+                    <a class="grid-row-outstock btn btn-danger btn-xs" data-id="'.$this->getKey().'">
+                        <i class="fa fa-times"></i> Hết hàng
+                    </a>'
+                );
+            }
 
         });
         $grid->paginate(200);
+        $grid->disablePagination();
         Admin::style('.box {border-top:none;} .column-order.order_number span{margin-bottom: 10px;}');
 
         Admin::script(
             <<<EOT
             $(document).on('click', '.btn-confirm-ordered', function () {
-                $.ajax({
-                    type: 'POST',
-                    url: '/api/confirm-ordered',
-                    data: {
-                        order_id: $(this).data('id'),
-                        user_id_created: $(this).data('user')
-                    },
-                    success: function(response) {
-                        if (response.error == false) {
-                            toastr.success('Đã xác nhận đặt hàng thành công.');
+                let flag_submit_ajax = false;
+                Swal.fire({
+                    title: 'Xác nhận đơn này đã đặt hàng ?',
+                    showDenyButton: false,
+                    showCancelButton: true,
+                    confirmButtonText: `Đồng ý`,
+                    cancelButtonText: 'Huỷ bỏ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (! flag_submit_ajax)
+                        {
+                            $.ajax({
+                                type: 'POST',
+                                url: '/api/confirm-ordered',
+                                data: {
+                                    order_id: $(this).data('id'),
+                                    user_id_created: $(this).data('user')
+                                },
+                                success: function(response) {
+                                    if (response.error == false) {
+                                        Swal.fire('Đã xác nhận đặt hàng !', '', 'success');
+            
+                                        setTimeout(function () {
+                                            window.location.reload();
+                                        }, 100);
+            
+                                    } else {
+                                        Swal.fire(response.msg, '', 'danger');
 
-                            setTimeout(function () {
-                                window.location.reload();
-                            }, 500);
-                            
-                        } else {
-                            alert('Xảy ra lỗi: ' + response.msg);
+                                        // setTimeout(function () {
+                                        //     window.location.reload();
+                                        // }, 500);
+                                    }
+                                }
+                            });
                         }
+                    }
+                    else {
+                        return false;
                     }
                 });
             });
 
             $(document).on('click', '.grid-row-outstock', function () {
-                $.ajax({
-                    type: 'POST',
-                    url: '/api/confirm-outstock',
-                    data: {
-                        item_id: $(this).data('id')
-                    },
-                    success: function(response) {
-                        if (response.error == false) {
-                            toastr.success('Đã xác nhận hết hàng.');
+                let flag_submit_ajax = false;
+                Swal.fire({
+                    title: 'Xác nhận sản phẩm này đã hết hàng ?',
+                    showDenyButton: false,
+                    showCancelButton: true,
+                    confirmButtonText: `Đồng ý`,
+                    cancelButtonText: 'Huỷ bỏ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (! flag_submit_ajax)
+                        {
+                            $.ajax({
+                                type: 'POST',
+                                url: '/api/confirm-outstock',
+                                data: {
+                                    item_id: $(this).data('id')
+                                },
+                                success: function(response) {
+                                    if (response.error == false) {
+                                        Swal.fire('Đã xác nhận hết hàng !', '', 'success');
+            
+                                        setTimeout(function () {
+                                            window.location.reload();
+                                        }, 100);
+            
+                                    } else {
+                                        Swal.fire(response.msg, '', 'danger');
 
-                            setTimeout(function () {
-                                window.location.reload();
-                            }, 500);
-                            
-                        } else {
-                            alert('Xảy ra lỗi: ' + response.msg);
+                                        // setTimeout(function () {
+                                        //     window.location.reload();
+                                        // }, 500);
+                                    }
+                                }
+                            });
                         }
+                    }
+                    else {
+                        return false;
                     }
                 });
             });
@@ -278,41 +298,29 @@ EOT
     {
         $order = PurchaseOrder::find($id);
 
-        if (! isset($order->items)) {
-            admin_error('Đơn hàng bạn vừa chọn xem chi tiết không tồn tại. Vui lòng kiểm tra lại.');
-            return redirect()->route('admin.puchase_orders.index');
-        }
         $items = $order->items;
         $qty = $qty_reality = 0;
         $purchase_cn_transport_fee = 0; // Tổng phí ship nội địa TQ
         $total_price_reality = 0; // Tổng tiền thực đặt = Tổng thực đặt * giá 
 
         foreach ($items as $item) {
-            // if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
+            if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
                 $qty_reality += $item->qty_reality;
                 $qty += $item->qty;
                 $purchase_cn_transport_fee += $item->purchase_cn_transport_fee;
                 $total_price_reality += $item->qty_reality * $item->price;
-            // }
+            }
         }
 
         $total_bill = ($total_price_reality + $purchase_cn_transport_fee + $order->purchase_order_service_fee);
         $current_rate = $order->current_rate;
-        $headers = ['Thông tin', 'Giá trị', ''];
-        $rows = [
-            ['Tổng giá trị đơn hàng = Tổng tiền thực đặt + ship nội địa + dịch vụ', number_format($total_bill, 2) . " (Tệ)" . " = " . number_format($total_bill * $current_rate, 2) . " (VND)", 'Kho', $order->warehouse->name ?? "Đang cập nhật"],
-            ['Tổng tiền thực đặt', number_format($total_price_reality, 2) . " (Tệ)" . " = " . number_format($total_price_reality * $current_rate, 2) . " (VND)", 'Nhân viên đặt hàng', $order->supporterOrder->name ?? "Đang cập nhật"],
-            ['Tổng phí ship nội địa Trung Quốc', number_format($purchase_cn_transport_fee, 2) . " (Tệ)"  . " = " . number_format($purchase_cn_transport_fee * $current_rate, 2) . " (VND)", 'Nhân viên CSKH', $order->supporter->name ?? "Đang cập nhật"],
-            ['Tổng phí dịch vụ', number_format($order->purchase_order_service_fee, 2) . " (Tệ)" . " = " . number_format($order->purchase_order_service_fee * $current_rate, 2) . " (VND)", 'Nhân viên Kho', $order->supporterWarehouse->name ?? "Đang cập nhật"],
-            ['Tổng số lượng', $qty, '<b>'.$order->order_number.'</b> / <b>'.$order->customer->symbol_name.'</b>'],
-            ['Tổng thực đặt', $qty_reality, 'Trạng thái đơn hàng', "<span class='label label-".PurchaseOrder::LABEL[$order->status]."'>".PurchaseOrder::STATUS[$order->status]."</span>"],  
-            ['Ngày tạo:', date('H:i | d-m-Y', strtotime($order->created_at)), 'Tỷ giá', number_format($current_rate) . " (VND)"],
-            ['Số tiền phải cọc', number_format($order->deposit_default, 2) . " (VND)"]
-        ];
 
-        $table = new Table($headers, $rows);
-
-        return $table->render();
+        $status = "<span class='label label-".PurchaseOrder::LABEL[$order->status]."'>".PurchaseOrder::STATUS[$order->status]."</span>";
+        $role = 'admin';
+        return view('admin.customer-detail-order', compact(
+            'order', 'status', 'qty', 'qty_reality', 'total_price_reality', 'current_rate', 'purchase_cn_transport_fee',
+            'total_bill', 'role'
+        ))->render();
     }
 
     /**
@@ -345,37 +353,6 @@ EOT
         OrderItem::find($data['pk'])->update([
             $data['name']   =>  $data['value']
         ]);
-
-        // $id = $data['pk'];
-        // $column = $data['name'];
-        // $value = $data['value'];
-        // $res = [];
-        // $res[$column] = $value;
-
-        // $item = OrderItem::find($id);
-        // $qty_reality = $item->qty_reality;
-
-        // // qty_reality
-        // if ($column == 'qty_reality' && $value == 0) {
-        //     $res['status'] = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
-        // } else if ($data['name'] == 'qty_reality' && $data['value'] > 0) {
-        //     if ($qty_reality == 0) {
-        //         $res['status'] = OrderItem::STATUS_PURCHASE_ITEM_ORDERED;
-        //     }
-        // }
-
-        // // cn_code alilogi
-        // if ($column == 'cn_code' && $value == 0) {
-        //     $transport_item = TransportOrderItem::select('cn_code', 'kg', 'warehouse_cn_date')->where('cn_code', $value)->first();
-
-        //     if ($transport_item) {
-        //         $res['weight'] = $transport_item->kg;
-        //         $res['weight_date'] =  $transport_item->warehouse_cn_date;
-        //     }
-            
-        // }
-
-        // OrderItem::find($data['pk'])->update($res);
 
         return response()->json([
             'status'  => true,
