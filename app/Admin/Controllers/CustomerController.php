@@ -86,7 +86,7 @@ class CustomerController extends AdminController
 
         $grid->header(function ($query) {
 
-            $owed = $query->sum('wallet');
+            $owed = $query->where('wallet', '<', 0)->sum('wallet');
             $color = $owed > 0 ? 'green' : 'red';
 
             return '<h4>Công nợ khách hàng hiện tại: <span style="color:'.$color.'">'. number_format($owed) ."</span> (VND)</h4>";
