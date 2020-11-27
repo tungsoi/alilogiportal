@@ -56,7 +56,7 @@ class CreateOrderFromCart extends BatchAction
             }
 
             $percent = (float) PurchaseOrder::PERCENT_NUMBER[Admin::user()->customer_percent_service];
-            $purchase_order_service_fee = round($purchase_total_items_price / 100 * $percent, 2);
+            $purchase_order_service_fee = round($purchase_total_items_price / 100 * $percent, 2); // phi dich vu vnd
 
             $final_total_price = round(($purchase_total_items_price + $purchase_order_service_fee) * $exchange_rate); // vnd
             $deposit_default   = round($final_total_price * 70 / 100); // vnd

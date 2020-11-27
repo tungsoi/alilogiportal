@@ -177,11 +177,23 @@ Route::post('/confirm-ordered', function (Request $request) {
  * Admin xac nhan san pham trong don da het hang
  */
 Route::post('/confirm-outstock', function (Request $request) {
+
+    // STATUS_NEW_ORDER : don hang moi
+    // -> item -> het hang: qty_reality = 0
+    // -> order -> tinh lai tien thuc dat, tong tien, tien coc mac dinh
+    // STATUS_DEPOSITED_ORDERING : da coc - dang dat
+    // -> item -> het hang: qty_reality = 0
+    // -> order -> tinh lai tien thuc dat, tong tien, tien coc mac dinh
+    // STATUS_ORDERED : da dat hang
+    // -> item -> het hang: 
+    // STATUS_SUCCESS : thanh cong
+    // STATUS_CANCEL : da huy
     DB::beginTransaction();
 
     try {
         if ($request->ajax()) {
             $item_id = $request->item_id;
+
             $item = OrderItem::find($item_id);
             $order = $item->order;
 
@@ -199,8 +211,8 @@ Route::post('/confirm-outstock', function (Request $request) {
 
             foreach ($order->items as $item) {
                 if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
-                    $new_data['purchase_cn_transport_fee'] += $item->purchase_cn_transport_fee;
-                    $new_data['purchase_total_items_price'] += $item->qty_reality * $item->price;
+                    $new_data['purchase_cn_transport_fee'] += $item->purchase_cn_transport_fee; // tong phi van chuyen
+                    $new_data['purchase_total_items_price'] += $item->qty_reality * $item->price; // tong tien thuc dat
                 }
             }
 
@@ -208,12 +220,15 @@ Route::post('/confirm-outstock', function (Request $request) {
 
             $percent = (float) PurchaseOrder::PERCENT_NUMBER[$order->customer->customer_percent_service];
             $new_data['purchase_order_service_fee'] = round($new_data['purchase_total_items_price'] / 100 * $percent, 2);
-            $new_data['final_total_price'] = round( ($new_data['purchase_total_items_price'] ) * $rate);
+            $new_data['final_total_price'] = round( 
+                ($new_data['purchase_total_items_price'] + $new_data['purchase_order_service_fee'] + $new_data['purchase_cn_transport_fee']) 
+                * $rate
+            );
             $new_data['deposit_default'] = round($new_data['final_total_price'] * 70 / 100);
 
             $order->update($new_data);
             $order->save();
-
+ 
             DB::commit();
             return response()->json([
                 'error' =>  false,

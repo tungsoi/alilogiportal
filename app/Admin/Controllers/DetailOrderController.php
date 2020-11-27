@@ -176,12 +176,14 @@ class DetailOrderController extends AdminController
                 $batch->disableDelete();
             });
         });
-        $grid->actions(function ($actions) {
+        $grid->actions(function ($actions) use ($id) {
             $actions->disableDelete();
             $actions->disableView();
             $actions->disableEdit();
             
-            if ($this->row->status == OrderItem::STATUS_PURCHASE_ITEM_NOT_ORDER) {
+            $order = PurchaseOrder::find($id);
+            if (in_array($order->status, [PurchaseOrder::STATUS_NEW_ORDER, PurchaseOrder::STATUS_DEPOSITED_ORDERING, PurchaseOrder::STATUS_ORDERED]))
+            {
                 $actions->append('
                     <a class="grid-row-outstock btn btn-danger btn-xs" data-id="'.$this->getKey().'">
                         <i class="fa fa-times"></i> Hết hàng
@@ -350,6 +352,8 @@ EOT
         # code...
 
         $data = $request->all();
+
+        dd($data);
         OrderItem::find($data['pk'])->update([
             $data['name']   =>  $data['value']
         ]);

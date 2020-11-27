@@ -64,7 +64,8 @@ class PurchaseOrderController extends AdminController
             });
             $filter->column(1/2, function ($filter) {
                 $filter->equal('status', 'Trạng thái')->select(PurchaseOrder::STATUS);
-                $filter->between('created_at', 'Ngày đặt hàng')->date();
+                $filter->between('created_at', 'Ngày tạo đơn hàng')->date();
+                $filter->between('order_at', 'Ngày chốt đặt hàng')->date();
             });
         });
 
@@ -498,11 +499,10 @@ EOT
                 '2% tổng tiền sản phẩm',
                 '2.5% tổng tiền sản phẩm',
                 '3% tổng tiền sản phẩm',
-            ]); // tinh % khi chon gia tri
-            $form->currency('purchase_order_service_fee', 'Phí dịch vụ (Tệ)')->symbol('￥')->width(200)->digits(2)->readonly();
+            ])->default(1); // tinh % khi chon gia tri
+            $form->currency('purchase_order_service_fee', 'Phí dịch vụ (Tệ)')->symbol('￥')->width(200)->digits(2);
             
             $form->divider();
-            // $form->currency('purchase_order_transport_fee', 'Phí ship nội địa (VND)')->symbol('VND')->width(200)->digits(0);
             $form->currency('price_weight', 'Giá cân nặng (VND)')->symbol('VND')->width(200)->digits(0);
             
             $form->hidden('deposited_at');
@@ -517,6 +517,8 @@ EOT
             $order->purchase_order_service_fee = $form->purchase_order_service_fee;
             $order->final_total_price = $order->finalPriceVND();
             $order->deposit_default = $order->finalPriceVND() * 70 / 100;
+            $order->admin_note = $form->admin_note;
+            $order->internal_note = $form->internal_note;
             $order->save();
         });
 
