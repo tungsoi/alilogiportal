@@ -49,11 +49,10 @@ class PurchaseOrderController extends AdminController
             $customer = User::whereStaffSaleId(Admin::user()->id)->get()->pluck('id');
             $grid->model()->whereIn('customer_id', $customer);
         } 
-        
-        // else if (Admin::user()->isRole('order_staff')) 
-        // {
-        //     $grid->model()->where('supporter_order_id', Admin::user()->id);
-        // }
+        else if (Admin::user()->isRole('order_staff')) 
+        {
+            $grid->model()->where('supporter_order_id', Admin::user()->id);
+        }
 
         $grid->filter(function($filter) {
             $filter->expand();
@@ -69,7 +68,7 @@ class PurchaseOrderController extends AdminController
             });
         });
 
-        $grid->fixColumns(6);
+        $grid->fixColumns(5);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
@@ -100,13 +99,9 @@ class PurchaseOrderController extends AdminController
             }
 
             $html = "<span class='label label-".PurchaseOrder::LABEL[$this->status]."'>".PurchaseOrder::STATUS[$this->status]." " .$count. "</span>";
-
-            return $html;
-        });
-
-        $grid->column('staff', 'Nhân viên phụ trách')->display(function () {
-            $html = "<ul style='padding-left: 15px;'>";
-            $html .= '<li>Đặt hàng: ' . ($this->supporterOrder->name ?? "...") . "</li>";
+            
+            $html_staff = "<ul style='padding-left: 15px;'>";
+            $html_staff .= '<li>Đặt hàng: ' . ($this->supporterOrder->name ?? "") . "</li>";
 
             if ($this->supporter_id != "") {
                 $sale = $this->supporter->name ?? "";
@@ -115,12 +110,13 @@ class PurchaseOrderController extends AdminController
                 $sale = $this->customer->saleStaff->name ?? "";
             }
             
-            $html .= '<li>CSKH: ' . ($sale ?? "...") . "</li>";
-            $html .= '<li>Kho: ' . ($this->supporterWarehouse->name ?? "...") . "</li>";
-            $html .= "</ul>";
+            $html_staff .= '<li>CSKH: ' . ($sale ?? "") . "</li>";
+            $html_staff .= '<li>Kho: ' . ($this->supporterWarehouse->name ?? "") . "</li>";
+            $html_staff .= "</ul>";
 
-            return $html;
+            return $html . $html_staff;
         });
+
         $grid->column('total_items', 'Số sản phẩm')->display(function () {
             return $this->totalItemReality();
         });
