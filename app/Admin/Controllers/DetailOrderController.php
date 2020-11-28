@@ -353,7 +353,6 @@ EOT
 
         $data = $request->all();
 
-        dd($data);
         OrderItem::find($data['pk'])->update([
             $data['name']   =>  $data['value']
         ]);
