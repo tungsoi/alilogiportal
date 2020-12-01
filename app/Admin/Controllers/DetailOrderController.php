@@ -2,7 +2,6 @@
 
 namespace App\Admin\Controllers;
 
-use App\Admin\Actions\Order\ConfirmOrdered;
 use App\Admin\Actions\OrderItem\Ordered;
 use App\Admin\Actions\OrderItem\WarehouseVietnam;
 use App\Models\Alilogi\TransportOrderItem;
@@ -126,12 +125,32 @@ class DetailOrderController extends AdminController
         $grid->order()->order_number('Trạng thái')->help('Mã đơn hàng mua hộ')->label('primary')->display(function () {
             $html = "";
             $html .= "<p class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</p>";
-            $html .= "<br>" . date('H:i | d-m-Y', strtotime($this->created_at));
             $html .= '<br> <a href="'.$this->product_link.'" target="_blank"> Link sản phẩm</a>';
 
             return $html;
-        });
-        $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 50, 'height' => 50]);
+        })->width(130);
+        $grid->column('timeline', 'Timeline')->display(function () {
+            $html = "<ul style='padding-left: 15px'>";
+            
+            $order_at = $this->order_at;
+            $html .= "<li> Đặt hàng: ".$order_at."</li>";
+
+            $item_logi = TransportOrderItem::whereCnCode($this->cn_code)->first();
+            $warehouse_vn = $payment = "";
+            if ($item_logi) {
+                $warehouse_vn = $item_logi->warehouse_vn_date != "" ? date('Y-m-d', strtotime($item_logi->warehouse_vn_date)) : "--";
+
+                if ($item_logi->order) {
+                    $payment = date('Y-m-d', strtotime($item_logi->order->created_at));
+                }
+
+            }
+            $html .= "<li> Về kho VN: ".$warehouse_vn."</li>";
+            $html .= "<li> Xuất kho: ".$payment."</li>";
+
+            return $html;
+        })->width(200);
+        $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 70, 'height' => 70])->width(120);
         $grid->product_size('Kích thước')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
         })->editable()->width(100);
@@ -158,13 +177,28 @@ class DetailOrderController extends AdminController
         $grid->setActionClass(\Encore\Admin\Grid\Displayers\Actions::class);
         
         $grid->tools(function (Grid\Tools $tools) {
-            $tools->append(new Ordered());
-            $tools->append(new WarehouseVietnam());
 
             $id = explode('/', request()->server()['REQUEST_URI'])[3];
             $order = PurchaseOrder::find($id);
 
-            if ($order->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
+            // xac nhan dat hang san pham
+            // hien thi khi co san pham o trang thai chua dat hang
+            if ($order->items->where('status', OrderItem::STATUS_PURCHASE_ITEM_NOT_ORDER)->count() > 0) {
+                $tools->append(new Ordered());
+            }
+
+            // xac nhan san pham da ve viet nam
+            // hien thi khi tat ca san pham o trang thai da dat hang, khong tinh cac san pham het hang
+            $all_items = $order->items->count();
+            $ordered_items = $order->items->where('status', OrderItem::STATUS_PURCHASE_ITEM_ORDERED)->count();
+            $outstock_items = $order->items->where('status', OrderItem::STATUS_PURCHASE_OUT_OF_STOCK)->count();
+            if ($order->status == PurchaseOrder::STATUS_ORDERED && $all_items == $ordered_items + $outstock_items) {
+                $tools->append(new WarehouseVietnam());
+            }
+
+            // xac nhan da dat hang ca don
+            // hien thi khi tat ca san pham da duoc dat hang, khong tinh san pham het hang
+            if ($all_items == $ordered_items + $outstock_items && $order->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
                 $tools->append('<a class="btn-confirm-ordered btn btn-sm btn-warning" data-user="'.Admin::user()->id.'" data-id="'.$id.'" data-toggle="tooltip" title="Chuyển trạng thái của đơn hàng thành Đã đặt hàng"><i class="fa fa-check"></i> &nbsp; Chốt đặt hàng đơn</a>');
             }
             

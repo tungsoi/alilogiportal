@@ -84,7 +84,8 @@ class OrderItem extends Model
         'internal_note',
         'weight_date',
         'order_id',
-        'customer_id'
+        'customer_id',
+        'order_at'
     ];
 
     protected $casts = [

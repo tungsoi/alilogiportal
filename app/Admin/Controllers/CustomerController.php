@@ -13,7 +13,7 @@ use App\Admin\Actions\Customer\RechargeHistory;
 use App\Models\Alilogi\District;
 use App\Models\Alilogi\Province;
 use App\Models\Alilogi\TransportRecharge;
-use App\Models\Order;
+use App\Models\Alilogi\Order;
 use App\Models\PurchaseOrder;
 use App\Models\TransportOrderItem;
 use Encore\Admin\Facades\Admin;
@@ -385,11 +385,12 @@ EOT
         ->orderBy('id', 'desc')
         ->get();
 
-        $headers = ['STT', 'Ngày giao dịch', 'Nội dung giao dịch', 'Loại giao dịch', 'Số dư đầu kỳ (VND)', 'Trừ tiền (VND)', 'Nạp tiền (VND)', 'Số dư cuối kỳ (VND)'];
+        $headers = ['STT', 'Ngày giao dịch', 'Đơn hàng', 'Nội dung giao dịch', 'Loại giao dịch', 'Số dư đầu kỳ (VND)', 'Trừ tiền (VND)', 'Nạp tiền (VND)', 'Số dư cuối kỳ (VND)'];
 
         $raw = [
             'order' =>  '',
             'payment_date'  =>  '',
+            'order_link'    =>  '',
             'type_recharge' =>  '',
             'content'   =>  '',
             'before_payment'    =>  '',
@@ -414,6 +415,7 @@ EOT
             $data[] = [
                 'order' =>  $key + 1,
                 'payment_date'  =>  date('H:i | d-m-Y', strtotime($record->created_at)),
+                'order_link'    =>  $this->convertOrderLink($record->content, $record->type_recharge),
                 'type_recharge' =>  TransportRecharge::ALL_RECHARGE[$record->type_recharge],
                 'content'   =>  $record->content,
                 'before_payment'    =>  '',
@@ -472,6 +474,51 @@ EOT
         $table = new Table($headers, $data);
 
         return $table->render();
+    }
+
+    public function convertOrderLink($content, $type)
+    {
+        # code...
+
+        switch ($type) {
+            case 4: 
+                $subs = explode("Thanh toán đơn hàng", $content);
+                $order_number = trim($subs[1]);
+                $order = Order::whereOrderNumber($order_number)->first();
+                if ($order) {
+                    return "<a href='https://alilogi.vn/admin/transport_orders/".$order->id."' target='_blank'>Đơn hàng vận chuyển ".$subs[1]."</a>";
+                }
+                else {
+                    return null;
+                }
+            case 5: 
+                $subs = explode("Đặt cọc đơn hàng mua hộ. Mã đơn hàng", $content);
+                $order_number = trim($subs[1]);
+                $order = PurchaseOrder::whereOrderNumber($order_number)->first();
+
+                if ($order) {
+                    return "<a href='".route('admin.customer_orders.show', $order->id)."' target='_blank'>Đơn hàng order ".$subs[1]."</a>";
+                }
+                else {
+                    return null;
+                }
+                
+            
+            case 6: 
+                $subs = explode("Thanh toán đơn hàng mua hộ. Mã đơn hàng", $content);
+                $order_number = trim($subs[1]);
+                $order = PurchaseOrder::whereOrderNumber($order_number)->first();
+                if ($order) {
+                    return "<a href='".route('admin.customer_orders.show', $order->id)."' target='_blank'>Đơn hàng order ".$subs[1]."</a>";
+                }
+                else {
+                    return null;
+                }
+                
+            default:
+                return null;
+        }
+        return $content;
     }
 
     public function orderHistory($id, Content $content)

@@ -303,7 +303,7 @@ class PurchaseOrder extends Model
             $total = 0;
             foreach ($this->items as $item) {
                 if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
-                    $total += $item->qty_reality;
+                    $total ++;
                 }
                 
             }
@@ -404,7 +404,7 @@ class PurchaseOrder extends Model
             $total = 0;
             foreach ($this->items as $item) {
                 if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK && $item->status == OrderItem::STATUS_PURCHASE_WAREHOUSE_VN) {
-                    $total += $item->qty_reality;
+                    $total ++;
                 }
             }
 
@@ -423,7 +423,7 @@ class PurchaseOrder extends Model
             $total = 0;
             foreach ($this->items as $item) {
                 if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK && $item->status == OrderItem::STATUS_PURCHASE_ITEM_ORDERED) {
-                    $total += $item->qty_reality;
+                    $total ++;
                 }
             }
 

@@ -86,11 +86,20 @@
             <td>Tổng phí ship nội địa Trung Quốc</td>
             <td>{{ number_format($purchase_cn_transport_fee, 2) . " Tệ" }}</td>
             <td>{{ number_format($purchase_cn_transport_fee * $current_rate) . " VND"  }}</td>
+            @if (isset($role) && $role == 'admin')
+                <td>Ngày đặt hàng</td>
+                <td>{{ $order->order_at ?? '...' }}</td>
+            @endif
         </tr>  
         <tr>
             <td>Tổng giá trị đơn hàng = Tổng tiền thực đặt + ship nội địa + dịch vụ</td>
             <td>{{ number_format($total_bill, 2) . " Tệ" }}</td>
             <td>{{ number_format($total_bill * $current_rate) . " VND" }}</td>
+
+            @if (isset($role) && $role == 'admin')
+                <td>Ngày chốt đơn</td>
+                <td>{{ $order->success_at ?? "..." }}</td>
+            @endif
         </tr>
         <tr style="background: green; color: white;">
             <td>Số tiền cần cọc</td>

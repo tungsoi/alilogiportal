@@ -68,7 +68,7 @@ class PurchaseOrderController extends AdminController
             });
         });
 
-        $grid->fixColumns(5);
+        // $grid->fixColumns(5);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
@@ -115,17 +115,17 @@ class PurchaseOrderController extends AdminController
             $html_staff .= "</ul>";
 
             return $html . $html_staff;
-        });
+        })->width(200);
 
         $grid->column('total_items', 'Số sản phẩm')->display(function () {
             return $this->totalItemReality();
-        });
+        })->width(100);
         $grid->purchase_total_items_price('Tổng giá trị SP (Tệ)')->display(function () {
             return number_format($this->sumQtyRealityMoney(), 2);
-        });
+        })->width(100);
         $grid->purchase_order_service_fee('Phí dịch vụ (Tệ)')->display(function () {
             return $this->purchase_order_service_fee;
-        })->editable();
+        })->editable()->width(100);
 
         $grid->purchase_order_transport_fee('Tổng phí VCNĐ (Tệ)')->display(function () {
             if ($this->items) {
@@ -138,7 +138,7 @@ class PurchaseOrderController extends AdminController
             }
 
             return 0;
-        });
+        })->width(100);
         $grid->column('total_kg', 'Tổng KG')->display(function () {
             if ($this->items) {
                 $total = 0;
@@ -168,14 +168,14 @@ class PurchaseOrderController extends AdminController
             }
             return 0;
         })
-        ->help('Tổng giá cuối = Tổng giá trị SP + Phí dịch vụ + Tổng phí VCNĐ');
+        ->help('Tổng giá cuối = Tổng giá trị SP + Phí dịch vụ + Tổng phí VCNĐ')->width(150);
 
         $grid->final_payment('Tổng thanh toán (VND)')->display(function () {
             return number_format($this->final_payment);
-        })->editable();
+        })->editable()->width(100);
 
-        $grid->admin_note('Admin ghi chú')->editable();
-        $grid->internal_note('Nội bộ ghi chú')->editable();
+        $grid->admin_note('Admin ghi chú')->editable()->width(130);
+        $grid->internal_note('Nội bộ ghi chú')->editable()->width(130);
         $grid->disableCreateButton();
         $grid->setActionClass(\Encore\Admin\Grid\Displayers\Actions::class);
 

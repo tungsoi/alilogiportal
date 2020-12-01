@@ -358,27 +358,35 @@ EOT
             $row->column('number', ($row->number+1));
         });
         $grid->column('number', 'STT');
-        $grid->order()->order_number('Trạng thái')->label('primary')->display(function () {
+        $grid->order()->order_number('Trạng thái')->help('Mã đơn hàng mua hộ')->label('primary')->display(function () {
             $html = "";
-            $html .= "<p class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</p> <br>";
-            $html .= '<a href="'.$this->product_link.'" target="_blank"> Link sản phẩm</a>';
-
-            $logi = TransportOrderItem::whereCnCode($this->cn_code)->first();
-
-            if ($logi) {
-                $html .= "<br> <br>";
-                $html .= "<ul style='padding-left: 20px'>";
-                $html .= "<li>Về Kho VN: <br>".date('H:i | d-m-Y', strtotime($logi->warehouse_vn_date))."</li>";
-                if ($logi->order) {
-                    $html .= "<li>Xuất Kho: ".date('H:i | d-m-Y', strtotime($logi->order->created_at))."</li>";
-                }
-               
-                $html .= "</ul>";
-            }
+            $html .= "<p class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</p>";
+            $html .= '<br> <a href="'.$this->product_link.'" target="_blank"> Link sản phẩm</a>';
 
             return $html;
-        });
-        $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 120, 'height' => 120]);
+        })->width(130);
+        $grid->column('timeline', 'Timeline')->display(function () {
+            $html = "<ul style='padding-left: 15px'>";
+            
+            $order_at = $this->order_at;
+            $html .= "<li> Đặt hàng: ".$order_at."</li>";
+
+            $item_logi = TransportOrderItem::whereCnCode($this->cn_code)->first();
+            $warehouse_vn = $payment = "";
+            if ($item_logi) {
+                $warehouse_vn = $item_logi->warehouse_vn_date != "" ? date('Y-m-d', strtotime($item_logi->warehouse_vn_date)) : "--";
+
+                if ($item_logi->order) {
+                    $payment = date('Y-m-d', strtotime($item_logi->order->created_at));
+                }
+
+            }
+            $html .= "<li> Về kho VN: ".$warehouse_vn."</li>";
+            $html .= "<li> Xuất kho: ".$payment."</li>";
+
+            return $html;
+        })->width(200);
+        $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 70, 'height' => 70])->width(120);
         $grid->product_size('Kích thước')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
         })->width(100);
@@ -473,7 +481,7 @@ EOT
 
         $grid->paginate(200);
         $grid->disablePagination();
-        Admin::style('.box {border-top:none;} table {font-size: 14px}');
+        Admin::style('.box {border-top:none;} table {font-size: 12px}');
 
         Admin::script(
             <<<EOT
