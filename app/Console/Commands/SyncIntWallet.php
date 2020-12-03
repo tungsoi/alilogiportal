@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ScheduleLog;
 use App\User;
 use Illuminate\Console\Command;
 
@@ -47,6 +48,10 @@ class SyncIntWallet extends Command
             
             $user->wallet = $round;
             $user->save();
+
+            ScheduleLog::create([
+                'code'  =>  'Làm tròn ví user'
+            ]);
         }
     }
 }
