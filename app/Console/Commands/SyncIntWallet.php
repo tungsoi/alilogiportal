@@ -42,7 +42,6 @@ class SyncIntWallet extends Command
 
         foreach ($users as $user)
         {
-            echo $user->symbol_name . "\n";
             $wallet = $user->wallet;
             $round = (int) round($wallet);
             

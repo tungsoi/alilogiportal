@@ -23,6 +23,9 @@
         <div class="navbar-custom-menu">
             <ul class="nav navbar-nav">
                 <li>
+                    <a href="#" target="" style="font-size: 18px;">| Tỷ giá: {{ App\Models\ExchangeRate::first()->vnd }} VND | </a>
+                </li>
+                <li>
                     <a href="/" target="_blank"><i class="fa fa-home"></i> &nbsp;{{trans('admin.home')}}</a>
                 </li>
                 {!! Admin::getNavbar()->render() !!}
