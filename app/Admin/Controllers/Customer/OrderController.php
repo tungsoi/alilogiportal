@@ -82,7 +82,7 @@ class OrderController extends AdminController
         });
         $grid->deposited_at('Ngày cọc')->display(function () {
             return $this->deposited_at != null 
-                ? date('d-m-Y', strtotime($this->deposited_at))
+                ? date('H:i | d-m-Y', strtotime($this->deposited_at))
                 : "";
         });
         $grid->final_total_price('Tổng giá cuối (VND)')->display(function () {

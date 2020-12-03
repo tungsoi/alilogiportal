@@ -27,7 +27,7 @@ class Deposite extends RowAction
         PurchaseOrder::find($model->id)->update([
             'deposited' =>  $deposite,
             'user_id_deposited' =>  $request->get('user_id_deposited'),
-            'deposited_at'  =>  date('Y-m-d', strtotime(now())),
+            'deposited_at'  =>  date('Y-m-d H:i:s', strtotime(now())),
             'status'    =>  PurchaseOrder::STATUS_DEPOSITED_ORDERING
         ]);
 

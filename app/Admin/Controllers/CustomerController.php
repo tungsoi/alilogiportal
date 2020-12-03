@@ -49,7 +49,19 @@ class CustomerController extends AdminController
     protected function grid()
     {
         $grid = new Grid(new User);
-        $grid->model()->where('is_customer', 1)->orderBy('id', 'desc');
+        $grid->model()->where('is_customer', 1);
+
+        if (! isset($_GET['wallet_sort'])) {
+            // sap xep giam dan : lon -> be
+            $grid->model()->orderByRaw('length(wallet) desc')->orderBy('wallet', 'desc');
+        } else {
+            if ($_GET['wallet_sort'] == '0') {
+                // giam dan : lon -> be
+                $grid->model()->orderByRaw('length(wallet) desc')->orderBy('wallet', 'desc');
+            } else {
+                $grid->model()->orderByRaw('length(wallet) asc')->orderBy('wallet', 'asc');
+            }
+        }
         
         $sales = DB::connection('aloorder')->table('admin_role_users')->where('role_id', 3)->get()->pluck('user_id');
         $saleStaff = User::whereIn('id', $sales)->get()->pluck('name', 'id');
@@ -74,6 +86,19 @@ class CustomerController extends AdminController
                     }
                 }, 'Số dư tài khoản', 'wallet')->select(['Công nợ', 'Số dư', 'Tất cả'])->default(2);
                 $filter->equal('staff_sale_id', 'Nhân viên kinh doanh')->select($saleStaff);
+                $filter->where(function ($query) {
+                    if ($this->input == '0') {
+                        $query->orderByRaw('length(wallet) desc')->orderBy('wallet', 'desc');
+                    } else {
+                        $query->orderByRaw('length(wallet) desc')->orderBy('wallet', 'asc');
+                    }
+                }, 'Sắp xếp Tiền âm ví', 'wallet_sort')->select(['Giảm dần', 'Tăng dần']);
+                $filter->where(function ($query) {
+                    if ($this->input == '0') {
+                        $paymented = PurchaseOrder::where('status', '!=', PurchaseOrder::STATUS_NEW_ORDER)->pluck('customer_id');
+                        $query->whereNotIn('id', $paymented);
+                    }
+                }, 'Tìm kiếm', 'search_customer')->radio(['Khách chưa từng phát sinh giao dịch mua hộ']);
             });
             $filter->column(1/2, function ($filter) {
                 $filter->like('email');
@@ -117,7 +142,12 @@ class CustomerController extends AdminController
         $grid->district('Quận/huyện')->display(function () {
             return District::whereDistrictId($this->district)->first()->name ?? "";
         });
-        $grid->address('Địa chỉ')->editable();
+        $grid->address('Địa chỉ')->editable()->width(100);
+        $grid->column('last_activity', 'Giao dịch cuối')->display(function () {
+            $last_order = PurchaseOrder::whereCustomerId($this->id)->orderBy('id', 'desc')->first();
+            
+            return $last_order ? date('H:i | d-m-Y', strtotime($last_order->created_at)) : '';
+        });
         $grid->is_active('Trạng thái')->display(function () {
             switch($this->is_active) {
                 case 1: 
@@ -482,7 +512,7 @@ EOT
 
         switch ($type) {
             case 4: 
-                $subs = explode("Thanh toán đơn hàng", $content);
+                $subs = explode("Thanh toán đơn hàng vận chuyển VC-", $content);
                 $order_number = trim($subs[1]);
                 $order = Order::whereOrderNumber($order_number)->first();
                 if ($order) {

@@ -157,7 +157,7 @@ class PurchaseOrderController extends AdminController
         $grid->warehouse()->name('Kho');
         $grid->deposited('Đã cọc (VND)')->display(function () {
             $html = number_format($this->deposited);
-            $deposited_at = $this->deposited_at != null ? date('d-m-Y', strtotime($this->deposited_at)) : "";
+            $deposited_at = $this->deposited_at != null ? date('H:i | d-m-Y', strtotime($this->deposited_at)) : "";
             $html .= "<br> <i>".$deposited_at."</i>";
 
             return $html;
@@ -607,7 +607,7 @@ EOT
             PurchaseOrder::find($request->id)->update([
                 'deposited' =>  $deposite,
                 'user_id_deposited' =>  $request->user_id_deposited,
-                'deposited_at'  =>  date('Y-m-d', strtotime(now())),
+                'deposited_at'  =>  date('Y-m-d H:i:s', strtotime(now())),
                 'status'    =>  PurchaseOrder::STATUS_DEPOSITED_ORDERING
             ]);
     

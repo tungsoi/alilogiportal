@@ -167,7 +167,7 @@ class CustomerRechargeController extends AdminController
 
         switch ($type) {
             case 4: 
-                $subs = explode("Thanh toán đơn hàng", $content);
+                $subs = explode("Thanh toán đơn hàng vận chuyển VC-", $content);
                 $order_number = trim($subs[1]);
                 $order = Order::whereOrderNumber($order_number)->first();
                 if ($order) {

@@ -268,7 +268,7 @@ Route::post('/customer-deposite', function (Request $request) {
                 ->update([
                     'deposited' =>  $order->deposit_default,
                     'user_id_deposited' =>  $order->customer_id,
-                    'deposited_at'  =>  date('Y-m-d', strtotime(now())),
+                    'deposited_at'  =>  date('Y-m-d H:i:s', strtotime(now())),
                     'status'    =>  PurchaseOrder::STATUS_DEPOSITED_ORDERING
                 ]);
 
