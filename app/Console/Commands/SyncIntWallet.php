@@ -47,11 +47,11 @@ class SyncIntWallet extends Command
             $round = (int) round($wallet);
             
             $user->wallet = $round;
-            $user->save();
-
-            ScheduleLog::create([
-                'code'  =>  'Làm tròn ví user'
-            ]);
+            $user->save();    
         }
+
+        ScheduleLog::create([
+            'code'  =>  'Làm tròn ví user'
+        ]);
     }
 }
