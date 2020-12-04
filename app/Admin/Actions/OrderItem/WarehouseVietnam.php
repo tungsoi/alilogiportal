@@ -66,7 +66,7 @@ class WarehouseVietnam extends BatchAction
                 if ($order->totalWarehouseVietnamItems() == $order->sumQtyRealityItem() && $order->status != PurchaseOrder::STATUS_SUCCESS)
                 {
                     $order->status = PurchaseOrder::STATUS_SUCCESS;
-                    $order->success_at = date('Y-m-d', strtotime(now()));
+                    $order->success_at = date('Y-m-d H:i:s', strtotime(now()));
                     $order->save();
 
                     if ($order->status == PurchaseOrder::STATUS_SUCCESS) {
