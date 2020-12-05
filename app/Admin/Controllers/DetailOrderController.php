@@ -192,9 +192,9 @@ class DetailOrderController extends AdminController
             $all_items = $order->items->count();
             $ordered_items = $order->items->where('status', OrderItem::STATUS_PURCHASE_ITEM_ORDERED)->count();
             $outstock_items = $order->items->where('status', OrderItem::STATUS_PURCHASE_OUT_OF_STOCK)->count();
-            if ($order->status == PurchaseOrder::STATUS_ORDERED && $all_items == $ordered_items + $outstock_items) {
+            // if ($order->status == PurchaseOrder::STATUS_ORDERED && $all_items == $ordered_items + $outstock_items) {
                 $tools->append(new WarehouseVietnam());
-            }
+            // }
 
             // xac nhan da dat hang ca don
             // hien thi khi tat ca san pham da duoc dat hang, khong tinh san pham het hang
