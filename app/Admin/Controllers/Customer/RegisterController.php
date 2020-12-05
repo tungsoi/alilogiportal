@@ -44,11 +44,17 @@ class RegisterController extends Controller {
 
         $user = User::firstOrCreate($data);
 
-        DB::table('admin_role_users')->insert([
+        DB::connection('aloorder')->table('admin_role_users')->insert([
             'user_id'   =>  $user->id,
             'role_id'   =>  2
         ]);
 
+        DB::connection('alilogi')->table('admin_role_users')->insert([
+            'user_id'   =>  $user->id,
+            'role_id'   =>  2
+        ]);
+
+        admin_toastr('Đăng ký thành công', 'success');
         return redirect()->route('admin.login')->with('register', 'Đăng ký thành công');
     
     }

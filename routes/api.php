@@ -188,7 +188,7 @@ Route::post('/confirm-outstock', function (Request $request) {
     // -> item -> het hang: 
     // STATUS_SUCCESS : thanh cong
     // STATUS_CANCEL : da huy
-    DB::beginTransaction();
+    // DB::beginTransaction();
 
     try {
         if ($request->ajax()) {
@@ -228,8 +228,43 @@ Route::post('/confirm-outstock', function (Request $request) {
 
             $order->update($new_data);
             $order->save();
+
+            $flag = 0;
+            foreach ($order->items as $item) {
+                if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
+                    $flag ++;
+                }
+            }
+
+            if ($flag == 0) {
+                $order->status = PurchaseOrder::STATUS_CANCEL;
+                $order->save();
+
+                $flag_deposite = User::find($order->customer_id)
+                                ->update([
+                                    'wallet'    =>  $order->customer->wallet + $order->deposited
+                                ]);
+
+                if ($flag_deposite) {
+                    TransportRecharge::firstOrCreate([
+                        'customer_id'   =>  $order->customer_id,
+                        'user_id_created'   => $order->customer_id,
+                        'money' =>  $order->deposited,
+                        'type_recharge' =>  TransportRecharge::REFUND,
+                        'content'   =>  'Hoàn tiền do hết hàng sản phẩm trong đơn. Mã đơn hàng '.$order->order_number,
+                        'order_type'    =>  TransportRecharge::TYPE_ORDER
+                    ]);
+
+
+                    // DB::commit();
+                    return response()->json([
+                        'error' =>  false,
+                        'msg'   =>  'success'
+                    ]);
+                }
+            }
  
-            DB::commit();
+            // DB::commit();
             return response()->json([
                 'error' =>  false,
                 'msg'   =>  'success'
@@ -237,7 +272,7 @@ Route::post('/confirm-outstock', function (Request $request) {
         }
     }
     catch (\Exception $e) {
-        DB::rollBack();
+        // DB::rollBack();
         return response()->json([
             'error' =>  true,
             'msg'   =>  $e->getMessage()

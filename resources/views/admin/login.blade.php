@@ -81,7 +81,7 @@
           <div class="col-xs-12">
             <hr>
             <div class="checkbox icheck" style="float: right; padding: 0px 15px;">
-              <a href="/#register"> 
+              <a href="{{ route('customer.register') }}"> 
                 Đăng ký tài khoản khách hàng ?
               </a>
             </div>
