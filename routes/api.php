@@ -469,3 +469,72 @@ Route::post('/customer-delete-item-from-order', function (Request $request) {
         ]);
     }
 });
+
+
+
+/**
+ * Kế toán chốt đơn thành công bằng tay
+ */
+Route::post('/confirm-order-success', function (Request $request) {
+    DB::beginTransaction();
+    try {
+        if ($request->ajax()) {
+            $order_id = $request->id;
+            $order = PurchaseOrder::find($order_id);
+
+            if ($order->status != PurchaseOrder::STATUS_SUCCESS) {
+                $order->status = PurchaseOrder::STATUS_SUCCESS;
+                $order->success_at = date('Y-m-d H:i:s', strtotime(now()));
+                $order->save();
+
+                if ($order->status == PurchaseOrder::STATUS_SUCCESS) {
+
+                    $deposited = $order->deposited; // số tiền đã cọc
+                    $total_final_price = round($order->totalBill() * $order->current_rate); // tổng tiền đơn hiện tại VND
+
+                    $customer = $order->customer;
+                    $flag = false;
+                    if ($deposited <= $total_final_price) {
+                        $money = $total_final_price - $deposited;
+                        $customer->wallet -= $money;
+                        $customer->save();
+                        $msg = 'Thanh toán đơn hàng mua hộ. Mã đơn hàng '.$order->order_number;
+                        $flag = true;
+
+                    } else {
+                        $money = $deposited - $total_final_price;
+                        $customer->wallet += $money;
+                        $customer->save();
+                        $msg = 'Thanh toán đơn hàng mua hộ. Mã đơn hàng '.$order->order_number . '. Thừa ' . $money. ' tiền cọc.';
+                        $flag = true;
+                    }
+
+                    if ($flag) {
+                        TransportRecharge::firstOrCreate([
+                            'customer_id'       =>  $order->customer_id,
+                            'user_id_created'   =>  1,
+                            'money'             =>  $money,
+                            'type_recharge'     =>  TransportRecharge::PAYMENT_ORDER,
+                            'content'           =>  $msg,
+                            'order_type'        =>  TransportRecharge::TYPE_ORDER
+                        ]);    
+                    }
+                    
+                    DB::commit();
+                    return response()->json([
+                        'error' =>  false,
+                        'msg'   =>  'success'
+                    ]);
+                }
+            }
+        }
+        
+    }
+    catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'error' =>  true,
+            'msg'   =>  $e
+        ]);
+    }
+});

@@ -202,10 +202,14 @@ class DetailOrderController extends AdminController
                 $tools->append('<a class="btn-confirm-ordered btn btn-sm btn-warning" data-user="'.Admin::user()->id.'" data-id="'.$id.'" data-toggle="tooltip" title="Chuyển trạng thái của đơn hàng thành Đã đặt hàng"><i class="fa fa-check"></i> &nbsp; Chốt đặt hàng đơn</a>');
             }
             
-            if ($order->status == PurchaseOrder::STATUS_NEW_ORDER) {
-                $tools->append('<a href="'.route('admin.puchase_orders.deposite', $id).'" class="btn btn-sm btn-danger" data-toggle="tooltip" title="Vào tiền cọc cho đơn hàng" target="_blank"><i class="fa fa-money"></i> &nbsp; Vào tiền cọc cho đơn hàng</a>');
-            }
+            // if ($order->status == PurchaseOrder::STATUS_NEW_ORDER) {
+            //     $tools->append('<a href="'.route('admin.puchase_orders.deposite', $id).'" class="btn btn-sm btn-danger" data-toggle="tooltip" title="Vào tiền cọc cho đơn hàng" target="_blank"><i class="fa fa-money"></i> &nbsp; Vào tiền cọc cho đơn hàng</a>');
+            // }
             
+            if ($order->status != PurchaseOrder::STATUS_SUCCESS) {
+                $tools->append('<a class="btn-confirm-success btn btn-sm btn-success" data-user="'.Admin::user()->id.'" data-id="'.$id.'" data-toggle="tooltip" title="Chốt đơn hàng thành công"><i class="fa fa-check"></i> &nbsp; Chốt đơn hàng thành công</a>');
+            }
+
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
@@ -297,6 +301,49 @@ class DetailOrderController extends AdminController
                                 success: function(response) {
                                     if (response.error == false) {
                                         Swal.fire('Đã xác nhận hết hàng !', '', 'success');
+            
+                                        setTimeout(function () {
+                                            window.location.reload();
+                                        }, 100);
+            
+                                    } else {
+                                        Swal.fire(response.msg, '', 'danger');
+
+                                        // setTimeout(function () {
+                                        //     window.location.reload();
+                                        // }, 500);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        return false;
+                    }
+                });
+            });
+
+            $(document).on('click', '.btn-confirm-success', function () {
+                let flag_submit_ajax = false;
+                Swal.fire({
+                    title: 'Xác nhận đơn hàng này đã thành công ?',
+                    showDenyButton: false,
+                    showCancelButton: true,
+                    confirmButtonText: `Đồng ý`,
+                    cancelButtonText: 'Huỷ bỏ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (! flag_submit_ajax)
+                        {
+                            $.ajax({
+                                type: 'POST',
+                                url: '/api/confirm-order-success',
+                                data: {
+                                    id: $(this).data('id')
+                                },
+                                success: function(response) {
+                                    if (response.error == false) {
+                                        Swal.fire('Đã chốt đơn hàng thành công !', '', 'success');
             
                                         setTimeout(function () {
                                             window.location.reload();
