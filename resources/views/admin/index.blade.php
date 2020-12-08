@@ -63,6 +63,11 @@
         }
 
         .mg-t-10{margin-top: 10px}
+
+        td, th {
+            padding: 0;
+            border: 1px solid #f4f4f4;
+        }
     </style>
 
 </head>

@@ -101,26 +101,26 @@ class OrderItemController extends AdminController
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 50, 'height' => 50]);
         $grid->product_size('Kích thước')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
-        })->editable()->width(100);
-        $grid->product_color('Màu')->editable()->width(100);
-        $grid->qty('Số lượng')->editable()->width(100);
-        $grid->qty_reality('Số lượng thực đặt')->editable();
+        })->width(100);
+        $grid->product_color('Màu')->width(100);
+        $grid->qty('Số lượng')->width(100);
+        $grid->qty_reality('Số lượng thực đặt');
         $grid->price('Giá (Tệ)');
         $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
             return $this->purchase_cn_transport_fee ?? 0;
-        })->help('Phí vận chuyển nội địa Trung quốc')->editable();
+        })->help('Phí vận chuyển nội địa Trung quốc');
         $grid->column('total_price', 'Tổng tiền (Tệ)')->display(function () {
             $totalPrice = ($this->qty_reality * $this->price) + $this->purchase_cn_transport_fee ;
             return number_format($totalPrice) ?? 0; 
         })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
-        $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi')->editable();
+        $grid->weight('Cân nặng (KG)')->help('Cân nặng lấy từ Alilogi');
         $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
             return $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null;
-        })->editable('date');
-        $grid->cn_code('Mã vận đơn Alilogi')->editable();
-        $grid->cn_order_number('Mã giao dịch')->editable();
-        $grid->customer_note('Khách hàng ghi chú')->style('width: 100px')->editable();
-        $grid->admin_note('Admin ghi chú')->editable();
+        });
+        $grid->cn_code('Mã vận đơn Alilogi')->width(200);
+        $grid->cn_order_number('Mã giao dịch')->width(200);
+        $grid->customer_note('Khách hàng ghi chú')->width(200);
+        $grid->admin_note('Admin ghi chú')->width(200);
 
         $grid->disableCreateButton();
         
