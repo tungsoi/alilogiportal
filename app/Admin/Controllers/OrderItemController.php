@@ -78,7 +78,7 @@ class OrderItemController extends AdminController
             });
             
         });
-        $grid->fixColumns(6);
+        // $grid->fixColumns(6);
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
@@ -98,29 +98,12 @@ class OrderItemController extends AdminController
             
             return $html;
         });
-        // $grid->id('Mã SP')->display(function () {
-        //     return "SPMH-".str_pad($this->id, 5, 0, STR_PAD_LEFT);
-        // });
-        // $grid->column('customer_name', 'Mã khách hàng')->display(function () {
-        //     return $this->order->customer->symbol_name ?? "";
-        // })->help('Mã khách hàng');
-        // $grid->status('Trạng thái')->display(function () {
-        //     $html = "<span class='label label-".OrderItem::LABEL[$this->status]."'>".OrderItem::STATUS[$this->status]."</span>";
-        //     $html .= "<br> <br>";
-        //     $html .= '<b><a href="'.$this->product_link.'" target="_blank"> Link sản phẩm </a></b>';
-        //     return $html;
-        // });
-
-
-        // $grid->created_at(trans('admin.created_at'))->display(function () {
-        //     return date('H:i | d-m-Y', strtotime($this->created_at));
-        // });
-        $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 120, 'height' => 120]);
+        $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 50, 'height' => 50]);
         $grid->product_size('Kích thước')->display(function () {
             return $this->product_size != "null" ? $this->product_size : null;
-        })->editable();
-        $grid->product_color('Màu')->editable();
-        $grid->qty('Số lượng')->editable();
+        })->editable()->width(100);
+        $grid->product_color('Màu')->editable()->width(100);
+        $grid->qty('Số lượng')->editable()->width(100);
         $grid->qty_reality('Số lượng thực đặt')->editable();
         $grid->price('Giá (Tệ)');
         $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {

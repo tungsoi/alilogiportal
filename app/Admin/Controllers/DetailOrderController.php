@@ -206,7 +206,7 @@ class DetailOrderController extends AdminController
             //     $tools->append('<a href="'.route('admin.puchase_orders.deposite', $id).'" class="btn btn-sm btn-danger" data-toggle="tooltip" title="Vào tiền cọc cho đơn hàng" target="_blank"><i class="fa fa-money"></i> &nbsp; Vào tiền cọc cho đơn hàng</a>');
             // }
             
-            if ($order->status != PurchaseOrder::STATUS_SUCCESS) {
+            if ($order->status != PurchaseOrder::STATUS_SUCCESS && Admin::user()->can('confirm-order-success')) {
                 $tools->append('<a class="btn-confirm-success btn btn-sm btn-success" data-user="'.Admin::user()->id.'" data-id="'.$id.'" data-toggle="tooltip" title="Chốt đơn hàng thành công"><i class="fa fa-check"></i> &nbsp; Chốt đơn hàng thành công</a>');
             }
 
