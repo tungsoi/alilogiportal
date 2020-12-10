@@ -68,3 +68,7 @@ Route::group([
 Route::get('/my-account/orders/temps', 'App\\Admin\\Controllers\\ToolController@show')->name('orders.temps.show')->middleware(['web']);
 Route::get('/my-account/orders/temps1688', 'App\\Admin\\Controllers\\ToolController@show1688')->name('orders.temps.show1688')->middleware(['web']);
 Route::post('/my-account/orders/temps', 'App\\Admin\\Controllers\\ToolController@booking')->middleware(['web']);
+
+Route::get('/demo-cors', function () {
+    return view('cors');
+});
