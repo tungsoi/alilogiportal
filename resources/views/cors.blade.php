@@ -15,7 +15,7 @@
 
     <script src="{{ Admin::jQuery() }}"></script>
     {!! Admin::headerJs() !!}
-    
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
 </head>
 
@@ -32,6 +32,7 @@
         <h1>Demo Cross Origin Resource Sharing</h1> <br>
 
         <button class="btn btn-lg btn-success btn-cors">Gọi dữ liệu sang domain https://alilogi.vn</button>
+        <input type="hidden" name="" value="{{ csrf_token() }}">
     </center>
 </div>
 
@@ -40,7 +41,7 @@
 <script>
     $('.btn-cors').click(function() {
         $.ajax({
-            url: "https://alilogi.vn/getOrders",
+            url: "https://alilogi.vn/api/getOrders",
             type: 'POST',
             dataType: 'json',
             data: {
