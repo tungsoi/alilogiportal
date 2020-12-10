@@ -47,6 +47,9 @@
             },
             type: 'POST',
             dataType: 'json',
+            xhrFields: {
+                withCredentials: true
+            },
         }).done(function(response) {
             console.log(response);
         }).fail(function(err) {
