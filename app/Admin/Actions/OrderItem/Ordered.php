@@ -48,7 +48,7 @@ class Ordered extends BatchAction
         foreach ($collection as $model) {
             OrderItem::find($model->id)->update([
                 'status'    =>  OrderItem::STATUS_PURCHASE_ITEM_ORDERED,
-                'order_at'  =>  date('Y-m-d', strtotime(now()))
+                'order_at'  =>  date('Y-m-d H:i:s', strtotime(now()))
             ]);
             $order_id = $model->order_id;
         }
