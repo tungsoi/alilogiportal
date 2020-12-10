@@ -42,14 +42,11 @@
     $('.btn-cors').click(function() {
         $.ajax({
             url: "https://alilogi.vn/api/getOrders",
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
             type: 'POST',
             dataType: 'json',
-            data: {
-                'API_TOKEN': 'testdemocors123@@'
-            },
-            xhrFields: {
-                withCredentials: true
-            },
         }).done(function(response) {
             console.log(response);
         }).fail(function(err) {
