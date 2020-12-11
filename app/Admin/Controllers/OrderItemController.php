@@ -117,10 +117,10 @@ class OrderItemController extends AdminController
         $grid->weight_date('Ngày vào KG')->help('Ngày vào cân sản phẩm ở Alilogi')->display(function () {
             return $this->weight_date != null ? date('Y-m-d', strtotime($this->weight_date)) : null;
         });
-        $grid->cn_code('Mã vận đơn Alilogi')->width(200);
-        $grid->cn_order_number('Mã giao dịch')->width(200);
-        $grid->customer_note('Khách hàng ghi chú')->width(200);
-        $grid->admin_note('Admin ghi chú')->width(200);
+        $grid->cn_code('Mã vận đơn Alilogi')->width(200)->editable();
+        $grid->cn_order_number('Mã giao dịch')->width(200)->editable();
+        $grid->customer_note('Khách hàng ghi chú')->width(200)->editable();
+        $grid->admin_note('Admin ghi chú')->width(200)->editable();
 
         $grid->disableCreateButton();
         
