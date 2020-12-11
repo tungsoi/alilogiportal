@@ -457,8 +457,10 @@ class PurchaseOrder extends Model
         $purchase_total_items_price = 0;
         $purchase_cn_transport_fee = 0;
         foreach ($order->items as $item) {
-            $purchase_total_items_price += ($item->qty_reality * $item->price); // Te
-            $purchase_cn_transport_fee += $item->purchase_cn_transport_fee;
+            if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
+                $purchase_total_items_price += ($item->qty_reality * $item->price); // Te
+                $purchase_cn_transport_fee += $item->purchase_cn_transport_fee;
+            }
         }
 
         $purchase_order_service_fee = $order->purchase_order_service_fee;

@@ -555,6 +555,9 @@ EOT
             $form->display('customer_name', 'Mã khách hàng');
             $form->select('warehouse_id', 'Kho')->options(Warehouse::all()->pluck('name', 'id'));
             $form->display('created_at', trans('admin.created_at'));
+
+            $order_users = DB::connection('aloorder')->table('admin_role_users')->where('role_id',4)->get()->pluck('user_id');
+            $form->select('supporter_order_id', 'Đặt hàng')->options(User::whereIn('id', $order_users)->get()->pluck('name', 'id'));
         });
 
         $form->column(1/2, function ($form) use ($order) {
