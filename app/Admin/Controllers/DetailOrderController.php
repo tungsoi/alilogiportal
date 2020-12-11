@@ -19,6 +19,7 @@ use Encore\Admin\Layout\Column;
 use Encore\Admin\Widgets\Box;
 use Encore\Admin\Widgets\Table;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DetailOrderController extends AdminController
 {
@@ -155,7 +156,7 @@ class DetailOrderController extends AdminController
             return $this->product_size != "null" ? $this->product_size : null;
         })->editable()->width(100);
         $grid->product_color('Màu')->editable()->width(100);
-        $grid->qty('Số lượng')->editable();
+        $grid->qty('Số lượng');
         $grid->qty_reality('Số lượng thực đặt')->editable();
         $grid->price('Giá (Tệ)');
         $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
@@ -430,18 +431,47 @@ EOT
 
     public function editable(Request $request)
     {
-        # code...
+        DB::beginTransaction();
 
-        $data = $request->all();
+        try {
+            # code...
 
-        OrderItem::find($data['pk'])->update([
-            $data['name']   =>  $data['value']
-        ]);
+            $data = $request->all();
+            $item_id = $data['pk'];
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'Lưu thành công !'
-        ]);
+            OrderItem::find($item_id)->update([
+                $data['name']   =>  $data['value']
+            ]);
+
+            if ($data['name'] == 'qty_reality') {
+
+                $order = OrderItem::find($item_id)->order;
+
+                $rebuild_data = PurchaseOrder::buildData($order->id);
+                $order->update($rebuild_data);
+            } else if ($data['name'] == 'purchase_cn_transport_fee') {
+                $order = OrderItem::find($item_id)->order;
+
+                $rebuild_data = PurchaseOrder::buildData($order->id);
+                $order->update($rebuild_data);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Lưu thành công !'
+            ]);
+        }
+        catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Update lỗi : ' . $e->getMessage()
+            ]);
+        }
+        
     }
 
 

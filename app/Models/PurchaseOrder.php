@@ -449,4 +449,26 @@ class PurchaseOrder extends Model
         }
         return 0;
     }
+
+    public static function buildData($id) {
+
+        $order = self::find($id);
+
+        $purchase_total_items_price = 0;
+        $purchase_cn_transport_fee = 0;
+        foreach ($order->items as $item) {
+            $purchase_total_items_price += ($item->qty_reality * $item->price); // Te
+            $purchase_cn_transport_fee += $item->purchase_cn_transport_fee;
+        }
+
+        $purchase_order_service_fee = $order->purchase_order_service_fee;
+        $final_total_price = round(($purchase_total_items_price + $purchase_order_service_fee + $purchase_cn_transport_fee) * $order->current_rate); // vnd
+        $deposit_default   = round($final_total_price * 70 / 100); // tiền cọc = 70% tiền tổng đơn
+        
+        return [
+            'purchase_total_items_price'  =>  $purchase_total_items_price,
+            'final_total_price' =>  $final_total_price,
+            'deposit_default'   =>  $deposit_default
+        ];
+    }
 }

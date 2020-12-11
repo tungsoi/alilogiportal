@@ -49,24 +49,25 @@ class CreateOrderFromCart extends BatchAction
             foreach ($collection as $model) {
                 OrderItem::find($model->id)->update([
                     'order_id'  =>  $order->id,
-                    'status'    =>  OrderItem::STATUS_PURCHASE_ITEM_NOT_ORDER
+                    'status'    =>  OrderItem::STATUS_PURCHASE_ITEM_NOT_ORDER,
+                    'qty_reality'   =>  $model->qty
                 ]);
 
-                $purchase_total_items_price += ($model->qty_reality * $model->price); // Te
+                $purchase_total_items_price += ($model->qty * $model->price); // Te
             }
 
             $percent = (float) PurchaseOrder::PERCENT_NUMBER[Admin::user()->customer_percent_service];
             $purchase_order_service_fee = round($purchase_total_items_price / 100 * $percent, 2); // phi dich vu vnd
 
             $final_total_price = round(($purchase_total_items_price + $purchase_order_service_fee) * $exchange_rate); // vnd
-            $deposit_default   = round($final_total_price * 70 / 100); // vnd
+            $deposit_default   = round($final_total_price * 70 / 100); // tiền cọc = 70% tiền tổng đơn
 
             PurchaseOrder::find($order->id)->update([
                 'purchase_total_items_price'    =>  $purchase_total_items_price,
                 'final_total_price'             =>  $final_total_price,
                 'deposit_default'               =>  $deposit_default,
                 'purchase_order_service_fee'    =>  $purchase_order_service_fee,
-                'supporter_id'                  => Admin::user()->staff_sale_id ?? ""
+                'supporter_id'                  =>  Admin::user()->staff_sale_id ?? ""
             ]);
             
             DB::commit();
