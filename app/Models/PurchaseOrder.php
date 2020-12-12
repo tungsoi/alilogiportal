@@ -463,14 +463,20 @@ class PurchaseOrder extends Model
             }
         }
 
-        $purchase_order_service_fee = $order->purchase_order_service_fee;
+        $percent = (float) PurchaseOrder::PERCENT_NUMBER[$order->customer->customer_percent_service];
+        $purchase_order_service_fee = round($purchase_total_items_price / 100 * $percent, 2);
         $final_total_price = round(($purchase_total_items_price + $purchase_order_service_fee + $purchase_cn_transport_fee) * $order->current_rate); // vnd
         $deposit_default   = round($final_total_price * 70 / 100); // tiền cọc = 70% tiền tổng đơn
         
         return [
             'purchase_total_items_price'  =>  $purchase_total_items_price,
             'final_total_price' =>  $final_total_price,
-            'deposit_default'   =>  $deposit_default
+            'deposit_default'   =>  $deposit_default,
+            'purchase_order_service_fee'    =>  $purchase_order_service_fee
         ];
+    }
+
+    public function totalItemOutStock() {
+        return $this->items->where('status', OrderItem::STATUS_PURCHASE_OUT_OF_STOCK)->count();
     }
 }
