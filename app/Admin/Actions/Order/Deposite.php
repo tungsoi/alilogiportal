@@ -40,7 +40,7 @@ class Deposite extends RowAction
             'customer_id'   =>  $model->customer_id,
             'user_id_created'   => $request->get('user_id_deposited'),
             'money' =>  $deposite,
-            'type_recharge' =>  TransportRecharge::DEPOSITE_ORDER,
+            'type_recharge' =>  TransportRecharge::DEDUCTION,
             'content'   =>  'Đặt cọc đơn hàng mua hộ. Mã đơn hàng '.$model->order_number,
             'order_type'    =>  TransportRecharge::TYPE_ORDER
         ]);

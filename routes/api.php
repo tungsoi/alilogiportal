@@ -318,7 +318,7 @@ Route::post('/customer-deposite', function (Request $request) {
                             'customer_id'   =>  $order->customer_id,
                             'user_id_created'   => $order->customer_id,
                             'money' =>  $order->deposit_default,
-                            'type_recharge' =>  TransportRecharge::DEPOSITE_ORDER,
+                            'type_recharge' =>  TransportRecharge::DEDUCTION,
                             'content'   =>  'Đặt cọc đơn hàng mua hộ. Mã đơn hàng '.$order->order_number,
                             'order_type'    =>  TransportRecharge::TYPE_ORDER
                         ]);
@@ -501,23 +501,33 @@ Route::post('/confirm-order-success', function (Request $request) {
                         $msg = 'Thanh toán đơn hàng mua hộ. Mã đơn hàng '.$order->order_number;
                         $flag = true;
 
+                        if ($flag) {
+                            TransportRecharge::firstOrCreate([
+                                'customer_id'       =>  $order->customer_id,
+                                'user_id_created'   =>  1,
+                                'money'             =>  $money,
+                                'type_recharge'     =>  TransportRecharge::DEDUCTION,
+                                'content'           =>  $msg,
+                                'order_type'        =>  TransportRecharge::TYPE_ORDER
+                            ]);
+                        }
                     } else {
                         $money = $deposited - $total_final_price;
                         $customer->wallet += $money;
                         $customer->save();
-                        $msg = 'Thanh toán đơn hàng mua hộ. Mã đơn hàng '.$order->order_number . '. Thừa ' . $money. ' tiền cọc.';
+                        $msg = 'Thanh toán đơn hàng mua hộ. Mã đơn hàng '.$order->order_number;
                         $flag = true;
-                    }
 
-                    if ($flag) {
-                        TransportRecharge::firstOrCreate([
-                            'customer_id'       =>  $order->customer_id,
-                            'user_id_created'   =>  1,
-                            'money'             =>  $money,
-                            'type_recharge'     =>  TransportRecharge::PAYMENT_ORDER,
-                            'content'           =>  $msg,
-                            'order_type'        =>  TransportRecharge::TYPE_ORDER
-                        ]);    
+                        if ($flag) {
+                            TransportRecharge::firstOrCreate([
+                                'customer_id'       =>  $order->customer_id,
+                                'user_id_created'   =>  1,
+                                'money'             =>  $money,
+                                'type_recharge'     =>  TransportRecharge::REFUND,
+                                'content'           =>  $msg,
+                                'order_type'        =>  TransportRecharge::TYPE_ORDER
+                            ]);
+                        }
                     }
                     
                     DB::commit();

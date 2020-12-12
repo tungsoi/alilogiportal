@@ -625,7 +625,7 @@ EOT
                 'customer_id'   =>  $request->customer_id,
                 'user_id_created'   => $request->user_id_deposited,
                 'money' =>  $deposite,
-                'type_recharge' =>  TransportRecharge::DEPOSITE_ORDER,
+                'type_recharge' =>  TransportRecharge::DEDUCTION,
                 'content'   =>  'Đặt cọc đơn hàng mua hộ. Mã đơn hàng '.PurchaseOrder::find($request->id)->order_number,
                 'order_type'    =>  TransportRecharge::TYPE_ORDER
             ]);

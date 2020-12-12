@@ -88,7 +88,7 @@ class WarehouseVietnam extends BatchAction
                                         'customer_id'       =>  $order->customer_id,
                                         'user_id_created'   =>  1,
                                         'money'             =>  $owed,
-                                        'type_recharge'     =>  TransportRecharge::PAYMENT_ORDER,
+                                        'type_recharge'     =>  TransportRecharge::DEDUCTION,
                                         'content'           =>  'Thanh toán đơn hàng mua hộ. Mã đơn hàng '.$order->order_number,
                                         'order_type'        =>  TransportRecharge::TYPE_ORDER
                                     ]);
