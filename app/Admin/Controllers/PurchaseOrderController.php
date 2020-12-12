@@ -613,7 +613,8 @@ EOT
                 'deposited' =>  $deposite,
                 'user_id_deposited' =>  $request->user_id_deposited,
                 'deposited_at'  =>  date('Y-m-d H:i:s', strtotime(now())),
-                'status'    =>  PurchaseOrder::STATUS_DEPOSITED_ORDERING
+                'status'    =>  PurchaseOrder::STATUS_DEPOSITED_ORDERING,
+                'supporter_order_id'    =>  $request->supporter_order_id
             ]);
     
             $alilogi_user = User::find($request->customer_id);
