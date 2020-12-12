@@ -415,7 +415,7 @@ EOT
         ->orderBy('id', 'desc')
         ->get();
 
-        $headers = ['STT', 'Ngày giao dịch', 'Đơn hàng', 'Nội dung giao dịch', 'Loại giao dịch', 'Số dư đầu kỳ (VND)', 'Trừ tiền (VND)', 'Nạp tiền (VND)', 'Số dư cuối kỳ (VND)'];
+        $headers = ['STT', 'Ngày giao dịch', 'Đơn hàng', 'Loại giao dịch', 'Nội dung giao dịch', 'Số dư đầu kỳ (VND)', 'Trừ tiền (VND)', 'Nạp tiền (VND)', 'Số dư cuối kỳ (VND)'];
 
         $raw = [
             'order' =>  '',

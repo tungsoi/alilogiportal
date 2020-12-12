@@ -608,31 +608,22 @@ EOT
         $item = OrderItem::find($data['pk']);
 
         if ($data['name'] == 'qty') {
-            $item->qty = $data['value'];
-            $item->qty_reality = $data['value'];
-            $item->save();
+            $item->update([
+                $data['name']   =>  $data['value'],
+                'qty_reality'   =>  $data['value']
+            ]);
 
-            $order = PurchaseOrder::find($item->order_id);
-            $purchase_total_items_price = 0;
-            foreach ($order->items as $item) {
-                $purchase_total_items_price += $item->qty_reality * $item->price;
-            }
+            $order = $item->order;
 
-            $exchange_rate = ExchangeRate::first()->vnd;
-            $final_total_price = round($purchase_total_items_price * $exchange_rate); // vnd
-            $deposit_default   = round($final_total_price * 70 / 100); // vnd
+            $rebuild_data = PurchaseOrder::buildData($order->id);
 
-            $order->purchase_total_items_price = $purchase_total_items_price;
-            $order->final_total_price = $final_total_price;
-            $order->deposit_default = $deposit_default;
-            $order->save();
+            $order->update($rebuild_data);
         } 
         else {
             OrderItem::find($data['pk'])->update([
                 $data['name']   =>  $data['value']
             ]);
         }
-
 
 
         return response()->json([
