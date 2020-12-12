@@ -5,6 +5,7 @@ namespace App\Admin\Controllers;
 use App\Admin\Actions\OrderItem\Ordered;
 use App\Admin\Actions\OrderItem\WarehouseVietnam;
 use App\Models\Alilogi\TransportOrderItem;
+use App\Models\Alilogi\TransportRecharge;
 use App\Models\OrderItem;
 use Encore\Admin\Controllers\AdminController;
 use Encore\Admin\Form;
@@ -223,11 +224,11 @@ class DetailOrderController extends AdminController
             $order = PurchaseOrder::find($id);
             if (in_array($order->status, [PurchaseOrder::STATUS_NEW_ORDER, PurchaseOrder::STATUS_DEPOSITED_ORDERING, PurchaseOrder::STATUS_ORDERED]))
             {
-                $actions->append('
-                    <a class="grid-row-outstock btn btn-danger btn-xs" data-id="'.$this->getKey().'">
-                        <i class="fa fa-times"></i> Hết hàng
-                    </a>'
-                );
+                // $actions->append('
+                //     <a class="grid-row-outstock btn btn-danger btn-xs" data-id="'.$this->getKey().'">
+                //         <i class="fa fa-times"></i> Hết hàng
+                //     </a>'
+                // );
             }
 
         });
@@ -437,38 +438,175 @@ EOT
             # code...
 
             $data = $request->all();
-            $item_id = $data['pk'];
 
-            OrderItem::find($item_id)->update([
-                $data['name']   =>  $data['value']
-            ]);
+            $item_id = $data['pk'];
+            
+            $item = OrderItem::find($item_id);
+            $order = $item->order;
 
             if ($data['name'] == 'qty_reality') {
 
-                $order = OrderItem::find($item_id)->order;
+                // cap nhat so luong thuc dat
+                if ($data['value'] == '0') {
 
-                $rebuild_data = PurchaseOrder::buildData($order->id);
-                $order->update($rebuild_data);
-            } else if ($data['name'] == 'purchase_cn_transport_fee') {
-                $order = OrderItem::find($item_id)->order;
+                    // neu so luong thuc dat = 0 -> het hang san pham
+                    // update thong tin san pham
+                    $item->update([
+                        $data['name']   =>  $data['value'],
+                        'status'        =>  OrderItem::STATUS_PURCHASE_OUT_OF_STOCK
+                    ]);
 
-                $rebuild_data = PurchaseOrder::buildData($order->id);
-                $order->update($rebuild_data);
+                    // check so luong san pham het hang trong don
+                    if ($order->totalItems() == $order->totalItemOutStock()) {
+                        // huy don hang
+                        $order->update([
+                            'status'    =>  PurchaseOrder::STATUS_CANCEL,
+                            'purchase_order_service_fee'    =>  0
+                        ]);
+
+                        $customer = $order->customer;
+                        $customer->wallet += $order->deposited;
+                        $customer->save();
+
+                        TransportRecharge::create([
+                            'customer_id'       =>  $order->customer_id,
+                            'user_id_created'   =>  1,
+                            'money'             =>  $order->deposited,
+                            'type_recharge'     =>  TransportRecharge::REFUND,
+                            'content'           =>  'Huỷ đơn hàng, hoàn trả tiền cọc. Mã đơn hàng '.$order->order_number,
+                            'order_type'        =>  TransportRecharge::TYPE_ORDER
+                        ]);
+
+                        DB::commit();
+
+                        return response()->json([
+                            'status'  => true,
+                            'message' => 'Lưu thành công !'
+                        ]);
+                    }
+                    else {
+                        // cac truong hop khac
+                        // slsp đã về vn + slsp hết hàng = tổng số sp
+
+                        if ($order->totalItemOutStock() + $order->totalWarehouseVietnamItems() == $order->totalItems()) 
+                        {
+                            $order->status = PurchaseOrder::STATUS_SUCCESS;
+                            $order->success_at = date('Y-m-d H:i:s', strtotime(now()));
+                            $order->save();
+
+                            if ($order->status == PurchaseOrder::STATUS_SUCCESS) {
+                                $deposited = $order->deposited; // số tiền đã cọc
+                                $total_final_price = round($order->totalBill() * $order->current_rate); // tổng tiền đơn hiện tại VND
+
+                                $customer = $order->customer;
+                                $wallet = $customer->wallet;
+
+                                $flag = false;
+                                if ($deposited <= $total_final_price)
+                                {
+                                    # Đã cọc < tổng đơn -> còn lại : tổng đơn - đã cọc
+                                    # -> trừ tiền của khách số còn lại
+
+                                    $owed = $total_final_price - $deposited;
+                                    $customer->wallet = $wallet - $owed; 
+                                    $customer->save();
+                                    $flag = true;
+
+                                    if ($flag) {
+                                        TransportRecharge::firstOrCreate([
+                                            'customer_id'       =>  $order->customer_id,
+                                            'user_id_created'   =>  1,
+                                            'money'             =>  $owed,
+                                            'type_recharge'     =>  TransportRecharge::PAYMENT_ORDER,
+                                            'content'           =>  'Thanh toán đơn hàng mua hộ. Mã đơn hàng '.$order->order_number,
+                                            'order_type'        =>  TransportRecharge::TYPE_ORDER
+                                        ]);
+
+                                        return response()->json([
+                                            'status'  => true,
+                                            'message' => 'Lưu thành công !'
+                                        ]);
+                                    }
+                                    
+                                } else {
+
+                                    # Đã cọc > tổng đơn 
+                                    # -> còn lại: đã cọc - tổng đơn
+                                    # -> cộng lại trả khách
+
+                                    $owed = $deposited - $total_final_price;
+                                    $customer->wallet = $wallet + $owed; 
+                                    $customer->save();
+                                    $flag = true;
+
+                                    if ($flag) {
+                                        TransportRecharge::firstOrCreate([
+                                            'customer_id'       =>  $order->customer_id,
+                                            'user_id_created'   =>  1,
+                                            'money'             =>  $owed,
+                                            'type_recharge'     =>  TransportRecharge::REFUND,
+                                            'content'           =>  'Thanh toán đơn hàng mua hộ. Mã đơn hàng '.$order->order_number,
+                                            'order_type'        =>  TransportRecharge::TYPE_ORDER
+                                        ]);
+
+                                        return response()->json([
+                                            'status'  => true,
+                                            'message' => 'Lưu thành công !'
+                                        ]);
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            $data = PurchaseOrder::buildData($order->id);
+                            $order->update($data);
+
+                            DB::commit();
+
+                            return response()->json([
+                                'status'  => true,
+                                'message' => 'Lưu thành công !'
+                            ]);
+                        }
+                    }
+                } else {
+
+                    $item->update([
+                        $data['name']   =>  $data['value']
+                    ]);
+
+                    // so luong thuc dat != 0 -> tinh lai tien don hang
+                    $data = PurchaseOrder::buildData($order->id);
+                    $order->update($data);
+
+                    DB::commit();
+
+                    return response()->json([
+                        'status'  => true,
+                        'message' => 'Lưu thành công !'
+                    ]);
+                }
             }
+            else {
+                // cap nhat cac thong tin khac
+                $item->update([
+                    $data['name']   =>  $data['value']
+                ]);
 
-            DB::commit();
+                DB::commit();
 
-            return response()->json([
-                'status'  => true,
-                'message' => 'Lưu thành công !'
-            ]);
+                return response()->json([
+                    'status'  => true,
+                    'message' => 'Lưu thành công !'
+                ]);
+            }
         }
         catch (\Exception $e) {
             DB::rollBack();
 
             return response()->json([
                 'status'  => false,
-                'message' => 'Update lỗi : ' . $e->getMessage()
+                'message' => 'Update lỗi : ' . $e
             ]);
         }
         
