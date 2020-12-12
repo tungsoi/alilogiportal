@@ -522,6 +522,7 @@ EOT
                                             'order_type'        =>  TransportRecharge::TYPE_ORDER
                                         ]);
 
+                                        DB::commit();
                                         return response()->json([
                                             'status'  => true,
                                             'message' => 'Lưu thành công !'
@@ -549,6 +550,7 @@ EOT
                                             'order_type'        =>  TransportRecharge::TYPE_ORDER
                                         ]);
 
+                                        DB::commit();
                                         return response()->json([
                                             'status'  => true,
                                             'message' => 'Lưu thành công !'
