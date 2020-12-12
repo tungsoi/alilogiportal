@@ -117,6 +117,8 @@ class DetailOrderController extends AdminController
         $grid = new Grid(new OrderItem());
         $grid->model()->where('order_id',$id);
 
+        $order = PurchaseOrder::find($id);
+
         $grid->disableFilter();
         $grid->disableColumnSelector();
 
@@ -153,35 +155,82 @@ class DetailOrderController extends AdminController
             return $html;
         })->width(200);
         $grid->column('product_image', 'Ảnh sản phẩm')->lightbox(['width' => 70, 'height' => 70])->width(120);
-        $grid->product_size('Kích thước')->display(function () {
-            return $this->product_size != "null" ? $this->product_size : null;
-        })->editable()->width(100);
-        $grid->product_color('Màu')->editable()->width(100);
+       
+        if ($order->status != PurchaseOrder::STATUS_SUCCESS) {
+            $grid->product_size('Kích thước')->display(function () {
+                return $this->product_size != "null" ? $this->product_size : null;
+            })->editable()->width(100);
+        } else {
+            $grid->product_size('Kích thước')->display(function () {
+                return $this->product_size != "null" ? $this->product_size : null;
+            })->width(100);
+        }
+        
+        if ($order->status != PurchaseOrder::STATUS_SUCCESS) {
+            $grid->product_color('Màu')->editable()->width(100);
+        } else {
+            $grid->product_color('Màu')->width(100);
+        }
+        
         $grid->qty('Số lượng');
-        $grid->qty_reality('Số lượng thực đặt')->editable();
+
+        if ($order->status != PurchaseOrder::STATUS_SUCCESS) {
+            $grid->qty_reality('Số lượng thực đặt')->editable()->width(100);
+        } else {    
+            $grid->qty_reality('Số lượng thực đặt')->width(100);
+        }
+
         $grid->price('Giá (Tệ)');
-        $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
-            return $this->purchase_cn_transport_fee;
-        })->help('Phí vận chuyển nội địa Trung quốc')->editable();
+
+        if ($order->status != PurchaseOrder::STATUS_SUCCESS) {
+            $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
+                return $this->purchase_cn_transport_fee;
+            })->help('Phí vận chuyển nội địa Trung quốc')->editable();
+        } else {    
+            $grid->purchase_cn_transport_fee('VCND TQ (Tệ)')->display(function () {
+                return $this->purchase_cn_transport_fee;
+            })->help('Phí vận chuyển nội địa Trung quốc');
+        }
+        
 
         $grid->column('total_price', 'Tổng tiền (Tệ)')->display(function () {
             $totalPrice = $this->qty_reality * $this->price + $this->purchase_cn_transport_fee ;
             return number_format($totalPrice, 2) ?? 0; 
         })->help('= Số lượng thực đặt x Giá (Tệ) + Phí vận chuyển nội địa (Tệ)');
         
-        $grid->cn_code('Mã vận đơn Alilogi')->editable();
-        $grid->cn_order_number('Mã giao dịch')->editable();
-        $grid->customer_note('Khách hàng ghi chú')->width(100)->editable();
-        $grid->admin_note('Admin ghi chú')->editable()->width(100);
+        if ($order->status != PurchaseOrder::STATUS_SUCCESS) {
+            $grid->cn_code('Mã vận đơn Alilogi')->editable();
+        } else {    
+            $grid->cn_code('Mã vận đơn Alilogi');
+        }
+
+        if ($order->status != PurchaseOrder::STATUS_SUCCESS) {
+            $grid->cn_order_number('Mã giao dịch')->editable();
+        } else {    
+            $grid->cn_order_number('Mã giao dịch');
+        }
+        
+        
+        if ($order->status != PurchaseOrder::STATUS_SUCCESS) {
+            $grid->customer_note('Khách hàng ghi chú')->width(100)->editable();
+        } else {    
+            $grid->customer_note('Khách hàng ghi chú')->width(100);
+        }
+        
+        if ($order->status != PurchaseOrder::STATUS_SUCCESS) {
+            $grid->admin_note('Admin ghi chú')->editable()->width(100);
+        } else {    
+            $grid->admin_note('Admin ghi chú')->width(100);
+        }
+       
 
         $grid->disableCreateButton();
-
+        $grid->disableExport();
         $grid->setActionClass(\Encore\Admin\Grid\Displayers\Actions::class);
         
-        $grid->tools(function (Grid\Tools $tools) {
+        $grid->tools(function (Grid\Tools $tools) use ($order, $id) {
 
-            $id = explode('/', request()->server()['REQUEST_URI'])[3];
-            $order = PurchaseOrder::find($id);
+            // $id = explode('/', request()->server()['REQUEST_URI'])[3];
 
             // xac nhan dat hang san pham
             // hien thi khi co san pham o trang thai chua dat hang
@@ -194,9 +243,10 @@ class DetailOrderController extends AdminController
             $all_items = $order->items->count();
             $ordered_items = $order->items->where('status', OrderItem::STATUS_PURCHASE_ITEM_ORDERED)->count();
             $outstock_items = $order->items->where('status', OrderItem::STATUS_PURCHASE_OUT_OF_STOCK)->count();
-            // if ($order->status == PurchaseOrder::STATUS_ORDERED && $all_items == $ordered_items + $outstock_items) {
+            if ($order->status == PurchaseOrder::STATUS_ORDERED) {
+                //  && $all_items == $ordered_items + $outstock_items
                 $tools->append(new WarehouseVietnam());
-            // }
+            }
 
             // xac nhan da dat hang ca don
             // hien thi khi tat ca san pham da duoc dat hang, khong tinh san pham het hang
@@ -216,12 +266,13 @@ class DetailOrderController extends AdminController
                 $batch->disableDelete();
             });
         });
-        $grid->actions(function ($actions) use ($id) {
+
+        $grid->disableActions();
+        $grid->actions(function ($actions) use ($order, $id) {
             $actions->disableDelete();
             $actions->disableView();
             $actions->disableEdit();
             
-            $order = PurchaseOrder::find($id);
             if (in_array($order->status, [PurchaseOrder::STATUS_NEW_ORDER, PurchaseOrder::STATUS_DEPOSITED_ORDERING, PurchaseOrder::STATUS_ORDERED]))
             {
                 // $actions->append('
@@ -517,7 +568,7 @@ EOT
                                             'customer_id'       =>  $order->customer_id,
                                             'user_id_created'   =>  1,
                                             'money'             =>  $owed,
-                                            'type_recharge'     =>  TransportRecharge::PAYMENT_ORDER,
+                                            'type_recharge'     =>  TransportRecharge::DEDUCTION,
                                             'content'           =>  'Thanh toán đơn hàng mua hộ. Mã đơn hàng '.$order->order_number,
                                             'order_type'        =>  TransportRecharge::TYPE_ORDER
                                         ]);
