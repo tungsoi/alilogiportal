@@ -555,57 +555,9 @@ EOT
                 }
             }
         }
-
-        // switch ($type) {
-        //     case 3: 
-        //         $subs = explode("Thanh toán đơn hàng vận chuyển VC-", $content);
-        //         if (sizeof($subs) == 2) {
-        //             dd($subs);
-        //         }
-        //         // $order_number = trim($subs[1]);
-
-        //         // dd($subs);
-        //         break;
-        //     case 4: 
-        //         $subs = explode("VC-", $content);
-        //         $order_number = trim($subs[1]);
-
-        //         dd($order_number);
-        //         $order = Order::whereOrderNumber($order_number)->first();
-        //         if ($order) {
-        //             return "<a href='https://alilogi.vn/admin/transport_orders/".$order->id."' target='_blank'>Đơn hàng vận chuyển ".$subs[1]."</a>";
-        //         }
-        //         else {
-        //             return null;
-        //         }
-        //     case 5: 
-        //         $subs = explode("Đặt cọc đơn hàng mua hộ. Mã đơn hàng", $content);
-        //         $order_number = trim($subs[1]);
-        //         $order = PurchaseOrder::whereOrderNumber($order_number)->first();
-
-        //         if ($order) {
-        //             return "<a href='".route('admin.customer_orders.show', $order->id)."' target='_blank'>Đơn hàng order ".$subs[1]."</a>";
-        //         }
-        //         else {
-        //             return null;
-        //         }
-                
-            
-        //     case 6: 
-        //         $subs = explode("Thanh toán đơn hàng mua hộ. Mã đơn hàng", $content);
-        //         $order_number = trim($subs[1]);
-        //         $order = PurchaseOrder::whereOrderNumber($order_number)->first();
-        //         if ($order) {
-        //             return "<a href='".route('admin.customer_orders.show', $order->id)."' target='_blank'>Đơn hàng order ".$subs[1]."</a>";
-        //         }
-        //         else {
-        //             return null;
-        //         }
-                
-        //     default:
-        //         return null;
-        // }
-        // return $content;
+        else {
+            return null;
+        }
     }
 
     public function orderHistory($id, Content $content)

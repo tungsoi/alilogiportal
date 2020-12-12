@@ -164,10 +164,14 @@ class CustomerRechargeController extends AdminController
     public function convertOrderLink($content, $type)
     {
         # code...
+        $payment_transport = 'Thanh toán đơn hàng vận chuyển VC-';
+        $payment_order = 'Thanh toán đơn hàng mua hộ. Mã đơn hàng';
+        $payment_deposite = 'Đặt cọc đơn hàng mua hộ. Mã đơn hàng';
 
-        switch ($type) {
-            case 4: 
-                $subs = explode("Thanh toán đơn hàng vận chuyển VC-", $content);
+        if (strpos($content, $payment_transport) !== false) {
+            $subs = explode($payment_transport, $content);
+
+            if (sizeof($subs) == 2) {
                 $order_number = trim($subs[1]);
                 $order = Order::whereOrderNumber($order_number)->first();
                 if ($order) {
@@ -176,9 +180,14 @@ class CustomerRechargeController extends AdminController
                 else {
                     return null;
                 }
-            case 5: 
-                $subs = explode("Đặt cọc đơn hàng mua hộ. Mã đơn hàng", $content);
+            }
+        }
+        else if (strpos($content, $payment_order) !== false) {
+            $subs = explode($payment_order, $content);
+
+            if (sizeof($subs) == 2) {
                 $order_number = trim($subs[1]);
+
                 $order = PurchaseOrder::whereOrderNumber($order_number)->first();
 
                 if ($order) {
@@ -187,11 +196,14 @@ class CustomerRechargeController extends AdminController
                 else {
                     return null;
                 }
-                
-            
-            case 6: 
-                $subs = explode("Thanh toán đơn hàng mua hộ. Mã đơn hàng", $content);
+            }
+        }
+        else if (strpos($content, $payment_deposite) !== false) {
+            $subs = explode($payment_deposite, $content);
+
+            if (sizeof($subs) == 2) {
                 $order_number = trim($subs[1]);
+
                 $order = PurchaseOrder::whereOrderNumber($order_number)->first();
                 if ($order) {
                     return "<a href='".route('admin.customer_orders.show', $order->id)."' target='_blank'>Đơn hàng order ".$subs[1]."</a>";
@@ -199,10 +211,10 @@ class CustomerRechargeController extends AdminController
                 else {
                     return null;
                 }
-                
-            default:
-                return null;
+            }
         }
-        return $content;
+        else {
+            return null;
+        }
     }
 }
