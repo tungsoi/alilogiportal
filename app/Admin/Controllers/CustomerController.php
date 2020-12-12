@@ -502,17 +502,19 @@ EOT
         }
 
         $table = new Table($headers, $data);
-
         return $table->render();
     }
 
     public function convertOrderLink($content, $type)
     {
         # code...
+        $payment_transport = 'Thanh toán đơn hàng vận chuyển VC-';
+        $payment_order = 'Thanh toán đơn hàng mua hộ. Mã đơn hàng';
+        $payment_deposite = 'Đặt cọc đơn hàng mua hộ. Mã đơn hàng';
+        if (strpos($content, $payment_transport) !== false) {
+            $subs = explode($payment_transport, $content);
 
-        switch ($type) {
-            case 4: 
-                $subs = explode("Thanh toán đơn hàng vận chuyển VC-", $content);
+            if (sizeof($subs) == 2) {
                 $order_number = trim($subs[1]);
                 $order = Order::whereOrderNumber($order_number)->first();
                 if ($order) {
@@ -521,34 +523,89 @@ EOT
                 else {
                     return null;
                 }
-            case 5: 
-                $subs = explode("Đặt cọc đơn hàng mua hộ. Mã đơn hàng", $content);
-                $order_number = trim($subs[1]);
-                $order = PurchaseOrder::whereOrderNumber($order_number)->first();
+            }
+        }
+        else if (strpos($content, $payment_order) !== false) {
+            $subs = explode($payment_order, $content);
 
+            if (sizeof($subs) == 2) {
+                $order_number = trim($subs[1]);
+
+                $order = PurchaseOrder::whereOrderNumber($order_number)->first();
                 if ($order) {
                     return "<a href='".route('admin.customer_orders.show', $order->id)."' target='_blank'>Đơn hàng order ".$subs[1]."</a>";
                 }
                 else {
                     return null;
                 }
+            }
+        }
+        else if (strpos($content, $payment_deposite) !== false) {
+            $subs = explode($payment_deposite, $content);
+
+            if (sizeof($subs) == 2) {
+                $order_number = trim($subs[1]);
+
+                $order = PurchaseOrder::whereOrderNumber($order_number)->first();
+                if ($order) {
+                    return "<a href='".route('admin.customer_orders.show', $order->id)."' target='_blank'>Đơn hàng order ".$subs[1]."</a>";
+                }
+                else {
+                    return null;
+                }
+            }
+        }
+
+        // switch ($type) {
+        //     case 3: 
+        //         $subs = explode("Thanh toán đơn hàng vận chuyển VC-", $content);
+        //         if (sizeof($subs) == 2) {
+        //             dd($subs);
+        //         }
+        //         // $order_number = trim($subs[1]);
+
+        //         // dd($subs);
+        //         break;
+        //     case 4: 
+        //         $subs = explode("VC-", $content);
+        //         $order_number = trim($subs[1]);
+
+        //         dd($order_number);
+        //         $order = Order::whereOrderNumber($order_number)->first();
+        //         if ($order) {
+        //             return "<a href='https://alilogi.vn/admin/transport_orders/".$order->id."' target='_blank'>Đơn hàng vận chuyển ".$subs[1]."</a>";
+        //         }
+        //         else {
+        //             return null;
+        //         }
+        //     case 5: 
+        //         $subs = explode("Đặt cọc đơn hàng mua hộ. Mã đơn hàng", $content);
+        //         $order_number = trim($subs[1]);
+        //         $order = PurchaseOrder::whereOrderNumber($order_number)->first();
+
+        //         if ($order) {
+        //             return "<a href='".route('admin.customer_orders.show', $order->id)."' target='_blank'>Đơn hàng order ".$subs[1]."</a>";
+        //         }
+        //         else {
+        //             return null;
+        //         }
                 
             
-            case 6: 
-                $subs = explode("Thanh toán đơn hàng mua hộ. Mã đơn hàng", $content);
-                $order_number = trim($subs[1]);
-                $order = PurchaseOrder::whereOrderNumber($order_number)->first();
-                if ($order) {
-                    return "<a href='".route('admin.customer_orders.show', $order->id)."' target='_blank'>Đơn hàng order ".$subs[1]."</a>";
-                }
-                else {
-                    return null;
-                }
+        //     case 6: 
+        //         $subs = explode("Thanh toán đơn hàng mua hộ. Mã đơn hàng", $content);
+        //         $order_number = trim($subs[1]);
+        //         $order = PurchaseOrder::whereOrderNumber($order_number)->first();
+        //         if ($order) {
+        //             return "<a href='".route('admin.customer_orders.show', $order->id)."' target='_blank'>Đơn hàng order ".$subs[1]."</a>";
+        //         }
+        //         else {
+        //             return null;
+        //         }
                 
-            default:
-                return null;
-        }
-        return $content;
+        //     default:
+        //         return null;
+        // }
+        // return $content;
     }
 
     public function orderHistory($id, Content $content)
