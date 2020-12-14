@@ -67,7 +67,10 @@ Route::post('/cancle-purchase-order', function (Request $request) {
 
             // check tien coc, neu  > 0 -> back lai tien
             if ($order->deposited) {
-                $order->customer->wallet += $order->deposited;
+                $customer = User::find($order->customer_id); 
+                $customer->wallet += $order->deposited;
+                $customer->save();
+
                 TransportRecharge::firstOrCreate([
                     'customer_id'   =>  $order->customer_id,
                     'user_id_created'   =>  $request->user_id_created,
