@@ -41,84 +41,47 @@ Route::get('/service_percent', function (Request $request) {
  */
 Route::post('/cancle-purchase-order', function (Request $request) {
     DB::beginTransaction();
-    // $order_id = $request->order_id;
 
     try {
         if ($request->ajax()) {
             $order = PurchaseOrder::find($request->order_id);
-            $status = $order->status;
 
-            // huy don hang moi
-            // chuyen trang thai don hang -> da huy
-            // chuyen trang thai item -> het hang
-            if ($status == PurchaseOrder::STATUS_NEW_ORDER) {
-                $flag = $order->update([
-                    'status'    =>  PurchaseOrder::STATUS_CANCEL,
-                    'purchase_order_service_fee'    =>  0,
-                    'deposit_default'   =>  0,
-                    'purchase_total_items_price'    =>  0,
-                    'final_total_price' =>  0
-                ]);
+            // update trang thai don hang
+            $order->update([
+                'status'    =>  PurchaseOrder::STATUS_CANCEL,
+                'purchase_order_service_fee'    =>  0,
+                'deposit_default'   =>  0,
+                'purchase_total_items_price'    =>  0,
+                'final_total_price' =>  0
+            ]);
 
-                if ($flag) {
-                    foreach ($order->items as $item) {
-                        $item->qty_reality = 0;
-                        $item->status = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
-                        $item->save();
-                    }
 
-                    DB::commit();
-                    return response()->json([
-                        'error' =>  false,
-                        'msg'   =>  'success'
-                    ]);
+            // update trang thai cua san pham
+            if ($order->items->count() > 0) {
+                foreach ($order->items as $item) {
+                    $item->qty_reality = 0;
+                    $item->status = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
+                    $item->save();
                 }
             }
 
-            // huy don hang da coc
-            // chuyen trang thai don hang -> da huy
-            // chuyen trang thai item -> het hang
-            // hoan lai tien da coc cho khach
-            // tao giao dich hoan tien
-            else if ($status == PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
-                $deposited = (int) $order->deposited;
-
-                $flag = $order->update([
-                    'status'    =>  PurchaseOrder::STATUS_CANCEL,
-                    'purchase_order_service_fee'    =>  0,
-                    'deposit_default'   =>  0,
-                    'deposited' =>  0,
-                    'deposited_at'  =>  NULL,
-                    'purchase_total_items_price'    =>  0,
-                    'final_total_price' =>  0
+            // check tien coc, neu  > 0 -> back lai tien
+            if ($order->deposited) {
+                $order->customer->wallet += $order->deposited;
+                TransportRecharge::firstOrCreate([
+                    'customer_id'   =>  $order->customer_id,
+                    'user_id_created'   =>  $request->user_id_created,
+                    'money' =>  $order->deposited,
+                    'type_recharge' =>  TransportRecharge::REFUND,
+                    'content'   =>  'Hoàn lại tiền cọc đơn hàng ' . $order->order_number
                 ]);
-
-                if ($flag) {
-                    foreach ($order->items as $item) {
-                        $item->qty_reality = 0;
-                        $item->status = OrderItem::STATUS_PURCHASE_OUT_OF_STOCK;
-                        $item->save();
-                    }
-
-                    $customer = $order->customer;
-                    $customer->wallet += $deposited;
-                    $customer->save();
-
-                    TransportRecharge::firstOrCreate([
-                        'customer_id'   =>  $order->customer_id,
-                        'user_id_created'   =>  $request->user_id_created,
-                        'money' =>  $deposited,
-                        'type_recharge' =>  TransportRecharge::REFUND,
-                        'content'   =>  'Hoàn lại tiền cọc đơn hàng ' . $order->order_number
-                    ]);
-
-                    DB::commit();
-                    return response()->json([
-                        'error' =>  false,
-                        'msg'   =>  'success'
-                    ]);
-                }
             }
+
+            DB::commit();
+            return response()->json([
+                'error' =>  false,
+                'msg'   =>  'success'
+            ]);
         }
     } 
     catch (\Exception $e) {
