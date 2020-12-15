@@ -243,7 +243,7 @@ class DetailOrderController extends AdminController
             $all_items = $order->items->count();
             $ordered_items = $order->items->where('status', OrderItem::STATUS_PURCHASE_ITEM_ORDERED)->count();
             $outstock_items = $order->items->where('status', OrderItem::STATUS_PURCHASE_OUT_OF_STOCK)->count();
-            if ($order->status == PurchaseOrder::STATUS_ORDERED) {
+            if ($order->status == PurchaseOrder::STATUS_ORDERED || $order->status == PurchaseOrder::STATUS_IN_WAREHOUSE_VN) {
                 //  && $all_items == $ordered_items + $outstock_items
                 $tools->append(new WarehouseVietnam());
             }

@@ -123,6 +123,9 @@ class WarehouseVietnam extends BatchAction
                         }
                     }
                 }
+
+                DB::commit();
+                return $this->response()->success('Xác nhận các sản phẩm đã về kho Việt Nam thành công !')->refresh();
             }
         }
         catch (\Exception $e) {
