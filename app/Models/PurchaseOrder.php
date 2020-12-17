@@ -338,7 +338,14 @@ class PurchaseOrder extends Model
             $total = 0;
             foreach ($this->items as $item) {
                 if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
-                    $total += $item->purchase_cn_transport_fee;
+                    try {
+                        $item->purchase_cn_transport_fee = str_replace(",", ".", $item->purchase_cn_transport_fee);
+                        $total += $item->purchase_cn_transport_fee;
+                    }
+                    catch (\Exception $e) {
+                        // dd($item);
+                    }
+                    
                 }
                 
             }

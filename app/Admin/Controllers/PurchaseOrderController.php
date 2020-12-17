@@ -14,6 +14,7 @@ use Encore\Admin\Grid;
 use Encore\Admin\Show;
 use App\Models\PurchaseOrder;
 use App\User;
+use DateTime;
 use Encore\Admin\Facades\Admin;
 use Encore\Admin\Layout\Content;
 use Encore\Admin\Widgets\Table;
@@ -60,11 +61,25 @@ class PurchaseOrderController extends AdminController
             $filter->column(1/2, function ($filter) {
                 $filter->like('order_number', 'Mã đơn hàng');
                 $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
+                
+                $ids = DB::connection('aloorder')->table('admin_role_users')->where('role_id', 3)->get()->pluck('user_id');
+                $filter->equal('supporter_id', 'Nhân viên kinh doanh')->select(User::whereIn('id', $ids)->pluck('name', 'id'));
+
+                $order_ids = DB::connection('aloorder')->table('admin_role_users')->where('role_id', 4)->get()->pluck('user_id');
+                $filter->equal('supporter_order_id', 'Nhân viên đặt hàng')->select(User::whereIn('id', $order_ids)->pluck('name', 'id'));
             });
             $filter->column(1/2, function ($filter) {
                 $filter->equal('status', 'Trạng thái')->select(PurchaseOrder::STATUS);
                 $filter->between('created_at', 'Ngày tạo đơn hàng')->date();
+                $filter->between('deposited_at', 'Ngày cọc')->date();
                 $filter->between('order_at', 'Ngày chốt đặt hàng')->date();
+                $filter->where(function ($query) {
+                    if ($this->input == '0') {
+                        $dayAfter = (new DateTime(now()))->modify('-7 day')->format('Y-m-d H:i:s');
+                        $query->where('deposited_at', '<=', $dayAfter)
+                        ->whereIn('status', [PurchaseOrder::STATUS_DEPOSITED_ORDERING, PurchaseOrder::STATUS_ORDERED]);
+                    }
+                }, 'Tìm kiếm', '7days')->radio(['Đơn hàng chưa hoàn thành trong 7 ngày']);
             });
         });
 
@@ -125,15 +140,29 @@ class PurchaseOrderController extends AdminController
         $grid->purchase_total_items_price('Tổng giá trị SP (Tệ)')->display(function () {
             return number_format($this->sumQtyRealityMoney(), 2);
         })->width(100);
-        $grid->purchase_order_service_fee('Phí dịch vụ (Tệ)')->display(function () {
-            return $this->purchase_order_service_fee;
-        })->editable()->width(100);
+
+        if (Admin::user()->isRole('ar_staff')) {
+            $grid->purchase_order_service_fee('Phí dịch vụ (Tệ)')->display(function () {
+                return $this->purchase_order_service_fee;
+            })->editable()->width(100);
+        } else {
+            $grid->purchase_order_service_fee('Phí dịch vụ (Tệ)')->display(function () {
+                return $this->purchase_order_service_fee;
+            })->width(100);
+        }
+        
 
         $grid->purchase_order_transport_fee('Tổng phí VCNĐ (Tệ)')->display(function () {
             if ($this->items) {
                 $total = 0;
                 foreach ($this->items as $item) {
-                    $total += $item->purchase_cn_transport_fee;
+                    try {
+                        $total += $item->purchase_cn_transport_fee;
+                    } 
+                    catch (\Exception $e) {
+                        // dd($item->order->order_number);
+                    }
+                    
                 }
 
                 return number_format($total, 2);

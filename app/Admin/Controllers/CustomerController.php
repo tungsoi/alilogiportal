@@ -106,6 +106,12 @@ class CustomerController extends AdminController
                 $filter->equal('ware_house_id', 'Kho')->select(Warehouse::where('is_active', 1)->get()->pluck('name', 'id'));
                 $filter->equal('province', 'Tỉnh/thành phố')->select(Province::all()->pluck('name', 'province_id'));
                 $filter->equal('district', 'Quận/huyện')->select(District::all()->pluck('name', 'district_id'));
+                $filter->where(function ($query) {
+                    if ($this->input == '0') {
+                        $paymented = Order::all()->pluck('payment_customer_id');
+                        $query->whereNotIn('id', $paymented);
+                    }
+                }, 'Tìm kiếm', 'search_customer_transport')->radio(['Khách chưa từng phát sinh giao dịch vận chuyển']);
             });
         });
 
