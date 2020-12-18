@@ -45,12 +45,7 @@ class OfferController extends AdminController
         $grid = new Grid(new PurchaseOrder());
         $grid->model()->whereOrderType(1)->where('status', '!=', PurchaseOrder::STATUS_UNSENT)->orderBy('created_at', 'desc');
 
-        if (Admin::user()->isRole('sale_staff')) 
-        {
-            $customer = User::whereStaffSaleId(Admin::user()->id)->get()->pluck('id');
-            $grid->model()->whereIn('customer_id', $customer);
-        } 
-        else if (Admin::user()->isRole('order_staff')) 
+        if (Admin::user()->isRole('order_staff')) 
         {
             $grid->model()->where('supporter_order_id', Admin::user()->id);
         }
