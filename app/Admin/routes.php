@@ -50,7 +50,8 @@ Route::group([
         'customer_orders'   =>  CustomerOrderController::class,
         'schedule_logs' =>  ScheduleLogController::class,
         'detail_orders' =>  DetailOrderController::class,
-        'complaints'    =>  ComplaintController::class
+        'complaints'    =>  ComplaintController::class,
+        'offers'    =>  OfferController::class
     ]);
 });
 
