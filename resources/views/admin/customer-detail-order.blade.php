@@ -105,6 +105,25 @@
             <td>Số tiền cần cọc</td>
             <td></td>
             <td>{{ number_format($order->deposit_default) . " VND" }}</td>
+            @if (Admin::user()->can('admin-offer-order'))
+                <td style="background: white; color: black">Tiền thanh toán (Tệ)</td>
+                <td style="background: white; color: black">
+
+                    <form action="{{ route('admin.offers.updateOrder') }}" method="POST">
+                        {{ csrf_field() }}
+                        
+                        <div class="row">
+                            <div class="col-xs-9">
+                                <input class="form-control" type="text" name="final_payment" id="final_payment" placeholder="VD: 1.23" value="{{ $order->final_payment ?? "" }}">
+                            </div>
+                            <div class="col-xs-3">
+                                <button class="btn btn-success btn-xs" type="submit">Lưu</button>
+                            </div>
+                            <input type="hidden" name="order_id" value="{{ $order->id }}">
+                        </div>
+                    </form>
+                </td>
+            @endif
         </tr>
         <tr>
             <td>Số tiền đã cọc</td>

@@ -90,7 +90,7 @@ class OfferController extends AdminController
             return number_format($this->sumQtyRealityMoney(), 2);
         })->width(150);
         $grid->final_payment('Tiền thanh toán (Tệ)')->display(function () {
-            return number_format($this->final_payment);
+            return $this->final_payment;
         })->editable()->width(100);
         $grid->column('offer', 'Chiết khấu (Tệ / VND)')->display(function () {
             if ($this->final_payment != "" && $this->final_payment > 0) {
@@ -148,5 +148,26 @@ class OfferController extends AdminController
         $form->text('final_payment');
 
         return $form;
+    }
+
+    public function updateOrder(Request $request) {
+        DB::beginTransaction();
+
+        try {
+            PurchaseOrder::find($request->order_id)->update([
+                'final_payment' =>  str_replace(',', '.', $request->final_payment)
+            ]);
+
+            DB::commit();
+
+            admin_toastr('Cập nhật tiền thanh toán thành công', 'success');
+            return redirect()->back();
+        }
+        catch (\Exception $e) {
+            DB::rollBack();
+
+            admin_toastr('Cập nhật tiền thanh toán lỗi', 'error');
+            return redirect()->back();
+        }
     }
 }
