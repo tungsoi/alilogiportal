@@ -89,13 +89,44 @@ class OfferController extends AdminController
         $grid->purchase_total_items_price('Tiền thực đặt (Tệ)')->display(function () {
             return number_format($this->sumQtyRealityMoney(), 2);
         })->width(150);
+        $grid->purchase_order_transport_fee('Tổng phí VCNĐ (Tệ)')->display(function () {
+            if ($this->items) {
+                $total = 0;
+                foreach ($this->items as $item) {
+                    try {
+                        $total += $item->purchase_cn_transport_fee;
+                    } 
+                    catch (\Exception $e) {
+                        // dd($item->order->order_number);
+                    }
+                    
+                }
+
+                return number_format($total, 2);
+            }
+
+            return 0;
+        })->width(100);
         $grid->final_payment('Tiền thanh toán (Tệ)')->display(function () {
             return $this->final_payment;
         })->editable()->width(100);
         $grid->column('offer', 'Chiết khấu (Tệ / VND)')->display(function () {
             if ($this->final_payment != "" && $this->final_payment > 0) {
+                if ($this->items) {
+                    $total = 0;
+                    foreach ($this->items as $item) {
+                        try {
+                            $total += $item->purchase_cn_transport_fee;
+                        } 
+                        catch (\Exception $e) {
+                            // dd($item->order->order_number);
+                        }
+                        
+                    }
+                }
+
                 try {
-                    $amount = number_format($this->sumQtyRealityMoney() - $this->final_payment);
+                    $amount = number_format($this->sumQtyRealityMoney() + $total - $this->final_payment, 2);
                     return $amount . " / " . number_format($amount * $this->current_rate);
                 }
                 catch (\Exception $e) {
