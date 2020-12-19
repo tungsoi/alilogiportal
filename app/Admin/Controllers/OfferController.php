@@ -83,6 +83,7 @@ class OfferController extends AdminController
 
             return "<span class='label label-".PurchaseOrder::LABEL[$this->status]."'>".PurchaseOrder::STATUS[$this->status]." " .$count. "</span>";
         })->width(150);
+        $grid->order_at('Ngày đặt')->width(100);
         $grid->supporter_order_id('Nhân viên Order')->display(function () {
             return $this->supporterOrder->name ?? "";
         })->width(150);
