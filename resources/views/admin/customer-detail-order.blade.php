@@ -129,6 +129,14 @@
             <td>Số tiền đã cọc</td>
             <td></td>
             <td>{{ number_format($order->deposited) . " VND"}}</td>
+            @if (Admin::user()->can('admin-offer-order'))
+                <td style="background: white; color: black">Tiền chiết khấu (Tệ)</td>
+                <td style="background: white; color: black">
+                    @if ($order->final_payment > 0)
+                        {{ $total_price_reality + $purchase_cn_transport_fee - $order->final_payment }}
+                    @endif
+                </td>
+            @endif
         </tr>
         <tr style="background: coral; color: white;">
             <td>Số tiền còn thiếu</td>
