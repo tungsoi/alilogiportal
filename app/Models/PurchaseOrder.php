@@ -137,7 +137,8 @@ class PurchaseOrder extends Model
         'purchase_order_transport_fee',
         'purchase_order_service_fee',
         'final_payment',
-        'user_id_confirm_ordered'
+        'user_id_confirm_ordered',
+        'user_input_final_payment'
     ];
 
     public function customer() {

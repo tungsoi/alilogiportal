@@ -155,7 +155,8 @@ class OfferController extends AdminController
 
         try {
             PurchaseOrder::find($request->order_id)->update([
-                'final_payment' =>  str_replace(',', '.', $request->final_payment)
+                'final_payment' =>  str_replace(',', '.', $request->final_payment),
+                'user_input_final_payment'  =>  Admin::user()->id
             ]);
 
             DB::commit();
