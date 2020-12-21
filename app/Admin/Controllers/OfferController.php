@@ -56,7 +56,7 @@ class OfferController extends AdminController
             $filter->column(1/2, function ($filter) {
                 $filter->like('order_number', 'Mã đơn hàng');
                 $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
-                $filter->between('order_at', 'Ngày đặt hàng');
+                $filter->between('order_at', 'Ngày đặt hàng')->date();
             });
             $filter->column(1/2, function ($filter) {
                 $filter->equal('status', 'Trạng thái')->select(PurchaseOrder::STATUS);
