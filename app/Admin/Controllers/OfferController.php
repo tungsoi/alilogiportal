@@ -45,10 +45,10 @@ class OfferController extends AdminController
         $grid = new Grid(new PurchaseOrder());
         $grid->model()->whereOrderType(1)->where('status', '!=', PurchaseOrder::STATUS_UNSENT)->orderBy('created_at', 'desc');
 
-        if (Admin::user()->isRole('order_staff')) 
-        {
-            $grid->model()->where('supporter_order_id', Admin::user()->id);
-        }
+        // if (Admin::user()->isRole('order_staff')) 
+        // {
+        //     $grid->model()->where('supporter_order_id', Admin::user()->id);
+        // }
 
         $grid->filter(function($filter) {
             $filter->expand();
@@ -56,7 +56,13 @@ class OfferController extends AdminController
             $filter->column(1/2, function ($filter) {
                 $filter->like('order_number', 'Mã đơn hàng');
                 $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
-                $filter->between('order_at', 'Ngày đặt hàng')->date();
+                $filter->where(function ($query) {
+                    $query->where('order_at', '>=', $this->input." 00:00:00");
+                }, 'Ngày đặt hàng', 'order_at_begin')->date();
+
+                $filter->where(function ($query) {
+                    $query->where('order_at', '<=', $this->input." 23:59:59");
+                }, 'Ngày đặt hàng kết thúc', 'order_at_finish')->date();
             });
             $filter->column(1/2, function ($filter) {
                 $filter->equal('status', 'Trạng thái')->select(PurchaseOrder::STATUS);
