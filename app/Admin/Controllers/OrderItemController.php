@@ -42,6 +42,11 @@ class OrderItemController extends AdminController
         ->whereNotNull('order_id')
         ->orderBy('created_at', 'desc');
 
+        if (Admin::user()->isRole('order_staff')) {
+            $order_ids = PurchaseOrder::whereSupporterOrderId(Admin::user()->id)->get()->pluck('id');
+            $grid->model()->whereIn('order_id', $order_ids);
+        } 
+
         $grid->filter(function($filter) {
             $filter->expand();
             $filter->disableIdFilter();
