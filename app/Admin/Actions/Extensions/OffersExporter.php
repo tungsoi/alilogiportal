@@ -16,7 +16,7 @@ class OffersExporter extends AbstractExporter
             $excel->sheet('Sheet1', function(LaravelExcelWorksheet $sheet) {
 
                 $this->chunk(function ($records) use ($sheet) {
-                    return [];
+                    
                     $flag = 1;
                     $rows = $records->map(function ($item) use ($flag) {
                         try {
