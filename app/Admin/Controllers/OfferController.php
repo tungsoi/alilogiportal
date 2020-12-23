@@ -2,6 +2,7 @@
 
 namespace App\Admin\Controllers;
 
+use App\Admin\Actions\Extensions\OffersExporter;
 use App\Admin\Actions\OrderItem\Ordered;
 use App\Admin\Actions\OrderItem\WarehouseVietnam;
 use App\Admin\Actions\Extensions\OrdersExporter;
@@ -144,6 +145,8 @@ class OfferController extends AdminController
             }
             return null;
         })->width(100);
+        // export
+        $grid->exporter(new OffersExporter());
 
         // setup
         $grid->disableActions();
