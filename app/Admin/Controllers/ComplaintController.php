@@ -107,10 +107,13 @@ class ComplaintController extends AdminController
                 $column->append((new Box('', $this->listComment($id)->render())));
             });
 
-            $row->column(12, function (Column $column) use ($id)
-            {
-                $column->append((new Box('', $this->formSubComment($id))));
-            });
+            if (Complaint::find($id)->status != Complaint::DONE) {
+                $row->column(12, function (Column $column) use ($id)
+                {
+                    $column->append((new Box('', $this->formSubComment($id))));
+                });
+            }
+            
         });
     }
 
