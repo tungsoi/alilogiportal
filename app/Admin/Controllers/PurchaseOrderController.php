@@ -201,10 +201,7 @@ class PurchaseOrderController extends AdminController
         })
         ->help('Tổng giá cuối = Tổng giá trị SP + Phí dịch vụ + Tổng phí VCNĐ')->width(150);
 
-        $grid->final_payment('Tổng thanh toán (VND)')->display(function () {
-            $this->final_payment = str_replace(',', '.', $this->final_payment);
-            return number_format($this->final_payment);
-        })->editable()->width(100);
+        $grid->final_payment('Tổng thanh toán (VND)')->editable()->width(100);
 
         $grid->admin_note('Admin ghi chú')->editable()->width(130);
         $grid->internal_note('Nội bộ ghi chú')->editable()->width(130);

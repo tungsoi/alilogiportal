@@ -54,6 +54,11 @@ Route::group([
         'complaints'    =>  ComplaintController::class,
         'offers'        =>  OfferController::class
     ]);
+
+    $router->get('/complaints/{complaint}', 'ComplaintController@showComplaint')->name('complaints.showComplaint');
+    $router->post('/complaints/addComment', 'ComplaintController@addComment')->name('complaints.addComment');
+    $router->post('/complaints/adminConfirmSuccess', 'ComplaintController@storeAdminConfirmSuccess')->name('complaints.storeAdminConfirmSuccess');
+    $router->post('/complaints/customerConfirmSuccess', 'ComplaintController@storeCustomerConfirmSuccess')->name('complaints.storeCustomerConfirmSuccess');
 });
 
 

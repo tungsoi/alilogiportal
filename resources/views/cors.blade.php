@@ -31,7 +31,7 @@
     <center>
         <h1>Demo Cross Origin Resource Sharing</h1> <br>
 
-        <button class="btn btn-lg btn-success btn-cors">Gọi dữ liệu sang domain https://alilogi.vn</button>
+        <button class="btn btn-lg btn-success btn-cors">Gọi dữ liệu sang domain http://server.local</button>
         <input type="hidden" name="" value="{{ csrf_token() }}">
     </center>
 </div>
@@ -39,17 +39,16 @@
 <!-- REQUIRED JS SCRIPTS -->
 {!! Admin::js() !!}
 <script>
+    // Client
+    // Thực hiện request tới domain server.local
     $('.btn-cors').click(function() {
         $.ajax({
-            url: "https://alilogi.vn/api/getOrders",
+            url: "http://server.local/api/getOrders", // route trả ra danh sách 10 đơn hàng
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
             type: 'POST',
-            dataType: 'json',
-            xhrFields: {
-                withCredentials: true
-            },
+            dataType: 'json'
         }).done(function(response) {
             console.log(response);
         }).fail(function(err) {

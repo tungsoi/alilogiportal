@@ -39,19 +39,14 @@ class SyncDeposited extends Command
      */
     public function handle()
     {
-        $orders = Order::whereOrderType(1)->get();
+        $orders = PurchaseOrder::all();
 
-        $data = [];
         foreach ($orders as $order) {
-            $new_order = PurchaseOrder::whereOrderNumber('MH-'.$order->order_number)->first();
-            if ($new_order && $order->deposited != "" && round($new_order->deposited) != round($order->deposited)) {
-                $data['MH-'.$order->order_number] = [
-                    'old'   =>  $order->deposited,
-                    'new'   =>  $new_order->deposited
-                ];
+            if ($order->deposited_at != null && strlen($order->deposited_at) == 10) {
+                echo $order->order_number."\n";
+                $order->deposited_at = $order->deposited_at. " 00:00:00";
+                $order->save();
             }
         }
-
-        dd($data);
     }
 }
