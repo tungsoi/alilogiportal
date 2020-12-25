@@ -37,7 +37,7 @@ Route::group([
     $router->post('/carts/storeAddByTool', 'CartController@storeAddByTool')->name('carts.storeAddByTool');
     $router->post('/carts/storeAdd1688', 'CartController@storeAdd1688')->name('carts.storeAdd1688');
     $router->put('/customer_orders/{order_id}/{item_id}', 'CustomerOrderController@editable')->name('customer_orders.editable');
-    $router->put('/offers/{id}', 'OfferController@updateOrder')->name('offers.updateOrder');
+    $router->post('/offers/updateOrder', 'OfferController@updateOrder')->name('offers.updateOrder');
 
     $router->resources([
         'order_items'       =>  OrderItemController::class,
