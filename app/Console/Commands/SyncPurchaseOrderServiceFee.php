@@ -45,18 +45,23 @@ class SyncPurchaseOrderServiceFee extends Command
         ->orderBy('id', 'desc')->get();
 
         foreach ($orders as $order) {
-            echo $order->order_number . "\n";
-            $customer_percent_service = (int) $order->customer->customer_percent_service;
+            $customer_percent_service = PurchaseOrder::PERCENT_NUMBER[$order->customer->customer_percent_service];
 
             if ($customer_percent_service == 0 && ! in_array($order->customer->id, [1043, 1389, 1020])) {
                 $customer_percent_service = 1;
             }
             $purchase_total_items_price = $order->sumQtyRealityMoney();
+            $purchase_service_fee_percent = $order->customer->customer_percent_service;
 
             $purchase_order_service_fee = number_format($purchase_total_items_price / 100 * $customer_percent_service, 2);
 
-            $order->purchase_order_service_fee = $purchase_order_service_fee;
-            $order->save();
+            if ($purchase_order_service_fee != $order->purchase_order_service_fee) {
+                echo $order->order_number . "\n";
+
+                $order->purchase_order_service_fee = $purchase_order_service_fee;
+                $order->purchase_service_fee_percent = $purchase_service_fee_percent;
+                $order->save();
+            }
         }
 
         ScheduleLog::create([

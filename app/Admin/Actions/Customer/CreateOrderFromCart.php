@@ -56,7 +56,8 @@ class CreateOrderFromCart extends BatchAction
                 $purchase_total_items_price += ($model->qty * $model->price); // Te
             }
 
-            $percent = (float) PurchaseOrder::PERCENT_NUMBER[Admin::user()->customer_percent_service];
+            $percent = PurchaseOrder::PERCENT_NUMBER[Admin::user()->customer_percent_service];
+            $purchase_service_fee_percent = Admin::user()->customer_percent_service;
             if ($percent == "" || $percent == NULL) {
                 $percent = 1;
             }
@@ -70,7 +71,8 @@ class CreateOrderFromCart extends BatchAction
                 'final_total_price'             =>  $final_total_price,
                 'deposit_default'               =>  $deposit_default,
                 'purchase_order_service_fee'    =>  $purchase_order_service_fee,
-                'supporter_id'                  =>  Admin::user()->staff_sale_id ?? ""
+                'supporter_id'                  =>  Admin::user()->staff_sale_id ?? "",
+                'purchase_service_fee_percent'  =>  $purchase_service_fee_percent
             ]);
             
             DB::commit();

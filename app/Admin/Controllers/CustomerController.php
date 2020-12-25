@@ -266,7 +266,13 @@ class CustomerController extends AdminController
             //     )->disable();
             // }
 
-            $form->select('customer_percent_service', 'Phí dịch vụ')->options(PurchaseOrder::PERCENT);
+            if (Admin::user()->isRole('ar_staff')) {
+                $form->select('customer_percent_service', 'Phí dịch vụ')->options(PurchaseOrder::PERCENT);
+            } 
+            else {
+                $form->select('customer_percent_service', 'Phí dịch vụ')->options(PurchaseOrder::PERCENT)->readonly();
+            }
+            
         });
         
         $form->column(1/2, function ($form) {

@@ -26,7 +26,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('sync:wallet')->everyTenMinutes();
-        $schedule->command('sync:service_fee')->everyTenMinutes();
+        $schedule->command('sync:service_fee')->everyMinutes();
     }
 
     /**

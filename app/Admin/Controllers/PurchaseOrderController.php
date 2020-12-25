@@ -478,25 +478,46 @@ EOT
         $order = PurchaseOrder::find($id);
         $purchase_total_items_price = $order->getPurchaseTotalItemPrice();
 
-        $form->column(1/2, function ($form) {
+        $form->column(1/2, function ($form) use ($order) {
             $form->hidden('id');
             $form->divider("Thông tin");
             $form->display('order_number', 'Mã đơn hàng');
             $form->display('customer_name', 'Mã khách hàng');
             $form->select('warehouse_id', 'Kho')->options(Warehouse::all()->pluck('name', 'id'));
             $form->display('created_at', trans('admin.created_at'));
-            $form->select('status', 'Trạng thái')->options(PurchaseOrder::STATUS);
+
+            if ($order->status == PurchaseOrder::STATUS_SUCCESS) {
+                $form->select('status', 'Trạng thái')->options(PurchaseOrder::STATUS)->disable();
+            }
+            else {
+                $form->select('status', 'Trạng thái')->options(PurchaseOrder::STATUS);
+            }
+            
 
             $form->divider("Nhân viên phụ trách");
 
             $order_users = DB::connection('aloorder')->table('admin_role_users')->where('role_id',4)->get()->pluck('user_id');
-            $form->select('supporter_order_id', 'Đặt hàng')->options(User::whereIn('id', $order_users)->get()->pluck('name', 'id'));
+            if ($order->status == PurchaseOrder::STATUS_SUCCESS) {
+                $form->select('supporter_order_id', 'Đặt hàng')->options(User::whereIn('id', $order_users)->get()->pluck('name', 'id'))->disable();
+            }
+            else {
+                $form->select('supporter_order_id', 'Đặt hàng')->options(User::whereIn('id', $order_users)->get()->pluck('name', 'id'));
+            }
 
             $sale_users = DB::connection('aloorder')->table('admin_role_users')->where('role_id',3)->get()->pluck('user_id');
-            $form->select('supporter_id', 'Chăm sóc KH')->options(User::whereIn('id', $sale_users)->get()->pluck('name', 'id'));
+            if ($order->status == PurchaseOrder::STATUS_SUCCESS) {
+                $form->select('supporter_id', 'Chăm sóc KH')->options(User::whereIn('id', $sale_users)->get()->pluck('name', 'id'))->disable();
+            }
+            else {
+                $form->select('supporter_id', 'Chăm sóc KH')->options(User::whereIn('id', $sale_users)->get()->pluck('name', 'id'));
+            }
             
-            $form->select('support_warehouse_id', 'Quản lý kho')->options(User::whereIsCustomer(0)->get()->pluck('name', 'id'));
-            
+            if ($order->status == PurchaseOrder::STATUS_SUCCESS) {
+                $form->select('support_warehouse_id', 'Quản lý kho')->options(User::whereIsCustomer(0)->get()->pluck('name', 'id'))->disable();
+            }
+            else {
+                $form->select('support_warehouse_id', 'Quản lý kho')->options(User::whereIsCustomer(0)->get()->pluck('name', 'id'));
+            }
             $form->text('admin_note', 'Admin ghi chú');
             $form->text('internal_note', 'Ghi chú nội bộ');
             
@@ -505,7 +526,14 @@ EOT
         $form->column(1/2, function ($form) use ($purchase_total_items_price, $order) {
             $form->divider("Tổng tiền");
             $form->currency('final_total_price', 'Tổng giá cuối (VND)')->symbol('VND')->width(200)->disable()->digits(2);
-            $form->currency('final_payment', 'Tiền thanh toán (VND)')->symbol('VND')->width(200)->digits(0);
+            if ($order->status == PurchaseOrder::STATUS_SUCCESS) {
+                $form->currency('final_payment', 'Tiền thanh toán (VND)')->symbol('VND')->width(200)->digits(0)->disable();
+            }
+            else {
+                $form->currency('final_payment', 'Tiền thanh toán (VND)')->symbol('VND')->width(200)->digits(0);
+            }
+
+            
             $form->currency('deposit_default', 'Số tiền phải cọc (70%) (VND)')->readonly()->symbol('VND')->width(200)->digits(2);
             $form->currency('deposited', 'Số tiền đã cọc (VND)')->symbol('VND')->width(200)->readonly()->digits(0);
             $form->text('deposited_at', 'Ngày vào cọc')->readonly();
@@ -517,25 +545,54 @@ EOT
             $form->currency('current_rate', 'Tỷ giá chuyển đổi (VND)')->symbol('VND')->readonly()->width(200)->digits(0);
 
             $form->divider();
-            $form->select('purchase_service_fee_percent', '% phí dịch vụ')->options([
-                '0% tổng tiền sản phẩm',
-                '1% tổng tiền sản phẩm',
-                '1.5% tổng tiền sản phẩm',
-                '2% tổng tiền sản phẩm',
-                '2.5% tổng tiền sản phẩm',
-                '3% tổng tiền sản phẩm',
-            ])->default(1); // tinh % khi chon gia tri
-            $form->currency('purchase_order_service_fee', 'Phí dịch vụ (Tệ)')->symbol('￥')->width(200)->digits(2);
+
+            if ($order->status == PurchaseOrder::STATUS_SUCCESS) {
+                
+                $form->select('purchase_service_fee_percent', '% phí dịch vụ')->options([
+                    '0% tổng tiền sản phẩm', // 0
+                    '1% tổng tiền sản phẩm', // 1
+                    '1.5% tổng tiền sản phẩm', // 2
+                    '2% tổng tiền sản phẩm', // 3
+                    '2.5% tổng tiền sản phẩm', // 4
+                    '3% tổng tiền sản phẩm', // 5
+                ])->disable(); // tinh % khi chon gia tri;
+            }
+            else {
+                $form->select('purchase_service_fee_percent', '% phí dịch vụ')->options([
+                    '0% tổng tiền sản phẩm', // 0
+                    '1% tổng tiền sản phẩm', // 1
+                    '1.5% tổng tiền sản phẩm', // 2
+                    '2% tổng tiền sản phẩm', // 3
+                    '2.5% tổng tiền sản phẩm', // 4
+                    '3% tổng tiền sản phẩm', // 5
+                ]); // tinh % khi chon gia tri
+            }
             
+            if ($order->status == PurchaseOrder::STATUS_SUCCESS) {
+                $form->currency('purchase_order_service_fee', 'Phí dịch vụ (Tệ)')->symbol('￥')->width(200)->digits(2)->disable(); // tinh % khi chon gia tri;
+            }
+            else {
+                $form->currency('purchase_order_service_fee', 'Phí dịch vụ (Tệ)')->symbol('￥')->width(200)->digits(2);
+            }
             $form->divider();
-            $form->currency('price_weight', 'Giá cân nặng (VND)')->symbol('VND')->width(200)->digits(0);
             
+            if ($order->status == PurchaseOrder::STATUS_SUCCESS) {
+                $form->currency('price_weight', 'Giá cân nặng (VND)')->symbol('VND')->width(200)->digits(0)->disable(); // tinh % khi chon gia tri;
+            }
+            else {
+                $form->currency('price_weight', 'Giá cân nặng (VND)')->symbol('VND')->width(200)->digits(0);
+            }
+
             $form->hidden('deposited_at');
         });
 
         $form->disableEditingCheck();
         $form->disableCreatingCheck();
         $form->disableViewCheck();
+
+        $form->tools(function (Form\Tools $tools) {
+            $tools->disableList();
+        });
 
         $form->saving(function (Form $form) {
             $order = PurchaseOrder::find($form->model()->id);
@@ -544,6 +601,7 @@ EOT
             $order->deposit_default = $order->finalPriceVND() * 70 / 100;
             $order->admin_note = $form->admin_note;
             $order->internal_note = $form->internal_note;
+            $order->purchase_service_fee_percent = $form->purchase_service_fee_percent;
             $order->save();
         });
 
