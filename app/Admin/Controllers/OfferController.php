@@ -76,11 +76,12 @@ class OfferController extends AdminController
         $grid->rows(function (Grid\Row $row) {
             $row->column('number', ($row->number+1));
         });
-        $grid->column('number', 'STT')->width(50);
-        $grid->order_number('Mã đơn hàng')->width(150);
+        $grid->column('number', 'STT');
+        $grid->order_number('Mã đơn hàng');
+        $grid->current_rate('Tỷ giá');
         $grid->customer_id('Mã khách hàng')->display(function () {
             return $this->customer->symbol_name ?? "";
-        })->width(150);
+        });
         $grid->status('Trạng thái')->display(function () {
             $count = "";
             if ($this->status == PurchaseOrder::STATUS_DEPOSITED_ORDERING) {
@@ -90,14 +91,14 @@ class OfferController extends AdminController
             }
 
             return "<span class='label label-".PurchaseOrder::LABEL[$this->status]."'>".PurchaseOrder::STATUS[$this->status]." " .$count. "</span>";
-        })->width(150);
+        });
         $grid->order_at('Ngày đặt')->width(100);
         $grid->supporter_order_id('Nhân viên Order')->display(function () {
             return $this->supporterOrder->name ?? "";
-        })->width(150);
+        });
         $grid->purchase_total_items_price('Tiền thực đặt (Tệ)')->display(function () {
             return number_format($this->sumQtyRealityMoney(), 2);
-        })->width(150);
+        });
         $grid->purchase_order_transport_fee('Tổng phí VCNĐ (Tệ)')->display(function () {
             if ($this->items) {
                 $total = 0;
@@ -118,33 +119,13 @@ class OfferController extends AdminController
         })->width(100);
         $grid->final_payment('Tiền thanh toán (Tệ)')->display(function () {
             return $this->final_payment;
-        })->editable()->width(100);
-        $grid->column('offer', 'Chiết khấu (Tệ / VND)')->display(function () {
-            if ($this->final_payment != "" && $this->final_payment > 0) {
-                if ($this->items) {
-                    $total = 0;
-                    foreach ($this->items as $item) {
-                        try {
-                            $total += $item->purchase_cn_transport_fee;
-                        } 
-                        catch (\Exception $e) {
-                            // dd($item->order->order_number);
-                        }
-                        
-                    }
-                }
-
-                try {
-                    $amount = number_format($this->sumQtyRealityMoney() + $total - $this->final_payment, 2);
-                    return $amount . " / " . number_format($amount * $this->current_rate);
-                }
-                catch (\Exception $e) {
-                    return null;
-                }
-                
-            }
-            return null;
-        })->width(100);
+        })->editable()->totalRow();
+        $grid->column('offer_cn', 'Chiết khấu (Tệ)')->totalRow();
+        $grid->column('offer_vnd', 'Chiết khấu (VND)')->display(function () {
+            return number_format($this->offer_vnd);
+        })->totalRow(function ($amount) {
+            return number_format($amount);
+        });
         // export
         $grid->exporter(new OffersExporter());
 
@@ -154,6 +135,14 @@ class OfferController extends AdminController
         $grid->paginate(50);
         $grid->disableCreateButton();
 
+        Admin::script(
+            <<<EOT
+
+            $('tfoot').each(function () {
+                $(this).insertAfter($(this).siblings('thead'));
+            });
+EOT
+    );
         return $grid;
     }
 
@@ -196,17 +185,34 @@ class OfferController extends AdminController
         DB::beginTransaction();
 
         try {
-            PurchaseOrder::find($request->order_id)->update([
-                'final_payment' =>  str_replace(',', '.', $request->final_payment),
-                'user_input_final_payment'  =>  Admin::user()->id
-            ]);
+            $data = $request->all();
+
+            $final_payment = str_replace(',', '.', $data['value']);
+            $order = PurchaseOrder::find($data['pk']);
+            if ($order->items) {
+                $total = 0;
+                foreach ($order->items as $item) {
+                    $total += $item->purchase_cn_transport_fee;
+                }
+            }
+
+            $offer_cn = number_format($order->sumQtyRealityMoney() + $total - $final_payment, 2);
+            $offer_vnd = round($offer_cn * $order->current_rate);
+
+            $order->final_payment = $final_payment;
+            $order->offer_cn = $offer_cn;
+            $order->offer_vnd = $offer_vnd;
+            $order->save();
 
             DB::commit();
 
-            admin_toastr('Cập nhật tiền thanh toán thành công', 'success');
-            return redirect()->back();
+            return response()->json([
+                'status'    =>  true,
+                'message'   =>  'Cập nhật tiền thanh toán thành công'
+            ]);
         }
         catch (\Exception $e) {
+            dd($e->getMessage());
             DB::rollBack();
 
             admin_toastr('Cập nhật tiền thanh toán lỗi', 'error');
