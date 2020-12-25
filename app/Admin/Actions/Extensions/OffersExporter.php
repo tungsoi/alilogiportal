@@ -22,13 +22,7 @@ class OffersExporter extends AbstractExporter
                         try {
                             $ship = $this->totalShip($item);
                             $reality = $item->sumQtyRealityMoney();
-    
-                            if ($item->final_payment != "" && $item->final_payment > 0) {
-                                $discount = $reality + $ship - $item->final_payment;
-                            }
-                            else {
-                                $discount = 0;
-                            }
+
                             $res = [
                                 $flag,
                                 $item->order_number,
@@ -39,8 +33,8 @@ class OffersExporter extends AbstractExporter
                                 $reality,
                                 $ship,
                                 $item->final_payment,
-                                $discount,
-                                $discount * $item->current_rate
+                                $item->offer_cn,
+                                number_format($item->offer_vnd)
                             ];
     
                             $flag++;
