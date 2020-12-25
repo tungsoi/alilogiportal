@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         'App\Console\Commands\SyncDataAdminUserFromAlilogi',
+        'App\Console\Commands\SyncPurchaseOrderServiceFee',
     ];
 
     /**
@@ -25,6 +26,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('sync:wallet')->everyTenMinutes();
+        $schedule->command('sync:service_fee')->everyTenMinutes();
     }
 
     /**
