@@ -133,7 +133,7 @@
                 <td style="background: white; color: black">Tiền chiết khấu (Tệ)</td>
                 <td style="background: white; color: black">
                     @if ($order->final_payment > 0)
-                        {{ $total_price_reality + $purchase_cn_transport_fee - $order->final_payment }}
+                        {{ number_format($order->offer_cn, 2) }}
                     @endif
                 </td>
             @endif
@@ -142,6 +142,14 @@
             <td>Số tiền còn thiếu</td>
             <td></td>
             <td>{{ number_format( ($total_bill * $current_rate) - $order->deposited) . " VND" }}</td>
+            @if (Admin::user()->can('admin-offer-order'))
+                <td style="background: white; color: black">Tiền chiết khấu (VND)</td>
+                <td style="background: white; color: black">
+                    @if ($order->final_payment > 0)
+                        {{ number_format($order->offer_vnd) }}
+                    @endif
+                </td>
+            @endif
         </tr>   
     </tbody>    
 </table>

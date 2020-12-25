@@ -120,7 +120,9 @@ class OfferController extends AdminController
         $grid->final_payment('Tiền thanh toán (Tệ)')->display(function () {
             return $this->final_payment;
         })->editable()->totalRow();
-        $grid->column('offer_cn', 'Chiết khấu (Tệ)')->totalRow();
+        $grid->column('offer_cn', 'Chiết khấu (Tệ)')->totalRow()->display(function () {
+            return number_format($this->offer_cn, 2);
+        });
         $grid->column('offer_vnd', 'Chiết khấu (VND)')->display(function () {
             return number_format($this->offer_vnd);
         })->totalRow(function ($amount) {
@@ -181,14 +183,15 @@ EOT
         return $form;
     }
 
-    public function updateOrder(Request $request) {
+    public function editable(Request $request) {
         DB::beginTransaction();
-
+        
         try {
             $data = $request->all();
-
-            $final_payment = str_replace(',', '.', $data['value']);
             $order = PurchaseOrder::find($data['pk']);
+            $order->final_payment = $data['value'];
+            $order->save();
+
             if ($order->items) {
                 $total = 0;
                 foreach ($order->items as $item) {
@@ -196,10 +199,15 @@ EOT
                 }
             }
 
-            $offer_cn = number_format($order->sumQtyRealityMoney() + $total - $final_payment, 2);
-            $offer_vnd = round($offer_cn * $order->current_rate);
+            if ($data['value'] == 0) {
+                $offer_cn = 0;
+                $offer_vnd = 0;
+            }
+            else {
+                $offer_cn = $order->sumQtyRealityMoney() + $total - $order->final_payment;
+                $offer_vnd = round($offer_cn * $order->current_rate);
+            }
 
-            $order->final_payment = $final_payment;
             $order->offer_cn = $offer_cn;
             $order->offer_vnd = $offer_vnd;
             $order->save();
@@ -212,10 +220,56 @@ EOT
             ]);
         }
         catch (\Exception $e) {
-            dd($e->getMessage());
+
             DB::rollBack();
 
-            admin_toastr('Cập nhật tiền thanh toán lỗi', 'error');
+             return response()->json([
+                'status'    =>  true,
+                'message'   =>  $e->getMessage()
+            ]);
+        }
+    }
+
+    public function updateOrder(Request $request) {
+        DB::beginTransaction();
+        
+        try {
+            $data = $request->all();
+            $order = PurchaseOrder::find($data['order_id']);
+            $order->final_payment = $data['final_payment'];
+            $order->save();
+
+            if ($order->items) {
+                $total = 0;
+                foreach ($order->items as $item) {
+                    $total += $item->purchase_cn_transport_fee;
+                }
+            }
+
+            if ($data['final_payment'] == 0) {
+                $offer_cn = 0;
+                $offer_vnd = 0;
+            }
+            else {
+                $offer_cn = $order->sumQtyRealityMoney() + $total - $order->final_payment;
+                $offer_vnd = round($offer_cn * $order->current_rate);
+            }
+
+            $order->offer_cn = $offer_cn;
+            $order->offer_vnd = $offer_vnd;
+            $order->save();
+
+            DB::commit();
+
+            admin_toastr('Cập nhật tiền thanh toán thành công', 'success');
+
+            return redirect()->back();
+        }
+        catch (\Exception $e) {
+
+            DB::rollBack();
+
+            admin_toastr($e->getMessage(), 'error');
             return redirect()->back();
         }
     }
