@@ -58,7 +58,7 @@ class PurchaseOrderController extends AdminController
         $grid->filter(function($filter) {
             $filter->expand();
             $filter->disableIdFilter();
-            $filter->column(1/2, function ($filter) {
+            $filter->column(1/3, function ($filter) {
                 $filter->like('order_number', 'Mã đơn hàng');
                 $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
                 
@@ -66,13 +66,32 @@ class PurchaseOrderController extends AdminController
                 $filter->equal('supporter_id', 'Nhân viên kinh doanh')->select(User::whereIn('id', $ids)->pluck('name', 'id'));
 
                 $order_ids = DB::connection('aloorder')->table('admin_role_users')->where('role_id', 4)->get()->pluck('user_id');
-                $filter->equal('supporter_order_id', 'Nhân viên đặt hàng')->select(User::whereIn('id', $order_ids)->pluck('name', 'id'));
+                $filter->equal('supporter_order_id', 'Nhân viên Order')->select(User::whereIn('id', $order_ids)->pluck('name', 'id'));
+                
             });
-            $filter->column(1/2, function ($filter) {
+            $filter->column(1/3, function ($filter) {
+                $filter->where(function ($query) {
+                    $query->where('created_at', '>=', $this->input." 00:00:00");
+                }, 'Ngày tạo nhỏ nhất', 'created_at_begin')->date();
+                $filter->where(function ($query) {
+                    $query->where('created_at', '<=', $this->input." 23:59:59");
+                }, 'Ngày tạo lớn nhất', 'created_at_finish')->date();
+
+                $filter->where(function ($query) {
+                    $query->where('deposited_at', '>=', $this->input." 00:00:00");
+                }, 'Ngày cọc nhỏ nhất', 'deposited_at_begin')->date();
+                $filter->where(function ($query) {
+                    $query->where('deposited_at', '<=', $this->input." 23:59:59");
+                }, 'Ngày cọc lớn nhất', 'deposited_at_finish')->date();
+            });
+            $filter->column(1/3, function ($filter) {
+                $filter->where(function ($query) {
+                    $query->where('order_at', '>=', $this->input." 00:00:00");
+                }, 'Ngày đặt hàng nhỏ nhất', 'order_at_begin')->date();
+                $filter->where(function ($query) {
+                    $query->where('order_at', '<=', $this->input." 23:59:59");
+                }, 'Ngày đặt hàng lớn nhất', 'order_at_finish')->date();
                 $filter->equal('status', 'Trạng thái')->select(PurchaseOrder::STATUS);
-                $filter->between('created_at', 'Ngày tạo đơn hàng')->date();
-                $filter->between('deposited_at', 'Ngày cọc')->date();
-                $filter->between('order_at', 'Ngày chốt đặt hàng')->date();
                 $filter->where(function ($query) {
                     if ($this->input == '0') {
                         $dayAfter = (new DateTime(now()))->modify('-7 day')->format('Y-m-d H:i:s');
@@ -80,7 +99,20 @@ class PurchaseOrderController extends AdminController
                         ->whereIn('status', [PurchaseOrder::STATUS_DEPOSITED_ORDERING, PurchaseOrder::STATUS_ORDERED]);
                     }
                 }, 'Tìm kiếm', '7days')->radio(['Đơn hàng chưa hoàn thành trong 7 ngày']);
-            });
+            }); 
+
+            Admin::style('
+                #filter-box label {
+                    padding: 0px !important;
+                    padding-top: 10px;
+                }
+                #filter-box .col-sm-2 {
+                    width: 30% !important;
+                }
+                #filter-box .col-sm-8 {
+                    width: 70% !important;
+                }
+            ');
         });
 
         // $grid->fixColumns(5);
