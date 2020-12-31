@@ -46,10 +46,10 @@ class OfferController extends AdminController
         $grid = new Grid(new PurchaseOrder());
         $grid->model()->whereOrderType(1)->where('status', '!=', PurchaseOrder::STATUS_UNSENT)->orderBy('created_at', 'desc');
 
-        // if (Admin::user()->isRole('order_staff')) 
-        // {
-        //     $grid->model()->where('supporter_order_id', Admin::user()->id);
-        // }
+        if (Admin::user()->isRole('order_staff')) 
+        {
+            $grid->model()->where('supporter_order_id', Admin::user()->id);
+        }
 
         $grid->filter(function($filter) {
             $filter->expand();
@@ -128,6 +128,7 @@ class OfferController extends AdminController
         })->totalRow(function ($amount) {
             return number_format($amount);
         });
+        $grid->internal_note('Ghi chú nội bộ')->editable();
         // export
         $grid->exporter(new OffersExporter());
 
@@ -189,35 +190,50 @@ EOT
         try {
             $data = $request->all();
             $order = PurchaseOrder::find($data['pk']);
-            $order->final_payment = $data['value'];
-            $order->save();
 
-            if ($order->items) {
-                $total = 0;
-                foreach ($order->items as $item) {
-                    $total += $item->purchase_cn_transport_fee;
+            if ($data['name'] == 'final_payment') {
+                $order->final_payment = $data['value'];
+                $order->save();
+    
+                if ($order->items) {
+                    $total = 0;
+                    foreach ($order->items as $item) {
+                        $total += $item->purchase_cn_transport_fee;
+                    }
                 }
+    
+                if ($data['value'] == 0) {
+                    $offer_cn = 0;
+                    $offer_vnd = 0;
+                }
+                else {
+                    $offer_cn = $order->sumQtyRealityMoney() + $total - $order->final_payment;
+                    $offer_vnd = round($offer_cn * $order->current_rate);
+                }
+    
+                $order->offer_cn = $offer_cn;
+                $order->offer_vnd = $offer_vnd;
+                $order->save();
+    
+                DB::commit();
+    
+                return response()->json([
+                    'status'    =>  true,
+                    'message'   =>  'Cập nhật tiền thanh toán thành công'
+                ]);
+            } else {
+                $order->update([
+                    $data['name']   =>  $data['value']
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'status'    =>  true,
+                    'message'   =>  'Cập nhật thành công'
+                ]);
             }
-
-            if ($data['value'] == 0) {
-                $offer_cn = 0;
-                $offer_vnd = 0;
-            }
-            else {
-                $offer_cn = $order->sumQtyRealityMoney() + $total - $order->final_payment;
-                $offer_vnd = round($offer_cn * $order->current_rate);
-            }
-
-            $order->offer_cn = $offer_cn;
-            $order->offer_vnd = $offer_vnd;
-            $order->save();
-
-            DB::commit();
-
-            return response()->json([
-                'status'    =>  true,
-                'message'   =>  'Cập nhật tiền thanh toán thành công'
-            ]);
+            
         }
         catch (\Exception $e) {
 
