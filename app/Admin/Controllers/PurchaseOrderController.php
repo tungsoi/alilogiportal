@@ -149,6 +149,10 @@ class PurchaseOrderController extends AdminController
             if ($this->status == PurchaseOrder::STATUS_ORDERED) {
                 $html .= "<br><br><p>".$this->order_at != null ? " &nbsp;(".date('H:i d-m-Y', strtotime($this->order_at)).")" : null. "</p>";
             }
+            else if ($this->status == PurchaseOrder::STATUS_SUCCESS) {
+                $html .= "<br><br><p>".$this->success_at != null ? " &nbsp;(".date('H:i d-m-Y', strtotime($this->success_at)).")" : null. "</p>";
+            }
+            
             $html_staff = "<ul style='padding-left: 15px;'>";
             $html_staff .= '<li>Đặt hàng: ' . ($this->supporterOrder->name ?? "") . "</li>";
 
