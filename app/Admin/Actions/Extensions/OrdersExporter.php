@@ -39,6 +39,8 @@ class OrdersExporter extends AbstractExporter
                             $item->warehouse->name ?? "",
                             $item->deposited != "" ? $item->deposited : 0,
                             $item->deposited != "" ? $item->deposited_at : "",
+                            $item->order_at,
+                            $item->success_at,
                             $item->totalBill(),
                             $item->admin_note,
                             $item->internal_note
@@ -80,6 +82,8 @@ class OrdersExporter extends AbstractExporter
             'Kho',
             'Đã cọc (VND)',
             'Ngày cọc',
+            'Ngày đặt hàng',
+            'Ngày thành công',
             'Tổng giá cuối (Tệ)',
             'Admin ghi ghú',
             'Nội bộ ghi chú'
