@@ -58,7 +58,7 @@ class CreateOrderFromCart extends BatchAction
 
             $percent = PurchaseOrder::PERCENT_NUMBER[Admin::user()->customer_percent_service];
             $purchase_service_fee_percent = Admin::user()->customer_percent_service;
-            if ($percent == "" || $percent == NULL) {
+            if (is_null($percent)) {
                 $percent = 1;
             }
             $purchase_order_service_fee = number_format($purchase_total_items_price / 100 * $percent, 2); // phi dich vu vnd
