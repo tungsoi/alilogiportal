@@ -99,6 +99,14 @@ class PurchaseOrderController extends AdminController
                         ->whereIn('status', [PurchaseOrder::STATUS_DEPOSITED_ORDERING, PurchaseOrder::STATUS_ORDERED]);
                     }
                 }, 'Tìm kiếm', '7days')->radio(['Đơn hàng chưa hoàn thành trong 7 ngày']);
+
+
+                $filter->where(function ($query) {
+                    $query->where('success_at', '>=', $this->input." 00:00:00");
+                }, 'Ngày hoàn thành nhỏ nhất', 'success_at_begin')->date();
+                $filter->where(function ($query) {
+                    $query->where('success_at', '<=', $this->input." 23:59:59");
+                }, 'Ngày hoàn thành lớn nhất', 'success_at_finish')->date();
             }); 
 
             Admin::style('
