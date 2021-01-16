@@ -42,6 +42,12 @@ class TransportRecharge extends Model
         self::DEDUCTION     =>  'Trừ tiền',
     ];
 
+    const TRANSACTION = [
+        self::RECHARGE_MONEY    =>  'Nạp tiền mặt',
+        self::RECHARGE_BANK     =>  'Nạp tiền chuyển khoản',
+        self::DEDUCTION     =>  'Trừ tiền',
+    ];
+
     const ALL_RECHARGE = [
         self::RECHARGE_MONEY    =>  'Nạp tiền mặt',
         self::RECHARGE_BANK     =>  'Nạp tiền chuyển khoản',
@@ -73,7 +79,7 @@ class TransportRecharge extends Model
         'warning',
         'success',
         'primary',
-        'default',
+        'danger',
         'danger',
         'danger',
         'danger'
