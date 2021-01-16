@@ -39,7 +39,9 @@ Route::group([
     $router->put('/customer_orders/{order_id}/{item_id}', 'CustomerOrderController@editable')->name('customer_orders.editable');
     $router->post('/offers/updateOrder', 'OfferController@updateOrder')->name('offers.updateOrder');
     $router->put('/offers/{id}', 'OfferController@editable')->name('offers.editable');
-
+    $router->get('/customer_transport_orders', 'ProfileController@orderPayment')->name('profiles.historyOrder');
+    $router->get('/customer_transport_orders/{id}', 'ProfileController@orderPaymentDetail')->name('profiles.orderPaymentDetail');
+    $router->get('/transport_orders/{id}', 'TransportOrderController@show')->name('transport_orders.show');
     $router->resources([
         'order_items'       =>  OrderItemController::class,
         'puchase_orders'    =>  PurchaseOrderController::class,
@@ -53,7 +55,8 @@ Route::group([
         'schedule_logs' =>  ScheduleLogController::class,
         'detail_orders' =>  DetailOrderController::class,
         'complaints'    =>  ComplaintController::class,
-        'offers'        =>  OfferController::class
+        'offers'        =>  OfferController::class,
+        'transactions'  =>  TransactionController::class
     ]);
 
     $router->get('/complaints/{complaint}', 'ComplaintController@showComplaint')->name('complaints.showComplaint');
