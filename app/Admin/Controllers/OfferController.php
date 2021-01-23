@@ -59,16 +59,23 @@ class OfferController extends AdminController
                 $filter->equal('customer_id', 'Mã khách hàng')->select(User::whereIsCustomer(1)->get()->pluck('symbol_name', 'id'));
                 $filter->where(function ($query) {
                     $query->where('order_at', '>=', $this->input." 00:00:00");
-                }, 'Ngày đặt hàng', 'order_at_begin')->date();
+                }, 'Ngày đặt hàng nhỏ nhất', 'order_at_begin')->date();
 
                 $filter->where(function ($query) {
                     $query->where('order_at', '<=', $this->input." 23:59:59");
-                }, 'Ngày đặt hàng kết thúc', 'order_at_finish')->date();
+                }, 'Ngày đặt hàng lớn nhất', 'order_at_finish')->date();
             });
             $filter->column(1/2, function ($filter) {
                 $filter->equal('status', 'Trạng thái')->select(PurchaseOrder::STATUS);
                 $order_ids = DB::connection('aloorder')->table('admin_role_users')->where('role_id', 4)->get()->pluck('user_id');
                 $filter->equal('supporter_order_id', 'Nhân viên đặt hàng')->select(User::whereIn('id', $order_ids)->pluck('name', 'id'));
+                $filter->where(function ($query) {
+                    $query->where('success_at', '>=', $this->input." 00:00:00");
+                }, 'Ngày thành công nhỏ nhất', 'success_at_begin')->date();
+
+                $filter->where(function ($query) {
+                    $query->where('success_at', '<=', $this->input." 23:59:59");
+                }, 'Ngày thành công lớn nhất', 'success_at_finish')->date();
             });
         });
 
@@ -97,17 +104,16 @@ class OfferController extends AdminController
             return $this->supporterOrder->name ?? "";
         });
         $grid->purchase_total_items_price('Tiền thực đặt (Tệ)')->display(function () {
-            return number_format($this->sumQtyRealityMoney(), 2);
+            return $this->sumQtyRealityMoney();
+        })->totalRow(function ($amount) {
+            return "<span id='purchase_total_items_price'></span>";
         });
         $grid->purchase_order_transport_fee('Tổng phí VCNĐ (Tệ)')->display(function () {
             if ($this->items) {
                 $total = 0;
                 foreach ($this->items as $item) {
-                    try {
+                    if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
                         $total += $item->purchase_cn_transport_fee;
-                    } 
-                    catch (\Exception $e) {
-                        // dd($item->order->order_number);
                     }
                     
                 }
@@ -116,18 +122,32 @@ class OfferController extends AdminController
             }
 
             return 0;
-        })->width(100);
+        })->width(100)
+        ->totalRow(function ($amount) {
+            return "<span id='purchase_order_transport_fee'></span>";
+        });
+        $grid->column('total_reality', 'Tổng tiền thực đặt')->display(function() {
+            if ($this->items) {
+                $total = 0;
+                foreach ($this->items as $item) {
+                    if ($item->status != OrderItem::STATUS_PURCHASE_OUT_OF_STOCK) {
+                        $total += $item->purchase_cn_transport_fee;
+                    }
+                    
+                }
+
+                return number_format($this->sumQtyRealityMoney() + $total, 2);
+            }
+        });
         $grid->final_payment('Tiền thanh toán (Tệ)')->display(function () {
             return $this->final_payment;
         })->editable()->totalRow();
-        $grid->column('offer_cn', 'Chiết khấu (Tệ)')->totalRow()->display(function () {
-            return number_format($this->offer_cn, 2);
-        });
+        $grid->column('offer_cn', 'Chiết khấu (Tệ)')->display(function () {
+            return number_format($this->offer_cn);
+        })->totalRow();
         $grid->column('offer_vnd', 'Chiết khấu (VND)')->display(function () {
             return number_format($this->offer_vnd);
-        })->totalRow(function ($amount) {
-            return number_format($amount);
-        });
+        })->totalRow();
         $grid->internal_note('Ghi chú nội bộ')->editable();
         // export
         $grid->exporter(new OffersExporter());
@@ -144,6 +164,46 @@ class OfferController extends AdminController
             $('tfoot').each(function () {
                 $(this).insertAfter($(this).siblings('thead'));
             });
+
+            $( document ).ready(function() {
+                // Tiền thực đặt (Tệ)
+                let purchase_total_items_price = $('tbody .column-purchase_total_items_price');
+
+                let total = 0;
+                let total_2 = 0;
+                purchase_total_items_price.each( function( i, el ) {
+                    var elem = $( el );
+                    let html = parseFloat($.trim(elem.html()));
+                    total += html;
+                    total_2 += html;
+                });
+                total = total.toFixed(2);
+                $('#purchase_total_items_price').html(total);
+
+
+                // Tổng phí VCNĐ (Tệ)
+                let purchase_order_transport_fee = $('tbody .column-purchase_order_transport_fee');
+                let total_1 = 0;
+                purchase_order_transport_fee.each( function( i, el ) {
+                    var elem = $( el );
+                    let html = parseFloat($.trim(elem.html()));
+                    total_1 += html;
+                    total_2 += html;
+                });
+                total_1 = total_1.toFixed(2);
+                $('#purchase_order_transport_fee').html(total_1);
+
+
+                // Tổng tiền thực đặt
+                total_2 = total_2.toFixed(2);
+                $('#purchase_order_transport_fee').parent().next().html(total_2);
+
+
+                // Tiền thanh toán (Tệ)
+
+            });
+
+            
 EOT
     );
         return $grid;
@@ -268,12 +328,20 @@ EOT
             }
             else {
                 $offer_cn = $order->sumQtyRealityMoney() + $total - $order->final_payment;
-                $offer_vnd = round($offer_cn * $order->current_rate);
+                $offer_vnd = $offer_cn * $order->current_rate;
             }
 
-            $order->offer_cn = $offer_cn;
-            $order->offer_vnd = $offer_vnd;
-            $order->save();
+            if ($offer_cn < 0) {
+                $offer_cn = $offer_vnd = 0;
+                $order->offer_cn = 0;
+                $order->offer_vnd = 0;
+                $order->save();
+            }
+            else {
+                $order->offer_cn = $offer_cn;
+                $order->offer_vnd = $offer_vnd;
+                $order->save();
+            }
 
             DB::commit();
 
