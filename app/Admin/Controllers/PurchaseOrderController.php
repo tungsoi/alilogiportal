@@ -599,6 +599,7 @@ EOT
                     '2% tổng tiền sản phẩm', // 3
                     '2.5% tổng tiền sản phẩm', // 4
                     '3% tổng tiền sản phẩm', // 5
+                    '0.5% tổng tiền sản phẩm', // 6
                 ])->disable(); // tinh % khi chon gia tri;
             }
             else {
@@ -609,6 +610,7 @@ EOT
                     '2% tổng tiền sản phẩm', // 3
                     '2.5% tổng tiền sản phẩm', // 4
                     '3% tổng tiền sản phẩm', // 5
+                    '0.5% tổng tiền sản phẩm', // 5
                 ]); // tinh % khi chon gia tri
             }
             

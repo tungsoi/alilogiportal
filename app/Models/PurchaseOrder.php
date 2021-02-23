@@ -61,11 +61,11 @@ class PurchaseOrder extends Model
     ];
 
     const PERCENT = [
-        '0%', '1%', '1.5%', '2%', '2.5%', '3%'
+        '0%', '1%', '1.5%', '2%', '2.5%', '3%', '0.5%'
     ];
 
     const PERCENT_NUMBER = [
-        0, 1, 1.5, 2, 2.5, 3
+        0, 1, 1.5, 2, 2.5, 3, 0.5
     ];
     
     /**
@@ -320,7 +320,6 @@ class PurchaseOrder extends Model
     /**
      * Tổng phí dịch vụ trong đơn
      *
-     * @return void
      */
     public function sumServiceFee()
     {
@@ -331,7 +330,6 @@ class PurchaseOrder extends Model
     /**
      * Tổng phí ship trong đơn
      *
-     * @return void
      */
     public function sumShipFee()
     {
@@ -362,7 +360,6 @@ class PurchaseOrder extends Model
     /**
      * Tổng tiền sản phẩm
      *
-     * @return void
      */
     public function sumQtyRealityMoney()
     {
