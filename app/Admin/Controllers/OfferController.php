@@ -124,7 +124,7 @@ class OfferController extends AdminController
             return 0;
         })->width(100)
         ->totalRow(function ($amount) {
-            return "<span id='purchase_order_transport_fee'></span>";
+            return "<span id='purchase_order_transport_fee'>".$amount."</span>";
         });
         $grid->column('total_reality', 'Tổng tiền thực đặt')->display(function() {
             if ($this->items) {
@@ -157,6 +157,7 @@ class OfferController extends AdminController
         $grid->disableBatchActions();
         $grid->paginate(50);
         $grid->disableCreateButton();
+        $grid->perPages([50, 200, 500]);
 
         Admin::script(
             <<<EOT
@@ -167,39 +168,39 @@ class OfferController extends AdminController
 
             $( document ).ready(function() {
                 // Tiền thực đặt (Tệ)
-                let purchase_total_items_price = $('tbody .column-purchase_total_items_price');
+                // let purchase_total_items_price = $('tbody .column-purchase_total_items_price');
 
-                let total = 0;
-                let total_2 = 0;
-                purchase_total_items_price.each( function( i, el ) {
-                    var elem = $( el );
-                    let html = parseFloat($.trim(elem.html()));
-                    total += html;
-                    total_2 += html;
-                });
-                total = total.toFixed(2);
-                $('#purchase_total_items_price').html(total);
-
-
-                // Tổng phí VCNĐ (Tệ)
-                let purchase_order_transport_fee = $('tbody .column-purchase_order_transport_fee');
-                let total_1 = 0;
-                purchase_order_transport_fee.each( function( i, el ) {
-                    var elem = $( el );
-                    let html = parseFloat($.trim(elem.html()));
-                    total_1 += html;
-                    total_2 += html;
-                });
-                total_1 = total_1.toFixed(2);
-                $('#purchase_order_transport_fee').html(total_1);
+                // let total = 0;
+                // let total_2 = 0;
+                // purchase_total_items_price.each( function( i, el ) {
+                //     var elem = $( el );
+                //     let html = parseFloat($.trim(elem.html()));
+                //     total += html;
+                //     total_2 += html;
+                // });
+                // total = total.toFixed(2);
+                // $('#purchase_total_items_price').html(total);
 
 
-                // Tổng tiền thực đặt
-                total_2 = total_2.toFixed(2);
-                $('#purchase_order_transport_fee').parent().next().html(total_2);
+                // // Tổng phí VCNĐ (Tệ)
+                // let purchase_order_transport_fee = $('tbody .column-purchase_order_transport_fee');
+                // let total_1 = 0;
+                // purchase_order_transport_fee.each( function( i, el ) {
+                //     var elem = $( el );
+                //     let html = parseFloat($.trim(elem.html()));
+                //     total_1 += html;
+                //     total_2 += html;
+                // });
+                // total_1 = total_1.toFixed(2);
+                // $('#purchase_order_transport_fee').html(total_1);
 
 
-                // Tiền thanh toán (Tệ)
+                // // Tổng tiền thực đặt
+                // total_2 = total_2.toFixed(2);
+                // $('#purchase_order_transport_fee').parent().next().html(total_2);
+
+
+                // // Tiền thanh toán (Tệ)
 
             });
 
