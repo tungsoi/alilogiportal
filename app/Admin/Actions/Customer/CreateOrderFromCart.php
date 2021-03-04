@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\DB;
 
 class CreateOrderFromCart extends BatchAction
 {
+    const MAXIMUM_LINK = 30;
+
     protected $selector = ".create-order";
 
     public $name = 'Tạo đơn hàng';
@@ -23,6 +25,11 @@ class CreateOrderFromCart extends BatchAction
     {
         DB::beginTransaction();
         try {
+            
+            if ($collection->count() > self::MAXIMUM_LINK) 
+            {
+                return $this->response()->success('Số link sản phẩm tối đa trong 1 đơn hàng là '. self::MAXIMUM_LINK.'. Vui lòng tạo lại đơn hàng.')->refresh();
+            }
 
             $service = new OrderService();
             $order_number = $service->generateOrderNR();
